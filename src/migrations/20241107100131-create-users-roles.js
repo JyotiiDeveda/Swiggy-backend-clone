@@ -5,35 +5,37 @@ module.exports = {
     await queryInterface.createTable('users_roles', {
       id: {
         allowNull: false,
-        autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.literal('uuid_generate_v4()'),
+        type: Sequelize.UUID,
+        defaultValue: Sequelize.literal('uuid_generate_v4()'),
       },
       user_id: {
         type: Sequelize.UUID,
+        allowNull: false,
         references: {
           model: 'users',
           key: 'id',
         },
-        onDelete: 'cascade',
-        allowNull: false,
+        onDelete: 'CASCADE',
       },
       role_id: {
         type: Sequelize.UUID,
+        allowNull: false,
         references: {
           model: 'roles',
           key: 'id',
         },
-        onDelete: 'cascade',
-        allowNull: false,
+        onDelete: 'CASCADE',
       },
       created_at: {
         allowNull: false,
         type: Sequelize.DATE,
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
       },
       updated_at: {
         allowNull: false,
         type: Sequelize.DATE,
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
       },
     });
   },
