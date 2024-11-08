@@ -8,6 +8,12 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'user_id',
         as: 'roles',
       });
+
+      User.hasMany(models.Cart, {
+        foreignKey: 'user_id',
+        onDelete: 'CASCADE',
+        as: 'carts',
+      });
     }
   }
   User.init(
