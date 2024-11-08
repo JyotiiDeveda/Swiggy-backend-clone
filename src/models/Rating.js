@@ -1,0 +1,39 @@
+'use strict';
+const { Model } = require('sequelize');
+module.exports = (sequelize, DataTypes) => {
+  class Rating extends Model {}
+  Rating.init(
+    {
+      user_id: {
+        TYPE: DataTypes.UUID,
+        references: {
+          model: 'User',
+          key: 'id',
+        },
+        allowNull: false,
+        onDelete: 'CASCADE',
+      },
+      entity_type: {
+        TYPE: DataTypes.ENUM,
+        values: ['restaurant', 'dish'],
+        allowNull: false,
+      },
+      entity_id: {
+        type: DataTypes.UUID,
+        allowNull: false,
+      },
+      rating: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+      },
+    },
+    {
+      sequelize,
+      modelName: 'Rating',
+      tableName: 'ratings',
+      timestamps: true,
+      paranoid: true,
+    }
+  );
+  return Rating;
+};
