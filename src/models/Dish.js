@@ -6,7 +6,7 @@ module.exports = (sequelize, DataTypes) => {
       Dish.belongsTo(models.Restaurant, {
         foreignKey: 'restaurant_id',
         onDelete: 'CASCADE',
-      })
+      });
     }
   }
   Dish.init(
@@ -34,8 +34,8 @@ module.exports = (sequelize, DataTypes) => {
       },
       type: {
         type: DataTypes.ENUM,
-        values: ['veg',,
-        onDelete: 'CASCADE' 'non-veg'],
+        values: ['veg', 'non-veg'],
+        onDelete: 'CASCADE',
         allowNull: false,
       },
       price: {
