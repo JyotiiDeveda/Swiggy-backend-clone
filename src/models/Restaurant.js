@@ -1,7 +1,15 @@
 'use strict';
 const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-  class Restaurant extends Model {}
+  class Restaurant extends Model {
+    static associate(models) {
+      Restaurant.hasMany(models.Dish, {
+        foreignKey: 'restaurant_id',
+        onDelete: 'CASCADE',
+        as: 'dishes',
+      });
+    }
+  }
   Restaurant.init(
     {
       name: {

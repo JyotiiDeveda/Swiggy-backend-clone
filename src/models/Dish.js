@@ -1,7 +1,14 @@
 'use strict';
 const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-  class Dish extends Model {}
+  class Dish extends Model {
+    static associate(models) {
+      Dish.belongsTo(models.Restaurant, {
+        foreignKey: 'restaurant_id',
+        onDelete: 'CASCADE',
+      })
+    }
+  }
   Dish.init(
     {
       restaurant_id: {
@@ -27,7 +34,8 @@ module.exports = (sequelize, DataTypes) => {
       },
       type: {
         type: DataTypes.ENUM,
-        values: ['veg', 'non-veg'],
+        values: ['veg',,
+        onDelete: 'CASCADE' 'non-veg'],
         allowNull: false,
       },
       price: {
