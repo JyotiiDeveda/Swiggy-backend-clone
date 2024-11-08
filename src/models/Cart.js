@@ -8,6 +8,12 @@ module.exports = (sequelize, DataTypes) => {
         onDelete: 'CASCADE',
         as: 'user',
       });
+
+      Cart.belongsToMany(models.Dish, {
+        through: 'CartDishes',
+        foreignKey: 'cart_id',
+        as: 'dishes',
+      });
     }
   }
   Cart.init(

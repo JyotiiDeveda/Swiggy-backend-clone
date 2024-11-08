@@ -7,6 +7,12 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'restaurant_id',
         onDelete: 'CASCADE',
       });
+
+      Dish.belongsToMany(models.Cart, {
+        through: 'CartDishes',
+        foreignKey: 'dish_id',
+        as: 'carts',
+      });
     }
   }
   Dish.init(
