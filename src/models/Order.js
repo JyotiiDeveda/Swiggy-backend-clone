@@ -1,7 +1,14 @@
 'use strict';
 const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-  class Order extends Model {}
+  class Order extends Model {
+    static associate(models) {
+      Order.belongsTo(models.User, {
+        foreignKey: 'user_id',
+        onDelete: 'CASCADE',
+      });
+    }
+  }
   Order.init(
     {
       cart_id: {
