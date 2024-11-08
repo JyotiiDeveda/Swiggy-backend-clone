@@ -1,7 +1,14 @@
 'use strict';
 const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-  class Rating extends Model {}
+  class Rating extends Model {
+    static associate(models) {
+      Rating.belongsTo(models.User, {
+        foreignKey: 'user_id',
+        onDelete: 'CASCADE',
+      });
+    }
+  }
   Rating.init(
     {
       user_id: {
