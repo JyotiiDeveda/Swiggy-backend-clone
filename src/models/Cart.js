@@ -14,6 +14,10 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'cart_id',
         as: 'dishes',
       });
+
+      Cart.hasOne(models.Order, {
+        foreignKey: 'cart_id',
+      });
     }
   }
   Cart.init(

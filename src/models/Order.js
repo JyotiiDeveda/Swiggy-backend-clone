@@ -11,6 +11,10 @@ module.exports = (sequelize, DataTypes) => {
       Order.hasOne(models.Payment, {
         foreignKey: 'order_id',
       });
+
+      Order.belongsTo(models.Cart, {
+        foreignKey: 'cart_id',
+      });
     }
   }
   Order.init(
