@@ -23,19 +23,19 @@ module.exports = {
       },
       category: {
         type: Sequelize.ENUM,
-        values: ['vegeterian', 'non-vegeterian', 'both'],
-        defaultValue: 'vegeterian',
+        values: ['veg', 'non-veg', 'both'],
+        defaultValue: 'veg',
       },
       address: {
         type: Sequelize.STRING,
         allowNull: false,
       },
-      createdAt: {
+      created_at: {
         allowNull: false,
         type: Sequelize.DATE,
         defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
       },
-      updatedAt: {
+      updated_at: {
         allowNull: false,
         type: Sequelize.DATE,
         defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
@@ -43,6 +43,6 @@ module.exports = {
     });
   },
   async down(queryInterface) {
-    await queryInterface.dropTable('Restaurants');
+    await queryInterface.dropTable('restaurants');
   },
 };

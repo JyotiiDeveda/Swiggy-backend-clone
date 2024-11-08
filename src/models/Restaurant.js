@@ -18,8 +18,8 @@ module.exports = (sequelize, DataTypes) => {
       },
       category: {
         type: DataTypes.ENUM,
-        values: ['vegeterian', 'non-vegeterian', 'both'],
-        defaultValue: 'vegeterian',
+        values: ['veg', 'non-veg', 'both'],
+        defaultValue: 'veg',
       },
       address: {
         type: DataTypes.STRING,
