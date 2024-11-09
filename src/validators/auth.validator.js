@@ -38,4 +38,36 @@ const validateSignupPayload = (req, res, next) => {
   }
 };
 
-module.exports = { validateSignupPayload };
+const validateEmail = (req, res, next) => {
+  try {
+    const schema = Joi.object({
+      email: Joi.string()
+        .required()
+        .email({
+          minDomainSegments: 2,
+          tlds: { allow: ['com', 'co', 'net'] },
+        }),
+    });
+
+    const { error, value } = schema.validate(req.body);
+    if (error) {
+      console.log('error: ', error);
+      const errMsg = error?.details[0]?.message.replaceAll('"', '') || 'Email Validation failed';
+      return res.status(400).json({
+        success: false,
+        error: errMsg,
+      });
+    }
+
+    req.body = value;
+    next();
+  } catch (err) {
+    console.log('Error validating input fields: ', err);
+    return res.status(err.statusCode).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+module.exports = { validateSignupPayload, validateEmail };

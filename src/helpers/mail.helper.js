@@ -6,8 +6,7 @@ const sendVerificationEmail = async (email, otp) => {
     const mailResponse = await mailSender(
       email,
       'OTP Verification email',
-      `Please confirm your OTP
-      	Here is your OTP code: ${otp}`
+      `Your one time password to login : ${otp}`
     );
     console.log('Email sent successfully: ', mailResponse);
   } catch (error) {

@@ -19,4 +19,28 @@ const signup = async (req, res) => {
   }
 };
 
-module.exports = { signup };
+const sendOtp = async (req, res) => {
+  try {
+    //get email
+    const { email } = req.body;
+
+    const otp = await authServices.sendOtp(email);
+    console.log('OTP in controller: ', otp);
+    // save to redis
+    res.status(200).json({
+      success: true,
+      message: 'otp sent Successfully',
+      otp,
+    });
+
+    // send mail
+  } catch (err) {
+    console.log(err);
+    return res.status(400).json({
+      success: false,
+      error: err.message,
+    });
+  }
+};
+
+module.exports = { signup, sendOtp };
