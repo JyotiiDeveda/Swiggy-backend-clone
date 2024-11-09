@@ -1,4 +1,5 @@
 const Joi = require('joi');
+const commonHelper = require('../helpers/common.helper');
 
 const validateSignupPayload = (req, res, next) => {
   try {
@@ -20,21 +21,17 @@ const validateSignupPayload = (req, res, next) => {
 
     if (error) {
       console.log('error: ', typeof error);
-      const errMsg = error?.details[0]?.message.replaceAll('"', '') || 'Validation failed';
-      return res.status(400).json({
-        success: false,
-        error: errMsg,
-      });
+      const errMsg =
+        error?.details[0]?.message.replaceAll('"', '') || error.message || 'Otp Validation failed';
+
+      return commonHelper.customErrorHandler(res, errMsg, 400);
     }
 
     req.body = value;
     next();
   } catch (err) {
     console.log('Error validating input fields: ', err);
-    return res.status(err.statusCode).json({
-      success: false,
-      message: err.message,
-    });
+    return commonHelper.customErrorHandler(res, err.message, 400);
   }
 };
 
@@ -52,22 +49,48 @@ const validateEmail = (req, res, next) => {
     const { error, value } = schema.validate(req.body);
     if (error) {
       console.log('error: ', error);
-      const errMsg = error?.details[0]?.message.replaceAll('"', '') || 'Email Validation failed';
-      return res.status(400).json({
-        success: false,
-        error: errMsg,
-      });
+      const errMsg =
+        error?.details[0]?.message.replaceAll('"', '') || error.message || 'Otp Validation failed';
+
+      return commonHelper.customErrorHandler(res, errMsg, 400);
     }
 
     req.body = value;
     next();
   } catch (err) {
     console.log('Error validating input fields: ', err);
-    return res.status(err.statusCode).json({
-      success: false,
-      message: err.message,
-    });
+    return commonHelper.customErrorHandler(res, err.message, 400);
   }
 };
 
-module.exports = { validateSignupPayload, validateEmail };
+const validateLoginSchema = (req, res, next) => {
+  try {
+    const schema = Joi.object({
+      email: Joi.string()
+        .required()
+        .email({
+          minDomainSegments: 2,
+          tlds: { allow: ['com', 'co', 'net'] },
+        }),
+      otp: Joi.string().required().min(6),
+    });
+
+    const { value, error } = schema.validate(req.body);
+
+    if (error) {
+      console.log('error: ', error);
+      const errMsg =
+        error?.details[0]?.message.replaceAll('"', '') || error.message || 'Otp Validation failed';
+
+      return commonHelper.customErrorHandler(res, errMsg, 400);
+    }
+
+    req.body = value;
+    next();
+  } catch (err) {
+    console.log('Error validating input fields: ', err);
+    return commonHelper.customErrorHandler(res, err.message, 400);
+  }
+};
+
+module.exports = { validateSignupPayload, validateEmail, validateLoginSchema };

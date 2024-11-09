@@ -2,45 +2,60 @@ const authServices = require('../services/auth.service');
 const commonHelper = require('../helpers/common.helper');
 
 const signup = async (req, res) => {
-  try {
-    const payload = req.body;
+	try {
+		const payload = req.body;
 
-    const user = await authServices.signup(payload);
-    console.log('New user: ', user);
+		const user = await authServices.signup(payload);
+		console.log('New user: ', user);
 
-    if (!user) {
-      throw commonHelper.customError('Failed to create user', 400);
-    }
+		if (!user) {
+			throw commonHelper.customError('Failed to create user', 400);
+		}
 
-    return commonHelper.customResponseHandler(res, 'User created successfully', 201, user);
-  } catch (err) {
-    console.log('Error in signup', err);
-    return commonHelper.customErrorHandler(res, err.message, err.statusCode);
-  }
+		return commonHelper.customResponseHandler(res, 'User created successfully', 201, user);
+	} catch (err) {
+		console.log('Error in signup', err);
+		return commonHelper.customErrorHandler(res, err.message, err.statusCode);
+	}
 };
 
 const sendOtp = async (req, res) => {
-  try {
-    //get email
-    const { email } = req.body;
+	try {
+		const { email } = req.body;
 
-    const otp = await authServices.sendOtp(email);
-    console.log('OTP in controller: ', otp);
-    // save to redis
-    res.status(200).json({
-      success: true,
-      message: 'otp sent Successfully',
-      otp,
-    });
+		const otp = await authServices.sendOtp(email);
+		console.log('OTP in controller: ', otp);
 
-    // send mail
-  } catch (err) {
-    console.log(err);
-    return res.status(400).json({
-      success: false,
-      error: err.message,
-    });
-  }
+		return commonHelper.customResponseHandler(res, 'Otp sent Successfully', 200, otp);
+
+		// send mail
+	} catch (err) {
+		console.log(err);
+		return commonHelper.customErrorHandler(res, err.message, err.statusCode || 400);
+	}
 };
 
-module.exports = { signup, sendOtp };
+const login = async (req, res) => {
+	try {
+		const { email, otp } = req.body;
+
+		const token = await authServices.verifyOtp(email, otp);
+
+		return commonHelper.customResponseHandler(res, 'Login Successfully', 200, token);
+	} catch (err) {
+		console.log(err);
+		return commonHelper.customErrorHandler(res, err.message, err.statusCode || 400);
+	}
+};
+
+const logout = async (req, res) => {
+	try {
+		// logout logic
+		return commonHelper.customResponseHandler(res, 'Logout Successfully', 204);
+	} catch (err) {
+		console.log(err);
+		return commonHelper.customErrorHandler(res, err.message, err.statusCode || 400);
+	}
+};
+
+module.exports = { signup, sendOtp, login, logout };
