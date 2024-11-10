@@ -52,4 +52,13 @@ const assignRole = async (user_id, role) => {
   console.log('Assigned role successfully');
 };
 
-module.exports = { create, assignRole };
+const addAddress = async (userId, address) => {
+  if (!address) {
+    throw commonHelpers.customError('No address provided', 422);
+  }
+
+  await models.User.update({ address: address }, { where: { id: userId } });
+  console.log('Address updated	');
+};
+
+module.exports = { create, assignRole, addAddress };
