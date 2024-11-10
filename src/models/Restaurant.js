@@ -30,7 +30,7 @@ module.exports = (sequelize, DataTypes) => {
         defaultValue: 'veg',
       },
       address: {
-        type: DataTypes.STRING,
+        type: DataTypes.JSONB,
         allowNull: false,
       },
     },
