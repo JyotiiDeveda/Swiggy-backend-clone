@@ -3,7 +3,7 @@ const userControllers = require('../controllers/users.controller');
 const authMiddlewares = require('../middlewares/auth.middleware');
 
 router.patch(
-  '/:id/update-address',
+  '/:id',
   authMiddlewares.authenticateToken,
   authMiddlewares.isAuthorized,
   userControllers.addAddress
@@ -14,6 +14,13 @@ router.put(
   authMiddlewares.authenticateToken,
   authMiddlewares.isAdmin,
   userControllers.addDeliveryPartner
+);
+
+router.delete(
+  '/:id',
+  authMiddlewares.authenticateToken,
+  authMiddlewares.isAuthorized,
+  userControllers.removeAccount
 );
 
 module.exports = router;

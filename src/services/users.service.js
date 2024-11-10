@@ -63,4 +63,9 @@ const addAddress = async (userId, address) => {
   console.log('Address updated	');
 };
 
-module.exports = { create, assignRole, addAddress };
+const removeAccount = async userId => {
+  await models.User.destroy({ where: { id: userId } });
+  console.log('Deleted user');
+};
+
+module.exports = { create, assignRole, addAddress, removeAccount };

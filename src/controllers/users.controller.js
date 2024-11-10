@@ -6,7 +6,7 @@ const addAddress = async (req, res) => {
     const { address } = req.body;
     const userId = req.params['id'];
     await userServices.addAddress(userId, address);
-    return commonHelper.customResponseHandler(res, 'Address updated successfully', 200);
+    return commonHelper.customResponseHandler(res, 'Address updated successfully', 204);
   } catch (err) {
     console.log('Error in updating address: ', err.message);
     return commonHelper.customErrorHandler(res, err.message, 400);
@@ -27,4 +27,15 @@ const addDeliveryPartner = async (req, res) => {
   }
 };
 
-module.exports = { addAddress, addDeliveryPartner };
+const removeAccount = async (req, res) => {
+  try {
+    const userId = req.params['id'];
+    await userServices.removeAccount(userId);
+    return commonHelper.customResponseHandler(res, 'Deleted user successfully', 204);
+  } catch (err) {
+    console.log('Error in deleting user: ', err.message);
+    return commonHelper.customErrorHandler(res, err.message, 400);
+  }
+};
+
+module.exports = { addAddress, addDeliveryPartner, removeAccount };
