@@ -9,4 +9,11 @@ router.patch(
   userControllers.addAddress
 );
 
+router.put(
+  '/:userid/roles/:roleid',
+  authMiddlewares.authenticateToken,
+  authMiddlewares.isAdmin,
+  userControllers.addDeliveryPartner
+);
+
 module.exports = router;

@@ -30,14 +30,16 @@ const create = async data => {
   await newUser.save();
 
   // a user can signup with customer role only
-  await assignRole(newUser.id, 'Customer');
+  const roleDetails = await models.Role.findOne({ where: { name: 'Customer' } });
+
+  await assignRole(newUser.id, roleDetails.id);
 
   return newUser;
 };
 
-const assignRole = async (user_id, role) => {
+const assignRole = async (user_id, roleId) => {
   // a user can signup with customer role only
-  const roleDetails = await models.Role.findOne({ where: { name: role } });
+  const roleDetails = await models.Role.findOne({ where: { id: roleId } });
 
   if (!roleDetails) {
     throw commonHelpers.customError('Role does not exist', 404);

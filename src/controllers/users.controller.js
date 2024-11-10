@@ -13,4 +13,18 @@ const addAddress = async (req, res) => {
   }
 };
 
-module.exports = { addAddress };
+// admin can assign a delivery partner role to a reistered user
+const addDeliveryPartner = async (req, res) => {
+  try {
+    const userId = req.params['userid'];
+    const roleId = req.params['roleid'];
+
+    await userServices.assignRole(userId, roleId);
+    return commonHelper.customResponseHandler(res, 'Added delivery partner successfully', 201);
+  } catch (err) {
+    console.log('Error in adding delivery partner: ', err.message);
+    return commonHelper.customErrorHandler(res, err.message, 400);
+  }
+};
+
+module.exports = { addAddress, addDeliveryPartner };
