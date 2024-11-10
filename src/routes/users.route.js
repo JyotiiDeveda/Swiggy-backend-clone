@@ -23,4 +23,8 @@ router.delete(
   userControllers.removeAccount
 );
 
+router.get('/:id', authMiddlewares.authenticateToken, authMiddlewares.isAuthorized, userControllers.get);
+
+router.get('/', authMiddlewares.authenticateToken, authMiddlewares.isAdmin, userControllers.getAll);
+
 module.exports = router;

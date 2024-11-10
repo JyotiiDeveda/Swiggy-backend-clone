@@ -38,4 +38,26 @@ const removeAccount = async (req, res) => {
   }
 };
 
-module.exports = { addAddress, addDeliveryPartner, removeAccount };
+const get = async (req, res) => {
+  try {
+    const userId = req.params['id'];
+    const userDetails = await userServices.get(userId);
+    return commonHelper.customResponseHandler(res, 'Fetched user details successfully', 200, userDetails);
+  } catch (err) {
+    console.log('Error in getting the user details: ', err.message);
+    return commonHelper.customErrorHandler(res, err.message, 400);
+  }
+};
+
+const getAll = async (req, res) => {
+  try {
+    const { page = 1, limit = 10 } = req.query;
+    const users = await userServices.getAll(page, limit);
+    return commonHelper.customResponseHandler(res, 'Fetched users successfully', 200, users);
+  } catch (err) {
+    console.log('Error in getting the user details: ', err.message);
+    return commonHelper.customErrorHandler(res, err.message, 400);
+  }
+};
+
+module.exports = { addAddress, addDeliveryPartner, removeAccount, get, getAll };

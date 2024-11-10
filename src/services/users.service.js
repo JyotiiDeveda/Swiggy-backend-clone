@@ -1,15 +1,18 @@
 const commonHelpers = require('../helpers/common.helper');
-
+const { Op } = require('sequelize');
 const models = require('../models');
 
 const create = async data => {
   const { first_name, last_name, email, phone, address } = data;
-  const userExists = await models.User.findOne({ where: { email } }, { paranoid: false });
-  console.log('Existing user: ', userExists);
+  const userExists = await models.User.findOne(
+    { where: { [Op.or]: [{ email }, { phone }] } },
+    { paranoid: false }
+  );
+  console.log('Existing uer: ', userExists);
 
   // if user exists actively
   if (userExists && userExists.deleted_at === null) {
-    throw commonHelpers.customError('User already exists', 409);
+    throw commonHelpers.customError('User already exists (email and phone number should be unique)', 409);
   }
 
   // if soft deleted, activate the user
@@ -68,4 +71,24 @@ const removeAccount = async userId => {
   console.log('Deleted user');
 };
 
-module.exports = { create, assignRole, addAddress, removeAccount };
+const get = async userId => {
+  const userDetails = await models.User.findOne({ where: { id: userId } });
+
+  if (!userDetails) {
+    throw commonHelpers.customError('User not found', 404);
+  }
+  return userDetails;
+};
+
+const getAll = async (page, limit) => {
+  const startIndex = (page - 1) * limit;
+  const endIndex = page * limit;
+
+  const users = await models.User.findAll({ offset: startIndex, limit: endIndex });
+  if (!users || users.length === 0) {
+    throw commonHelpers.customError('No users found', 404);
+  }
+  return users;
+};
+
+module.exports = { create, assignRole, addAddress, removeAccount, get, getAll };
