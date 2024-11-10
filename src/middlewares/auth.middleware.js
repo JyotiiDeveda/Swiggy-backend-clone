@@ -44,4 +44,18 @@ const isAuthorized = (req, res, next) => {
   }
 };
 
-module.exports = { authenticateToken, isAuthorized };
+const isAdmin = (req, res, next) => {
+  try {
+    const userRoles = req?.user?.userRoles;
+    console.log('User roles: ', req.user);
+    if (userRoles && userRoles.includes('Admin')) {
+      return next();
+    }
+    return commonHelper.customErrorHandler(res, 'User is not authorized as admin', 403);
+  } catch (err) {
+    console.log('Error in authorizing admin: ', err.message);
+    return commonHelper.customErrorHandler(res, err.message, 401);
+  }
+};
+
+module.exports = { authenticateToken, isAuthorized, isAdmin };
