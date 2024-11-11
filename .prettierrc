@@ -9,7 +9,6 @@
     "arrowParens": "avoid",
     "bracketSpacing": true,
     "jsxBracketSameLine": false,
-    "parser": "babylon",
     "printWidth": 110,
     "semi": true,
     "tabWidth": 2,
