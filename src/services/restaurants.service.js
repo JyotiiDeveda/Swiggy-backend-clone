@@ -31,6 +31,28 @@ const create = async data => {
   return newRestaurant;
 };
 
+const get = async restaurantId => {
+  if (!restaurantId) {
+    throw commonHelpers.customError('Restaurant id not found', 422);
+  }
+
+  const restaurant = await models.Restaurant.findOne({
+    where: { id: restaurantId },
+    include: {
+      model: models.Dish,
+      as: 'dishes',
+      attributes: { exclude: ['created_at', 'updated_at', 'deleted_at'] },
+    },
+  });
+
+  if (!restaurant) {
+    throw commonHelpers.customError('No restaurant found', 404);
+  }
+
+  return restaurant;
+};
+
 module.exports = {
   create,
+  get,
 };

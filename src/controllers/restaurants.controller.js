@@ -12,6 +12,18 @@ const create = async (req, res) => {
   }
 };
 
+const get = async (req, res) => {
+  try {
+    const restaurantId = req.params['id'];
+    const restaurantDetails = await restaurantServices.get(restaurantId);
+    return commonHelper.customResponseHandler(res, 'Fetched restaurant successfully', 200, restaurantDetails);
+  } catch (err) {
+    console.log('Error in getting restaurants: ', err);
+    return commonHelper.customErrorHandler(res, err.message, 400);
+  }
+};
+
 module.exports = {
   create,
+  get,
 };
