@@ -6,6 +6,7 @@ module.exports = (sequelize, DataTypes) => {
       User.belongsToMany(models.Role, {
         through: 'UserRole',
         foreignKey: 'user_id',
+        onDelete: 'CASCADE',
         as: 'roles',
       });
 
@@ -47,7 +48,7 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
       },
       address: {
-        type: DataTypes.STRING,
+        type: DataTypes.JSONB,
       },
     },
     {

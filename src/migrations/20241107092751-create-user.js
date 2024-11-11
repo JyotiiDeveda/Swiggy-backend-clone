@@ -27,7 +27,7 @@ module.exports = {
         unique: true,
       },
       address: {
-        type: Sequelize.STRING,
+        type: Sequelize.JSONB,
       },
       created_at: {
         allowNull: false,

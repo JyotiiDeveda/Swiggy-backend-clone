@@ -4,10 +4,10 @@ module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.createTable('orders', {
       id: {
-        allowNull: false,
-        primaryKey: true,
         type: Sequelize.UUID,
         defaultValue: Sequelize.literal('uuid_generate_v4()'),
+        allowNull: false,
+        primaryKey: true,
       },
       cart_id: {
         type: Sequelize.UUID,
@@ -15,7 +15,7 @@ module.exports = {
           model: 'carts',
           key: 'id',
         },
-        allowNull: false,
+        allowNull: true,
         onDelete: 'SET NULL',
       },
       restaurant_id: {
@@ -24,7 +24,7 @@ module.exports = {
           model: 'restaurants',
           key: 'id',
         },
-        allowNull: false,
+        allowNull: true,
         onDelete: 'SET NULL',
       },
       delivery_partner_id: {
@@ -33,8 +33,8 @@ module.exports = {
           model: 'users',
           key: 'id',
         },
-        allowNull: false,
-        onDelete: 'CASCADE',
+        allowNull: true,
+        onDelete: 'SET NULL',
       },
       status: {
         type: Sequelize.ENUM,
