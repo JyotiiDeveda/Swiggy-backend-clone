@@ -8,6 +8,12 @@ module.exports = (sequelize, DataTypes) => {
         onDelete: 'CASCADE',
         as: 'dishes',
       });
+
+      Restaurant.hasMany(models.Rating, {
+        foreignKey: 'restaurant_id',
+        onDelete: 'CASCADE',
+        as: 'ratings',
+      });
     }
   }
   Restaurant.init(

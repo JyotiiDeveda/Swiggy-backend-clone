@@ -23,9 +23,23 @@ module.exports = {
         values: ['restaurant', 'dish'],
         allowNull: false,
       },
-      entity_id: {
+      restaurant_id: {
         type: Sequelize.UUID,
-        allowNull: false,
+        references: {
+          model: 'restaurants',
+          key: 'id',
+        },
+        allowNull: true,
+        onDelete: 'CASCADE',
+      },
+      dish_id: {
+        type: Sequelize.UUID,
+        references: {
+          model: 'dishes',
+          key: 'id',
+        },
+        allowNull: true,
+        onDelete: 'CASCADE',
       },
       rating: {
         type: Sequelize.INTEGER,
