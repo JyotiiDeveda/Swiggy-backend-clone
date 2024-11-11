@@ -23,7 +23,19 @@ const get = async (req, res) => {
   }
 };
 
+const remove = async (req, res) => {
+  try {
+    const restaurantId = req.params['id'];
+    await restaurantServices.remove(restaurantId);
+    return commonHelper.customResponseHandler(res, 'Deleted restaurant successfully', 204);
+  } catch (err) {
+    console.log('Error in deleting restaurant: ', err.message);
+    return commonHelper.customErrorHandler(res, err.message, 400);
+  }
+};
+
 module.exports = {
   create,
   get,
+  remove,
 };

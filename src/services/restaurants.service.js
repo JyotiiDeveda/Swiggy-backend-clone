@@ -52,7 +52,13 @@ const get = async restaurantId => {
   return restaurant;
 };
 
+const remove = async restaurantId => {
+  await models.Restaurant.destroy({ where: { id: restaurantId } });
+  console.log('Deleted Restaurant');
+};
+
 module.exports = {
   create,
   get,
+  remove,
 };

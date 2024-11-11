@@ -2,9 +2,6 @@ const router = require('express').Router();
 const restaurantsController = require('../controllers/restaurants.controller.js');
 const restaurantValidators = require('../validators/restaurants.validator');
 const authMiddlewares = require('../middlewares/auth.middleware');
-const ratingControllers = require('../controllers/ratings.controller');
-const dishValidators = require('../validators/dishes.validator');
-const dishControllers = require('../controllers/dishes.controller');
 
 router.post(
   '/',
@@ -15,5 +12,12 @@ router.post(
 );
 
 router.get('/:id', restaurantsController.get);
+
+router.delete(
+  '/:id',
+  authMiddlewares.authenticateToken,
+  authMiddlewares.isAdmin,
+  restaurantsController.remove
+);
 
 module.exports = router;
