@@ -4,8 +4,8 @@ module.exports = (sequelize, DataTypes) => {
   class Order extends Model {
     static associate(models) {
       Order.belongsTo(models.User, {
-        foreignKey: 'user_id',
-        onDelete: 'CASCADE',
+        foreignKey: 'delivery_partner_id',
+        onDelete: 'SET NULL',
       });
 
       Order.hasOne(models.Payment, {
@@ -21,6 +21,10 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'restaurant_id',
         onDelete: 'SET NULL',
       });
+
+      Order.belongsTo(models.Restaurant, {
+        foreignKey: 'restaurant_id',
+      });
     }
   }
   Order.init(
@@ -31,7 +35,7 @@ module.exports = (sequelize, DataTypes) => {
           model: 'Cart',
           key: 'id',
         },
-        allowNull: false,
+        allowNull: true,
         onDelete: 'SET NULL',
       },
       restaurant_id: {
@@ -40,7 +44,7 @@ module.exports = (sequelize, DataTypes) => {
           model: 'Restaurant',
           key: 'id',
         },
-        allowNull: false,
+        allowNull: true,
         onDelete: 'SET NULL',
       },
       delivery_partner_id: {
@@ -49,8 +53,8 @@ module.exports = (sequelize, DataTypes) => {
           model: 'User',
           key: 'id',
         },
-        allowNull: false,
-        onDelete: 'CASCADE',
+        allowNull: true,
+        onDelete: 'SET NULL',
       },
       status: {
         type: DataTypes.ENUM,
