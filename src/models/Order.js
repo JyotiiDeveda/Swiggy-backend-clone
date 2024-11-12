@@ -10,10 +10,16 @@ module.exports = (sequelize, DataTypes) => {
 
       Order.hasOne(models.Payment, {
         foreignKey: 'order_id',
+        onDelete: 'CASCADE',
       });
 
       Order.belongsTo(models.Cart, {
         foreignKey: 'cart_id',
+        onDelete: 'SET NULL',
+      });
+      Order.belongsTo(models.Restaurant, {
+        foreignKey: 'restaurant_id',
+        onDelete: 'SET NULL',
       });
     }
   }

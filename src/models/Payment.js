@@ -5,6 +5,7 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       Payment.belongsTo(models.Order, {
         foreignKey: 'order_id',
+        onDelete: 'CASCADE',
       });
     }
   }
