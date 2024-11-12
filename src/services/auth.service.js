@@ -14,7 +14,11 @@ const signup = async data => {
 
   await redisClient.set(createdUser.id.toString(), otp.toString(), { EX: 300 });
 
-  await mailHelper.sendVerificationEmail(createdUser.email, otp);
+  await mailHelper.sendVerificationEmail(
+    createdUser.email,
+    'OTP Verification email',
+    `Your one time password to login : ${otp}`
+  );
 
   return createdUser;
 };
@@ -32,7 +36,7 @@ const sendOtp = async email => {
   await redisClient.set(userExists?.id.toString(), otp.toString(), { EX: 300 });
 
   // send mail
-  await mailHelper.sendVerificationEmail(email, otp);
+  await mailHelper.sendVerificationEmail(email, 'Login OTP', `Your one time password to login: ${otp}`);
 
   return otp;
 };

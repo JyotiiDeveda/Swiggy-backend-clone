@@ -21,8 +21,7 @@ const validateSignupPayload = (req, res, next) => {
 
     if (error) {
       console.log('error: ', typeof error);
-      const errMsg =
-        error?.details[0]?.message.replaceAll('"', '') || error.message || 'Otp Validation failed';
+      const errMsg = error.details.map(detail => detail.message).join(', ') || 'Otp Validation failed';
 
       return commonHelper.customErrorHandler(res, errMsg, 400);
     }
@@ -49,9 +48,7 @@ const validateEmail = (req, res, next) => {
     const { error, value } = schema.validate(req.body);
     if (error) {
       console.log('error: ', error);
-      const errMsg =
-        error?.details[0]?.message.replaceAll('"', '') || error.message || 'Otp Validation failed';
-
+      const errMsg = error.details.map(detail => detail.message).join(', ') || 'Otp Validation failed';
       return commonHelper.customErrorHandler(res, errMsg, 400);
     }
 
@@ -79,9 +76,7 @@ const validateLoginSchema = (req, res, next) => {
 
     if (error) {
       console.log('error: ', error);
-      const errMsg =
-        error?.details[0]?.message.replaceAll('"', '') || error.message || 'Otp Validation failed';
-
+      const errMsg = error.details.map(detail => detail.message).join(', ') || 'Otp Validation failed';
       return commonHelper.customErrorHandler(res, errMsg, 400);
     }
 
