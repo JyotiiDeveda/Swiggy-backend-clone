@@ -12,7 +12,7 @@ module.exports = (sequelize, DataTypes) => {
   Rating.init(
     {
       user_id: {
-        TYPE: DataTypes.UUID,
+        type: DataTypes.UUID,
         references: {
           model: 'User',
           key: 'id',
@@ -21,7 +21,7 @@ module.exports = (sequelize, DataTypes) => {
         onDelete: 'CASCADE',
       },
       entity_type: {
-        TYPE: DataTypes.ENUM,
+        type: DataTypes.ENUM,
         values: ['restaurant', 'dish'],
         allowNull: false,
       },
