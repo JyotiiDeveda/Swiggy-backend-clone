@@ -27,6 +27,8 @@ const sendOtp = async (req, res) => {
     console.log('OTP in controller: ', otp);
 
     return commonHelper.customResponseHandler(res, 'Otp sent Successfully', 200, otp);
+
+    // send mail
   } catch (err) {
     console.log(err);
     return commonHelper.customErrorHandler(res, err.message, err.statusCode || 400);

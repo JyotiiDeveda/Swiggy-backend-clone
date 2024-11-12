@@ -5,6 +5,7 @@ const { registerRoutes } = require('./routes');
 
 app.use(express.json());
 registerRoutes(app);
+
 const PORT = process.env.DB_PORT || 3000;
 
 const startServer = async () => {
