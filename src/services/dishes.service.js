@@ -5,7 +5,7 @@ const { sequelize } = require('../models');
 const create = async (restaurantId, data) => {
   const transactionContext = await sequelize.transaction();
   try {
-    const { name, description, image, category, price, quantity } = data;
+    const { name, description, category, price, quantity } = data;
 
     // console.log(`${name}, ${restaurantId}, ${description}, ${image}, ${category}, ${price}, ${quantity}`);
     const restaurantExists = await models.Restaurant.findOne({ where: { id: restaurantId } });
@@ -27,15 +27,12 @@ const create = async (restaurantId, data) => {
       throw commonHelpers.customError('Dish already exists', 409);
     }
 
-    // todo: upload image to cloud and get image url
-
     // Creating a dish
     const newDish = await models.Dish.create(
       {
         restaurant_id: restaurantId,
         name,
         description,
-        image_url: image,
         type: category,
         price,
         quantity,
@@ -57,6 +54,7 @@ const get = async dishId => {
     throw commonHelpers.customError('Dish id not found', 422);
   }
 
+  // get a dish with its average rating and ratings count
   const dish = await models.Dish.findOne({
     where: { id: dishId },
     attributes: [
@@ -125,7 +123,10 @@ const update = async (dishId, payload) => {
 const remove = async dishId => {
   const transactionContext = await sequelize.transaction();
   try {
-    const deletedCount = await models.Dish.destroy({ where: { id: dishId } });
+    const deletedCount = await models.Dish.destroy({
+      where: { id: dishId },
+      transaction: transactionContext,
+    });
     console.log('Deleted Dish: ', deletedCount);
 
     if (deletedCount === 0) {
