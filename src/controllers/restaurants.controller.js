@@ -63,10 +63,24 @@ const createRestaurantsDish = async (req, res) => {
   }
 };
 
+const uploadImage = async (req, res) => {
+  try {
+    const restaurantId = req.params['id'];
+
+    const updatedRestaurant = await restaurantServices.uploadImage(restaurantId, req.file);
+
+    return commonHelper.customResponseHandler(res, 'Image uploaded successfully', 200, updatedRestaurant);
+  } catch (err) {
+    console.log('Error in uploading image for restaurant: ', err);
+    return commonHelper.customErrorHandler(res, err.message, err.statusCode);
+  }
+};
+
 module.exports = {
   create,
   get,
   remove,
   createRestaurantsRating,
   createRestaurantsDish,
+  uploadImage,
 };
