@@ -50,9 +50,23 @@ const remove = async (req, res) => {
   }
 };
 
+const uplaodImage = async (req, res) => {
+  try {
+    const dishId = req.params['id'];
+
+    const updatedDish = await dishServices.uplaodImage(dishId, req.file);
+
+    return commonHelper.customResponseHandler(res, 'Image uploaded successfully', 200, updatedDish);
+  } catch (err) {
+    console.log('Error in uploading image for dish: ', err);
+    return commonHelper.customErrorHandler(res, err.message, err.statusCode);
+  }
+};
+
 module.exports = {
   createDishesRating,
   get,
   update,
   remove,
+  uplaodImage,
 };
