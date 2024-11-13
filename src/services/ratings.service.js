@@ -132,7 +132,17 @@ const createDishesRating = async (dishId, value, userId) => {
   }
 };
 
+const remove = async ratingId => {
+  const deletedCount = await models.Rating.destroy({ where: { id: ratingId } });
+  console.log('Deleted Rating: ', deletedCount);
+
+  if (deletedCount === 0) {
+    throw commonHelpers.customError('No rating found', 404);
+  }
+};
+
 module.exports = {
   createRestaurantsRating,
   createDishesRating,
+  remove,
 };
