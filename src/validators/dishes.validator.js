@@ -8,7 +8,7 @@ const validateDishSchema = (req, res, next) => {
     const schema = Joi.object({
       name: Joi.string().required().min(3),
       description: Joi.string().required().min(10),
-      image: Joi.string().required(),
+      image: Joi.string().uri(),
       category: Joi.string()
         .required()
         .valid(...constants.DISH_CATEGORY),
@@ -16,7 +16,6 @@ const validateDishSchema = (req, res, next) => {
       quantity: Joi.number().options({ convert: false }).required(),
     });
 
-    console.log('Validated Dish schema');
     const { error, value } = schema.validate(req.body);
     // console.log("Value in validate: ", value);
 
@@ -24,7 +23,7 @@ const validateDishSchema = (req, res, next) => {
       console.log('error: ', typeof error);
       const errMsg = error.details.map(detail => detail.message).join(', ') || 'Dish data validation failed';
 
-      return commonHelper.customErrorHandler(res, errMsg, 400);
+      return commonHelper.customErrorHandler(res, errMsg, 422);
     }
 
     req.body = value;
