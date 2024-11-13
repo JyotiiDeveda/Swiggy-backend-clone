@@ -13,6 +13,14 @@ router.post(
 
 router.get('/:id', restaurantsController.get);
 
+//to rate restaurant
+router.post(
+  '/:id/ratings',
+  authMiddlewares.authenticateToken,
+  authMiddlewares.isAuthorized,
+  restaurantsController.createRestaurantsRating
+);
+
 router.delete(
   '/:id',
   authMiddlewares.authenticateToken,

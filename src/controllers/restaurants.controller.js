@@ -1,4 +1,5 @@
 const restaurantServices = require('../services/restaurants.service');
+const ratingServices = require('../services/ratings.service');
 const commonHelper = require('../helpers/common.helper');
 
 const create = async (req, res) => {
@@ -34,8 +35,24 @@ const remove = async (req, res) => {
   }
 };
 
+const createRestaurantsRating = async (req, res) => {
+  try {
+    const { rating } = req.body;
+    const entityId = req.params['id'];
+    const userId = req.user.userId;
+    console.log(`${rating} ${entityId} ${userId}`);
+    const newRating = await ratingServices.createRestaurantsRating(entityId, rating, userId);
+    console.log('New rating: ', newRating);
+    return commonHelper.customResponseHandler(res, 'Restaurant rated successfully', 201, newRating);
+  } catch (err) {
+    console.log('Error in rating restaurant: ', err);
+    return commonHelper.customErrorHandler(res, err.message, 400);
+  }
+};
+
 module.exports = {
   create,
   get,
   remove,
+  createRestaurantsRating,
 };
