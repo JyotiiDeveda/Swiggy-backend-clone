@@ -1,6 +1,7 @@
 const restaurantServices = require('../services/restaurants.service');
 const ratingServices = require('../services/ratings.service');
 const commonHelper = require('../helpers/common.helper');
+const dishServices = require('../services/dishes.service');
 
 const create = async (req, res) => {
   try {
@@ -9,7 +10,7 @@ const create = async (req, res) => {
     return commonHelper.customResponseHandler(res, 'Restaurant created successfully', 201, restaurant);
   } catch (err) {
     console.log('Error in creating restaurants: ', err);
-    return commonHelper.customErrorHandler(res, err.message, 400);
+    return commonHelper.customErrorHandler(res, err.message, err.statusCode);
   }
 };
 
@@ -20,7 +21,7 @@ const get = async (req, res) => {
     return commonHelper.customResponseHandler(res, 'Fetched restaurant successfully', 200, restaurantDetails);
   } catch (err) {
     console.log('Error in getting restaurants: ', err);
-    return commonHelper.customErrorHandler(res, err.message, 400);
+    return commonHelper.customErrorHandler(res, err.message, err.statusCode);
   }
 };
 
@@ -31,7 +32,7 @@ const remove = async (req, res) => {
     return commonHelper.customResponseHandler(res, 'Deleted restaurant successfully', 204);
   } catch (err) {
     console.log('Error in deleting restaurant: ', err.message);
-    return commonHelper.customErrorHandler(res, err.message, 400);
+    return commonHelper.customErrorHandler(res, err.message, err.statusCode);
   }
 };
 
@@ -46,7 +47,19 @@ const createRestaurantsRating = async (req, res) => {
     return commonHelper.customResponseHandler(res, 'Restaurant rated successfully', 201, newRating);
   } catch (err) {
     console.log('Error in rating restaurant: ', err);
-    return commonHelper.customErrorHandler(res, err.message, 400);
+    return commonHelper.customErrorHandler(res, err.message, err.statusCode);
+  }
+};
+
+const createRestaurantsDish = async (req, res) => {
+  try {
+    const payload = req.body;
+    const restaurantId = req.params['id'];
+    const dish = await dishServices.create(restaurantId, payload);
+    return commonHelper.customResponseHandler(res, 'Dish created successfully', 201, dish);
+  } catch (err) {
+    console.log('Error in creating dish: ', err);
+    return commonHelper.customErrorHandler(res, err.message, err.statusCode);
   }
 };
 
@@ -55,4 +68,5 @@ module.exports = {
   get,
   remove,
   createRestaurantsRating,
+  createRestaurantsDish,
 };
