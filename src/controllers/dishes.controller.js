@@ -39,8 +39,20 @@ const update = async (req, res) => {
   }
 };
 
+const remove = async (req, res) => {
+  try {
+    const dishId = req.params['id'];
+    await dishServices.remove(dishId);
+    return commonHelper.customResponseHandler(res, 'Deleted dish successfully', 204);
+  } catch (err) {
+    console.log('Error in deleting dish: ', err.message);
+    return commonHelper.customErrorHandler(res, err.message, err.statusCode);
+  }
+};
+
 module.exports = {
   createDishesRating,
   get,
   update,
+  remove,
 };

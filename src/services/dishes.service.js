@@ -104,6 +104,7 @@ const update = async (dishId, payload) => {
       },
       {
         where: { id: dishId },
+        transaction: transactionContext,
         returning: true,
       }
     );
@@ -117,7 +118,24 @@ const update = async (dishId, payload) => {
   } catch (err) {
     await transactionContext.rollback();
     console.log('Error in updating dish', err.message);
-    throw commonHelpers.customError(err.message, 409);
+    throw commonHelpers.customError(err.message, err.statusCode);
+  }
+};
+
+const remove = async dishId => {
+  const transactionContext = await sequelize.transaction();
+  try {
+    const deletedCount = await models.Dish.destroy({ where: { id: dishId } });
+    console.log('Deleted Dish: ', deletedCount);
+
+    if (deletedCount === 0) {
+      throw commonHelpers.customError('No dish found', 404);
+    }
+    await transactionContext.commit();
+  } catch (err) {
+    await transactionContext.rollback();
+    console.log('Error in deleting dish', err.message);
+    throw commonHelpers.customError(err.message, err.statusCode);
   }
 };
 
@@ -125,4 +143,5 @@ module.exports = {
   create,
   get,
   update,
+  remove,
 };

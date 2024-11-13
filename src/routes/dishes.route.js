@@ -22,4 +22,6 @@ router.put(
   dishControllers.update
 );
 
+router.delete('/:id', authMiddlewares.authenticateToken, authMiddlewares.isAdmin, dishControllers.remove);
+
 module.exports = router;
