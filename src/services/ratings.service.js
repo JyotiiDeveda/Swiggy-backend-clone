@@ -59,6 +59,80 @@ const createRestaurantsRating = async (entityId, value, userId) => {
   }
 };
 
+const createDishesRating = async (dishId, value, userId) => {
+  const transactionContext = await models.sequelize.transaction();
+
+  try {
+    // console.log(`${entityType} ${entityId} ${value} ${userId}`);
+    let payload = {
+      user_id: userId,
+      dish_id: dishId,
+      entity_type: 'dish',
+      rating: value,
+    };
+
+    //check if dish exists
+    const dishExists = await models.Dish.findOne({
+      where: { id: dishId },
+    });
+
+    if (!dishExists) {
+      throw commonHelpers.customError('Dish does not exist', 404);
+    }
+
+    //check if rating already exists
+    const ratingExists = await models.Rating.findOne(
+      {
+        where: {
+          [Op.and]: [{ user_id: userId }, { entity_type: 'dish' }, { dish_id: dishId }],
+        },
+      },
+      { paranoid: false }
+    );
+
+    if (ratingExists) {
+      if (ratingExists.deleted_at === null) await models.Rating.restore({ where: { id: ratingExists.id } });
+      throw commonHelpers.customError('User has already rated the dish', 409);
+    }
+    //check if user has ordered the dish
+    const order = await models.Order.findOne({
+      include: [
+        {
+          model: models.Cart,
+          where: { user_id: userId },
+          required: true,
+        },
+        {
+          model: models.Restaurant,
+          include: {
+            model: models.Dish,
+            as: 'dishes',
+            where: {
+              id: dishId,
+            },
+            required: true, // select only matching dishes
+          },
+          required: true,
+        },
+      ],
+    });
+    console.log('Order for the dish: ', order);
+
+    if (!order) {
+      throw commonHelpers.customError("User has not ordered the dish yet... can't rate", 403);
+    }
+
+    const newRating = await models.Rating.create(payload);
+    await transactionContext.commit();
+    return newRating;
+  } catch (err) {
+    console.log('Error in creating ', err);
+    await transactionContext.rollback();
+    throw commonHelpers.customError(err.message, err.statusCode);
+  }
+};
+
 module.exports = {
   createRestaurantsRating,
+  createDishesRating,
 };
