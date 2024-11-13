@@ -21,7 +21,11 @@ const validateDishSchema = (req, res, next) => {
 
     if (error) {
       console.log('error: ', typeof error);
-      const errMsg = error.details.map(detail => detail.message).join(', ') || 'Dish data validation failed';
+      const errMsg =
+        error.details
+          .map(detail => detail.message)
+          .join(', ')
+          .replaceAll(`"`, '') || 'Dish data validation failed';
 
       return commonHelper.customErrorHandler(res, errMsg, 422);
     }
