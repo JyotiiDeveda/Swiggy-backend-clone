@@ -88,7 +88,41 @@ const get = async dishId => {
   return dish;
 };
 
+const update = async (dishId, payload) => {
+  const transactionContext = await models.sequelize.transaction();
+  try {
+    const { name, description, image, category, price, quantity } = payload;
+
+    const [updatedDishCnt, updatedDish] = await models.Dish.update(
+      {
+        name,
+        description,
+        image_url: image,
+        type: category,
+        price,
+        quantity,
+      },
+      {
+        where: { id: dishId },
+        returning: true,
+      }
+    );
+
+    // console.log('UPDATED DISH COUNT: ', updatedDishCnt, updatedDish);
+    if (updatedDishCnt === 0) {
+      throw commonHelpers.customError('Dish not found', 404);
+    }
+    await transactionContext.commit();
+    return updatedDish;
+  } catch (err) {
+    await transactionContext.rollback();
+    console.log('Error in updating dish', err.message);
+    throw commonHelpers.customError(err.message, 409);
+  }
+};
+
 module.exports = {
   create,
   get,
+  update,
 };

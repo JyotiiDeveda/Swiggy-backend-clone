@@ -27,7 +27,20 @@ const get = async (req, res) => {
   }
 };
 
+const update = async (req, res) => {
+  try {
+    const payload = req.body;
+    const dishId = req.params['id'];
+    const updatedDish = await dishServices.update(dishId, payload);
+    return commonHelper.customResponseHandler(res, 'Dish updated successfully', 200, updatedDish);
+  } catch (err) {
+    console.log('Error in rating dish: ', err);
+    return commonHelper.customErrorHandler(res, err.message, err.statusCode);
+  }
+};
+
 module.exports = {
   createDishesRating,
   get,
+  update,
 };
