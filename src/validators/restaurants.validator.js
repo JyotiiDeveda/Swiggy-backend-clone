@@ -19,7 +19,10 @@ const validateRestaurantSchema = (req, res, next) => {
 
     if (error) {
       const errMsg =
-        error.details.map(detail => detail.message).join(', ') || 'Restaurant data validation failed';
+        error.details
+          .map(detail => detail.message)
+          .join(', ')
+          .replaceAll(`"`, '') || 'Restaurant data validation failed';
 
       return commonHelper.customErrorHandler(res, errMsg, 422);
     }
@@ -42,7 +45,11 @@ const validateImage = (req, res, next) => {
     const { error, value } = schema.validate({ image: imageUrl });
 
     if (error) {
-      const errMsg = error.details.map(detail => detail.message).join(', ') || 'Image validation failed';
+      const errMsg =
+        error.details
+          .map(detail => detail.message)
+          .join(', ')
+          .replaceAll(`"`, '') || 'Image validation failed';
 
       return commonHelper.customErrorHandler(res, errMsg, 422);
     }

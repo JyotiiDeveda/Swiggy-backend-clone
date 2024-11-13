@@ -4,12 +4,14 @@ const restaurantValidators = require('../validators/restaurants.validator');
 const authMiddlewares = require('../middlewares/auth.middleware');
 const dishValidators = require('../validators/dishes.validator');
 const multerMiddleware = require('../middlewares/multer.middleware');
+const ratingValidators = require('../validators/ratings.validator');
 
+// to create restaurant
 router.post(
   '/',
-  restaurantValidators.validateRestaurantSchema,
   authMiddlewares.authenticateToken,
   authMiddlewares.isAdmin,
+  restaurantValidators.validateRestaurantSchema,
   restaurantsController.create
 );
 
@@ -20,6 +22,7 @@ router.post(
   '/:id/ratings',
   authMiddlewares.authenticateToken,
   authMiddlewares.isAuthorized,
+  ratingValidators.validateRatingScore,
   restaurantsController.createRestaurantsRating
 );
 
@@ -34,16 +37,15 @@ router.delete(
 router.post(
   '/:id/dishes',
   authMiddlewares.authenticateToken,
-  authMiddlewares.isAuthorized,
   authMiddlewares.isAdmin,
   dishValidators.validateDishSchema,
   restaurantsController.createRestaurantsDish
 );
 
+//image upload
 router.patch(
   '/:id/images',
   authMiddlewares.authenticateToken,
-  authMiddlewares.isAuthorized,
   authMiddlewares.isAdmin,
   multerMiddleware.upload.single('image'),
   restaurantValidators.validateImage,
