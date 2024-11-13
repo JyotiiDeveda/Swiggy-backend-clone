@@ -1,5 +1,6 @@
 const ratingServices = require('../services/ratings.service');
 const commonHelper = require('../helpers/common.helper');
+const dishServices = require('../services/dishes.service');
 
 const createDishesRating = async (req, res) => {
   try {
@@ -15,6 +16,18 @@ const createDishesRating = async (req, res) => {
   }
 };
 
+const get = async (req, res) => {
+  try {
+    const dishId = req.params['id'];
+    const dishDetails = await dishServices.get(dishId);
+    return commonHelper.customResponseHandler(res, 'Fetched dish successfully', 200, dishDetails);
+  } catch (err) {
+    console.log('Error in getting restaurants: ', err);
+    return commonHelper.customErrorHandler(res, err.message, err.statusCode);
+  }
+};
+
 module.exports = {
   createDishesRating,
+  get,
 };

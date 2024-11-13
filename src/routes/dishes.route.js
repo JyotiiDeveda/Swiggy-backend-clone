@@ -10,4 +10,6 @@ router.post(
   dishControllers.createDishesRating
 );
 
+router.get('/:id', dishControllers.get);
+
 module.exports = router;

@@ -47,11 +47,48 @@ const create = async (restaurantId, data) => {
     return newDish;
   } catch (err) {
     await transactionContext.rollback();
-    console.log('ERRROR----- ', err.statusCode);
+    console.log('Error in creating dish', err.message);
     throw commonHelpers.customError(err.message, 409);
   }
 };
 
+const get = async dishId => {
+  if (!dishId) {
+    throw commonHelpers.customError('Dish id not found', 422);
+  }
+
+  const dish = await models.Dish.findOne({
+    where: { id: dishId },
+    attributes: [
+      'id',
+      'name',
+      'description',
+      'image_url',
+      'type',
+      'price',
+      'quantity',
+      [
+        models.sequelize.fn('round', models.sequelize.fn('avg', models.sequelize.col('ratings.rating')), 2),
+        'avg_rating',
+      ],
+      [models.sequelize.fn('count', models.sequelize.col('ratings.rating')), 'ratings_cnt'],
+    ],
+    include: {
+      model: models.Rating,
+      as: 'ratings',
+      attributes: [],
+    },
+    group: ['Dish.id'],
+  });
+
+  if (!dish) {
+    throw commonHelpers.customError('No restaurant found', 404);
+  }
+
+  return dish;
+};
+
 module.exports = {
   create,
+  get,
 };
