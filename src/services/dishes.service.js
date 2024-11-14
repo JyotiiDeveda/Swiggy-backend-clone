@@ -155,13 +155,12 @@ const getAll = async queryOptions => {
 const update = async (dishId, payload) => {
   const transactionContext = await models.sequelize.transaction();
   try {
-    const { name, description, image, category, price, quantity } = payload;
+    const { name, description, category, price, quantity } = payload;
 
     const [updatedDishCnt, updatedDish] = await models.Dish.update(
       {
         name,
         description,
-        image_url: image,
         type: category,
         price,
         quantity,
