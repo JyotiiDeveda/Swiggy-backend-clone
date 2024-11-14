@@ -19,6 +19,14 @@ router.get('/', restaurantsController.getAll);
 
 router.get('/:id', restaurantsController.get);
 
+router.put(
+  '/:id',
+  authMiddlewares.authenticateToken,
+  authMiddlewares.isAdmin,
+  restaurantValidators.validateRestaurantSchema,
+  restaurantsController.update
+);
+
 //to rate restaurant
 router.post(
   '/:id/ratings',

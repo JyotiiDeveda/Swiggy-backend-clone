@@ -36,6 +36,18 @@ const getAll = async (req, res) => {
   }
 };
 
+const update = async (req, res) => {
+  try {
+    const payload = req.body;
+    const restaurantId = req.params['id'];
+    const updatedRestaurant = await restaurantServices.update(restaurantId, payload);
+    return commonHelper.customResponseHandler(res, 'Restaurant updated successfully', 200, updatedRestaurant);
+  } catch (err) {
+    console.log('Error in updating restaurant: ', err);
+    return commonHelper.customErrorHandler(res, err.message, err.statusCode);
+  }
+};
+
 const remove = async (req, res) => {
   try {
     const restaurantId = req.params['id'];
@@ -90,6 +102,7 @@ module.exports = {
   create,
   get,
   getAll,
+  update,
   remove,
   createRestaurantsRating,
   createRestaurantsDish,

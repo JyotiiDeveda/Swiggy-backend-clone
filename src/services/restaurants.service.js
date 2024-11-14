@@ -149,6 +149,38 @@ const getAll = async queryOptions => {
   return restaurants;
 };
 
+const update = async (restaurantId, payload) => {
+  const transactionContext = await sequelize.transaction();
+  try {
+    const { name, description, category, address } = payload;
+
+    const [updatedRestaurantCnt, updatedRestaurant] = await models.Restaurant.update(
+      {
+        name,
+        description,
+        category: category,
+        address,
+      },
+      {
+        where: { id: restaurantId },
+        transaction: transactionContext,
+        returning: true,
+      }
+    );
+
+    // console.log('UPDATED RESTAURANT COUNT: ', updatedRestaurantCnt, updatedRestaurant);
+    if (updatedRestaurantCnt === 0) {
+      throw commonHelpers.customError('Restaurant not found', 404);
+    }
+    await transactionContext.commit();
+    return updatedRestaurant;
+  } catch (err) {
+    await transactionContext.rollback();
+    console.log('Error in updating restaurant', err.message);
+    throw commonHelpers.customError(err.message, err.statusCode);
+  }
+};
+
 const remove = async restaurantId => {
   const transactionContext = await sequelize.transaction();
   try {
@@ -202,6 +234,7 @@ module.exports = {
   create,
   get,
   getAll,
+  update,
   remove,
   uploadImage,
 };
