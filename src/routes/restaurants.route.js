@@ -15,6 +15,8 @@ router.post(
   restaurantsController.create
 );
 
+router.get('/', restaurantsController.getAll);
+
 router.get('/:id', restaurantsController.get);
 
 //to rate restaurant

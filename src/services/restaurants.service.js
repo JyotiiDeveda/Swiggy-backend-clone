@@ -1,6 +1,7 @@
 const commonHelpers = require('../helpers/common.helper');
 const models = require('../models');
 const { sequelize } = require('../models');
+const { Op } = require('sequelize');
 
 const create = async data => {
   const transactionContext = await sequelize.transaction();
@@ -84,6 +85,70 @@ const get = async restaurantId => {
   return restaurant;
 };
 
+const getAll = async queryOptions => {
+  console.log('Query options: ', queryOptions);
+  const { city = '', name = '', category, orderBy = 1, page = 1, limit = 10 } = queryOptions;
+  const startIndex = (page - 1) * limit;
+  const endIndex = page * limit;
+
+  let filter = {};
+
+  if (city) {
+    filter = { 'address.city': { [Op.iLike]: city } };
+  } else if (name) {
+    filter = { name: { [Op.iLike]: `%${name}%` } };
+  } else if (category) {
+    filter = {
+      category: sequelize.where(sequelize.cast(sequelize.col('category'), 'varchar'), {
+        [Op.iLike]: category,
+      }),
+    };
+  }
+
+  const order = orderBy === '1' || orderBy === '0' ? 'ASC' : 'DESC';
+
+  const restaurants = await models.Restaurant.findAll({
+    where: filter,
+    attributes: [
+      'id',
+      'name',
+      'description',
+      'category',
+      'image_url',
+      'address',
+      [
+        models.sequelize.fn('round', models.sequelize.fn('avg', models.sequelize.col('ratings.rating')), 2),
+        'avg_rating',
+      ],
+      [models.sequelize.fn('count', models.sequelize.col('ratings.rating')), 'ratings_cnt'],
+    ],
+    include: [
+      {
+        model: models.Rating,
+        as: 'ratings',
+        attributes: [],
+        duplicating: false,
+      },
+      {
+        model: models.Dish,
+        as: 'dishes',
+        attributes: ['name', 'image_url', 'description', 'type', 'price'],
+        duplicating: false,
+      },
+    ],
+    group: ['Restaurant.id', 'dishes.id'],
+    offset: startIndex,
+    order: [['avg_rating', order]],
+    limit: endIndex,
+  });
+
+  // console.log('Restaurant service: ', restaurants);
+  if (!restaurants || restaurants.length === 0) {
+    throw commonHelpers.customError('No restaurants found', 404);
+  }
+  return restaurants;
+};
+
 const remove = async restaurantId => {
   const transactionContext = await sequelize.transaction();
   try {
@@ -136,6 +201,7 @@ const uploadImage = async (restaurantId, file) => {
 module.exports = {
   create,
   get,
+  getAll,
   remove,
   uploadImage,
 };
