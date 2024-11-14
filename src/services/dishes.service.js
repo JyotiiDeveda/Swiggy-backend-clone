@@ -1,6 +1,7 @@
 const commonHelpers = require('../helpers/common.helper');
 const models = require('../models');
 const { sequelize } = require('../models');
+const { Op } = require('sequelize');
 
 const create = async (restaurantId, data) => {
   const transactionContext = await sequelize.transaction();
@@ -84,6 +85,71 @@ const get = async dishId => {
   }
 
   return dish;
+};
+
+const getAll = async queryOptions => {
+  // sortBy --- price or rating
+  // orderBy --- ascending or descending
+  const { name = '', category, sortBy = '', orderBy = 1, page = 1, limit = 10 } = queryOptions;
+  console.log('Query options: ', queryOptions);
+
+  const startIndex = (page - 1) * limit;
+  const endIndex = page * limit;
+
+  let filter = {};
+
+  if (name) {
+    filter = { name: { [Op.iLike]: `%${name}%` } };
+  } else if (category) {
+    filter = {
+      type: sequelize.where(sequelize.cast(sequelize.col('type'), 'varchar'), {
+        [Op.iLike]: category,
+      }),
+    };
+  }
+
+  const order = orderBy === '1' || orderBy === '0' ? 'ASC' : 'DESC';
+  const sort = sortBy === 'price' ? 'price' : 'avg_rating';
+
+  const dishes = await models.Dish.findAll({
+    where: filter,
+    attributes: [
+      'id',
+      'name',
+      'description',
+      'type',
+      'image_url',
+      'price',
+      [
+        models.sequelize.fn('round', models.sequelize.fn('avg', models.sequelize.col('ratings.rating')), 2),
+        'avg_rating',
+      ],
+      [models.sequelize.fn('count', models.sequelize.col('ratings.rating')), 'ratings_cnt'],
+    ],
+    include: [
+      {
+        model: models.Restaurant,
+        attributes: ['name'],
+        duplicating: false,
+      },
+      {
+        model: models.Rating,
+        as: 'ratings',
+        attributes: [],
+        duplicating: false,
+      },
+    ],
+    group: ['Dish.id', 'Restaurant.id'],
+    offset: startIndex,
+    order: [[sort, order]],
+    limit: endIndex,
+  });
+
+  // console.log('dishes service: ', restaurants);
+  if (!dishes || dishes.length === 0) {
+    throw commonHelpers.customError('No dishes found', 404);
+  }
+  return dishes;
 };
 
 const update = async (dishId, payload) => {
@@ -172,6 +238,7 @@ const uplaodImage = async (dishId, file) => {
 module.exports = {
   create,
   get,
+  getAll,
   update,
   remove,
   uplaodImage,

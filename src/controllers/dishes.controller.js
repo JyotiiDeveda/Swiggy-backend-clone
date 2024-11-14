@@ -27,6 +27,17 @@ const get = async (req, res) => {
   }
 };
 
+const getAll = async (req, res) => {
+  try {
+    const queyOptions = req.query;
+    const dishes = await dishServices.getAll(queyOptions);
+    return commonHelper.customResponseHandler(res, 'Fetched dishes data successfully', 200, dishes);
+  } catch (err) {
+    console.log('Error in getting all dishes: ', err);
+    return commonHelper.customErrorHandler(res, err.message, err.statusCode);
+  }
+};
+
 const update = async (req, res) => {
   try {
     const payload = req.body;
@@ -66,6 +77,7 @@ const uplaodImage = async (req, res) => {
 module.exports = {
   createDishesRating,
   get,
+  getAll,
   update,
   remove,
   uplaodImage,

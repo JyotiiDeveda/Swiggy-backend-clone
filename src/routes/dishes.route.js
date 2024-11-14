@@ -17,6 +17,8 @@ router.post(
 
 router.get('/:id', dishControllers.get);
 
+router.get('/', dishControllers.getAll);
+
 router.put(
   '/:id',
   authMiddlewares.authenticateToken,
