@@ -9,7 +9,7 @@ module.exports = (sequelize, DataTypes) => {
       });
 
       Dish.belongsToMany(models.Cart, {
-        through: 'CartDishes',
+        through: 'CartDish',
         foreignKey: 'dish_id',
         as: 'carts',
       });
