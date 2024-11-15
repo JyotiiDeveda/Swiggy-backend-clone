@@ -13,6 +13,19 @@ const addItem = async (req, res) => {
   }
 };
 
+const removeItem = async (req, res) => {
+  try {
+    const cartId = req.params['cartId'];
+    const dishId = req.params['dishId'];
+    await cartServices.removeItem(cartId, dishId);
+    return commonHelper.customResponseHandler(res, 'Removed dish from cart successfully', 204);
+  } catch (err) {
+    console.log('Error in removing dish from cart: ', err.message);
+    return commonHelper.customErrorHandler(res, err.message, err.statusCode);
+  }
+};
+
 module.exports = {
   addItem,
+  removeItem,
 };

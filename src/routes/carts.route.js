@@ -12,4 +12,11 @@ router.post(
   cartControllers.addItem
 );
 
+router.delete(
+  '/:cartId/dishes/:dishId',
+  authMiddlewares.authenticateToken,
+  authMiddlewares.isAuthorized,
+  cartControllers.removeItem
+);
+
 module.exports = router;

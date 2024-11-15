@@ -80,6 +80,27 @@ const addItem = async (userId, payload) => {
   }
 };
 
+const removeItem = async (cartId, dishId) => {
+  const transactionContext = await sequelize.transaction();
+  try {
+    const deletedCount = await models.CartDish.destroy({
+      where: { cart_id: cartId, dish_id: dishId },
+      force: true,
+      transaction: transactionContext,
+    });
+
+    if (deletedCount === 0) {
+      throw commonHelpers.customError('Dish not found in the cart', 404);
+    }
+    await transactionContext.commit();
+  } catch (err) {
+    await transactionContext.rollback();
+    console.log('Error in removing dish from cart', err.message);
+    throw commonHelpers.customError(err.message, err.statusCode);
+  }
+};
+
 module.exports = {
   addItem,
+  removeItem,
 };
