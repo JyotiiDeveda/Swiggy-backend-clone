@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const userControllers = require('../controllers/users.controller');
 const authMiddlewares = require('../middlewares/auth.middleware');
+const orderValidators = require('../validators/orders.validator');
 
 router.patch(
   '/:id',
@@ -26,5 +27,14 @@ router.delete(
 router.get('/:id', authMiddlewares.authenticateToken, authMiddlewares.isAuthorized, userControllers.get);
 
 router.get('/', authMiddlewares.authenticateToken, authMiddlewares.isAdmin, userControllers.getAll);
+
+// place order
+router.post(
+  '/:id/orders',
+  authMiddlewares.authenticateToken,
+  authMiddlewares.isAuthorized,
+  orderValidators.validatePlaceOrderSchema,
+  userControllers.placeOrder
+);
 
 module.exports = router;

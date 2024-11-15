@@ -1,5 +1,6 @@
 const userServices = require('../services/users.service');
 const commonHelper = require('../helpers/common.helper');
+const orderServices = require('../services/orders.service');
 
 const addAddress = async (req, res) => {
   try {
@@ -60,4 +61,23 @@ const getAll = async (req, res) => {
   }
 };
 
-module.exports = { addAddress, addDeliveryPartner, removeAccount, get, getAll };
+const placeOrder = async (req, res) => {
+  try {
+    const userId = req.params['id'];
+    const currentUser = req.user;
+    const order = await orderServices.placeOrder(currentUser, userId, req.body);
+    return commonHelper.customResponseHandler(res, 'Placed order successfully', 200, order);
+  } catch (err) {
+    console.log('Error in placing order: ', err.message);
+    return commonHelper.customErrorHandler(res, err.message, err.statusCode);
+  }
+};
+
+module.exports = {
+  addAddress,
+  addDeliveryPartner,
+  removeAccount,
+  get,
+  getAll,
+  placeOrder,
+};
