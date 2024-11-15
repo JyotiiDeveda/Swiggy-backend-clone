@@ -19,4 +19,11 @@ router.delete(
   cartControllers.removeItem
 );
 
+router.delete(
+  '/:id',
+  authMiddlewares.authenticateToken,
+  authMiddlewares.isAuthorized,
+  cartControllers.emptyCart
+);
+
 module.exports = router;

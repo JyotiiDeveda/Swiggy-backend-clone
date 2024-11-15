@@ -53,11 +53,10 @@ const addItem = async (userId, payload) => {
       if (cartRestaurant === dishRestaurant && parseInt(cart.dataValues.dishes_cnt) >= 5) {
         throw commonHelpers.customError('Five items can only be added in a cart', 400);
       } else if (cartRestaurant !== dishRestaurant) {
-        await models.CartDish.destroy({
-          where: { cart_id: cart.id },
-          force: true,
-          transaction: transactionContext,
-        });
+        throw commonHelpers.customError(
+          'Adding dishes from different restaurant will replace the existing dishes in cart',
+          409
+        );
       }
     }
 
@@ -100,7 +99,36 @@ const removeItem = async (cartId, dishId) => {
   }
 };
 
+const emptyCart = async cartId => {
+  const transactionContext = await sequelize.transaction();
+  try {
+    const activeCartExists = await models.Cart.findOne({
+      where: { id: cartId, status: 'active' },
+    });
+
+    if (!activeCartExists) {
+      throw commonHelpers.customError('No active cart exists', 404);
+    }
+
+    const deletedCount = await models.CartDish.destroy({
+      where: { cart_id: cartId, status: 'active' },
+      force: true,
+      transaction: transactionContext,
+    });
+
+    if (deletedCount === 0) {
+      throw commonHelpers.customError('No dish found', 404);
+    }
+    await transactionContext.commit();
+  } catch (err) {
+    await transactionContext.rollback();
+    console.log('Error while emptying cart', err);
+    throw commonHelpers.customError(err.message, err.statusCode);
+  }
+};
+
 module.exports = {
   addItem,
   removeItem,
+  emptyCart,
 };

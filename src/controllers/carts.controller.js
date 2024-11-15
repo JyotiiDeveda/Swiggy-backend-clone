@@ -25,7 +25,19 @@ const removeItem = async (req, res) => {
   }
 };
 
+const emptyCart = async (req, res) => {
+  try {
+    const cartId = req.params['id'];
+    await cartServices.emptyCart(cartId);
+    return commonHelper.customResponseHandler(res, 'Cart emptied successfully', 204);
+  } catch (err) {
+    console.log('Error in emptying cart: ', err.message);
+    return commonHelper.customErrorHandler(res, err.message, err.statusCode);
+  }
+};
+
 module.exports = {
   addItem,
   removeItem,
+  emptyCart,
 };
