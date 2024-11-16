@@ -160,7 +160,7 @@ const getAllOrders = async (currentUser, userId, page, limit) => {
   const startIndex = (page - 1) * limit;
   const endIndex = page * limit;
 
-  const users = await models.Order.findAll({
+  const orders = await models.Order.findAll({
     attributes: [
       'id',
       [sequelize.col('Order.created_at'), 'orderDate'],
@@ -188,10 +188,10 @@ const getAllOrders = async (currentUser, userId, page, limit) => {
     offset: startIndex,
     limit: endIndex,
   });
-  if (!users || users.length === 0) {
+  if (!orders || orders.length === 0) {
     throw commonHelpers.customError('No users found', 404);
   }
-  return users;
+  return orders;
 };
 
 const deleteOrder = async (currentUser, userId, orderId) => {
@@ -231,9 +231,25 @@ const deleteOrder = async (currentUser, userId, orderId) => {
   }
 };
 
+const getAllUnassignedOrders = async (page, limit) => {
+  const startIndex = (page - 1) * limit;
+  const endIndex = page * limit;
+
+  const orders = await models.Order.findAll({
+    where: { status: 'preparing' },
+    offset: startIndex,
+    limit: endIndex,
+  });
+  if (!orders || orders.length === 0) {
+    throw commonHelpers.customError('No orders found', 404);
+  }
+  return orders;
+};
+
 module.exports = {
   placeOrder,
   getOrder,
   getAllOrders,
   deleteOrder,
+  getAllUnassignedOrders,
 };
