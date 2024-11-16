@@ -274,11 +274,31 @@ const assignOrder = async (currentUser, userId, orderId) => {
   }
 };
 
+const getPendingOrders = async (currentUser, userId, page, limit) => {
+  if (!currentUser?.userRoles.includes('Admin') && currentUser.userId !== userId) {
+    throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
+  }
+
+  const startIndex = (page - 1) * limit;
+  const endIndex = page * limit;
+
+  const orders = await models.Order.findAll({
+    where: { delivery_partner_id: userId, status: 'preparing' },
+    offset: startIndex,
+    limit: endIndex,
+  });
+  if (!orders || orders.length === 0) {
+    throw commonHelpers.customError('No pending orders found', 404);
+  }
+  return orders;
+};
+
 module.exports = {
   placeOrder,
   getOrder,
   getAllOrders,
   deleteOrder,
   getAllUnassignedOrders,
+  getPendingOrders,
   assignOrder,
 };

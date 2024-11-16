@@ -112,6 +112,24 @@ const deleteOrder = async (req, res) => {
   }
 };
 
+const getPendingOrders = async (req, res) => {
+  try {
+    const { page = 1, limit = 10 } = req.query;
+    const deliveryPartnerId = req.params['id'];
+    const currentUser = req.user;
+    const orders = await orderServices.getPendingOrders(currentUser, deliveryPartnerId, page, limit);
+    return commonHelper.customResponseHandler(
+      res,
+      "Fetched delivery partner's pending orders successfully",
+      200,
+      orders
+    );
+  } catch (err) {
+    console.log('Error in getting the pending orders: ', err.message);
+    return commonHelper.customErrorHandler(res, err.message, err.statusCode);
+  }
+};
+
 module.exports = {
   addAddress,
   addDeliveryPartner,
@@ -122,4 +140,5 @@ module.exports = {
   getOrder,
   getAllOrders,
   deleteOrder,
+  getPendingOrders,
 };

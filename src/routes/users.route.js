@@ -45,6 +45,7 @@ router.get(
   userControllers.getOrder
 );
 
+// get user order history
 router.get(
   '/:id/orders',
   authMiddlewares.authenticateToken,
@@ -57,6 +58,14 @@ router.delete(
   authMiddlewares.authenticateToken,
   authMiddlewares.isAuthorized,
   userControllers.deleteOrder
+);
+
+// delivery partner can get all pending orders
+router.get(
+  '/:id/pending-orders',
+  authMiddlewares.authenticateToken,
+  authMiddlewares.isAuthorizedDeliveryPartner,
+  userControllers.getPendingOrders
 );
 
 module.exports = router;
