@@ -52,4 +52,11 @@ router.get(
   userControllers.getAllOrders
 );
 
+router.delete(
+  '/:userId/orders/:orderId',
+  authMiddlewares.authenticateToken,
+  authMiddlewares.isAuthorized,
+  userControllers.deleteOrder
+);
+
 module.exports = router;

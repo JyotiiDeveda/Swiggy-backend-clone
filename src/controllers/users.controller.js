@@ -95,7 +95,20 @@ const getAllOrders = async (req, res) => {
     return commonHelper.customResponseHandler(res, "Fetched user's orders successfully", 200, users);
   } catch (err) {
     console.log("Error in getting the user's order details: ", err.message);
-    return commonHelper.customErrorHandler(res, err.message, 400);
+    return commonHelper.customErrorHandler(res, err.message, err.statusCode);
+  }
+};
+
+const deleteOrder = async (req, res) => {
+  try {
+    const userId = req.params['userId'];
+    const orderId = req.params['orderId'];
+    const currentUser = req.user;
+    await orderServices.deleteOrder(currentUser, userId, orderId);
+    return commonHelper.customResponseHandler(res, "Deleted user's order successfully", 204);
+  } catch (err) {
+    console.log('Error in deleting order: ', err.message);
+    return commonHelper.customErrorHandler(res, err.message, err.statusCode);
   }
 };
 
@@ -108,4 +121,5 @@ module.exports = {
   placeOrder,
   getOrder,
   getAllOrders,
+  deleteOrder,
 };

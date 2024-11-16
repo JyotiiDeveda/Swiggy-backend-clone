@@ -59,14 +59,14 @@ const placeOrder = async (currentUser, userId, payload) => {
 
     // get the cart dishes
     const cartDishDetails = await models.CartDish.findAll({
-      cart_id: cartId,
+      where: { cart_id: cartId },
       attributes: { exclude: ['created_at', 'updated_at', 'deleted_at'] },
     });
 
     // order charges, delivery charges, total_amt
     let orderCharges = 0;
-    cartDishDetails.forEach(cart => {
-      orderCharges += cart.quantity * cart.price;
+    cartDishDetails.forEach(dish => {
+      orderCharges += dish.quantity * dish.price;
     });
 
     const deliveryCharges = constants.DELIVERY_CHARGES;
@@ -90,14 +90,14 @@ const placeOrder = async (currentUser, userId, payload) => {
       { transaction: transactionContext }
     );
 
-    if (!order) {
+    if (!order || !order.id) {
       throw commonHelpers.customError('Failed to place error', 400);
     }
 
     // lock the cart if ordered placed
     cartDetails.status = 'locked';
     await cartDetails.save({ transaction: transactionContext });
-
+    await transactionContext.commit();
     return order;
   } catch (err) {
     await transactionContext.rollback();
@@ -185,8 +185,46 @@ const getAllOrders = async (currentUser, userId, page, limit) => {
   return users;
 };
 
+const deleteOrder = async (currentUser, userId, orderId) => {
+  const transactionContext = await sequelize.transaction();
+  try {
+    // check if user has the access
+    if (!currentUser?.userRoles.includes('Admin') && currentUser.userId !== userId) {
+      throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
+    }
+
+    // the order which has not been delivered or cancelled can only be deleted
+    const deletedOrder = await models.Order.destroy({
+      where: { id: orderId, status: 'preparing' },
+      returning: true,
+      transaction: transactionContext,
+    });
+
+    if (!deletedOrder || deletedOrder?.length === 0) {
+      throw commonHelpers.customError('No order found', 404);
+    }
+
+    const associatedCartId = deletedOrder[0].cart_id;
+    // delete associated cart
+    const deletedCart = await models.Cart.destroy({
+      where: { id: associatedCartId },
+      transaction: transactionContext,
+    });
+
+    if (deletedCart === 0) {
+      throw commonHelpers.customError('Associated cart not found', 404);
+    }
+    await transactionContext.commit();
+  } catch (err) {
+    await transactionContext.rollback();
+    console.log('Error in deleting dish', err.message);
+    throw commonHelpers.customError(err.message, err.statusCode);
+  }
+};
+
 module.exports = {
   placeOrder,
   getOrder,
   getAllOrders,
+  deleteOrder,
 };
