@@ -73,6 +73,19 @@ const placeOrder = async (req, res) => {
   }
 };
 
+const getOrder = async (req, res) => {
+  try {
+    const userId = req.params['userId'];
+    const orderId = req.params['orderId'];
+    const currentUser = req.user;
+    const order = await orderServices.getOrder(currentUser, userId, orderId);
+    return commonHelper.customResponseHandler(res, 'Fetched order successfully', 200, order);
+  } catch (err) {
+    console.log('Error in getting order: ', err.message);
+    return commonHelper.customErrorHandler(res, err.message, err.statusCode);
+  }
+};
+
 module.exports = {
   addAddress,
   addDeliveryPartner,
@@ -80,4 +93,5 @@ module.exports = {
   get,
   getAll,
   placeOrder,
+  getOrder,
 };

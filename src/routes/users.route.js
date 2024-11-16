@@ -37,4 +37,11 @@ router.post(
   userControllers.placeOrder
 );
 
+router.get(
+  '/:userId/orders/:orderId',
+  authMiddlewares.authenticateToken,
+  authMiddlewares.isAuthorized,
+  userControllers.getOrder
+);
+
 module.exports = router;

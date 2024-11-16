@@ -2,13 +2,14 @@ const commonHelpers = require('../helpers/common.helper');
 const models = require('../models');
 const { sequelize } = require('../models');
 const constants = require('../constants/constants');
+const orderSerializer = require('../serializers/orders.serializer');
 
 const placeOrder = async (currentUser, userId, payload) => {
   const transactionContext = await sequelize.transaction();
   try {
     // check if user can access the endpoint
-    if (!currentUser?.userRoles.includes('admin') && currentUser.userId !== userId) {
-      throw commonHelpers.customError('A user can only access their own routes', 403);
+    if (!currentUser?.userRoles.includes('Admin') && currentUser.userId !== userId) {
+      throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
     }
 
     const { cart_id: cartId, restaurant_id: restaurantId } = payload;
@@ -95,7 +96,7 @@ const placeOrder = async (currentUser, userId, payload) => {
 
     // lock the cart if ordered placed
     cartDetails.status = 'locked';
-    await cartDetails.save();
+    await cartDetails.save({ transaction: transactionContext });
 
     return order;
   } catch (err) {
@@ -105,6 +106,43 @@ const placeOrder = async (currentUser, userId, payload) => {
   }
 };
 
+const getOrder = async (currentUser, userId, orderId) => {
+  // check if user has the access
+  if (!currentUser?.userRoles.includes('Admin') && currentUser.userId !== userId) {
+    throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
+  }
+
+  const order = await models.Order.findOne({
+    where: { id: orderId },
+    include: [
+      {
+        model: models.Cart,
+        where: {
+          user_id: userId,
+        },
+        include: {
+          model: models.Dish,
+          as: 'dishes',
+          attributes: {
+            exclude: ['created_at', 'updated_at', 'deleted_at'],
+          },
+        },
+      },
+      {
+        model: models.Restaurant,
+        attributes: ['id', 'name', 'category'],
+      },
+    ],
+  });
+
+  if (!order) throw commonHelpers.customError('No order found', 404);
+
+  const serialzedOrder = orderSerializer.serializeOrder(order);
+
+  return serialzedOrder;
+};
+
 module.exports = {
   placeOrder,
+  getOrder,
 };
