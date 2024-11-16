@@ -9,4 +9,12 @@ router.get(
   orderControllers.getAllUnassignedOrders
 );
 
+// assign order to delivery partner
+router.patch(
+  '/:orderId/users/:userId',
+  authMiddlewares.authenticateToken,
+  authMiddlewares.isAuthorizedDeliveryPartner,
+  orderControllers.assignOrder
+);
+
 module.exports = router;

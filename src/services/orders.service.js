@@ -246,10 +246,39 @@ const getAllUnassignedOrders = async (page, limit) => {
   return orders;
 };
 
+const assignOrder = async (currentUser, userId, orderId) => {
+  const transactionContext = await sequelize.transaction();
+  try {
+    // check if user has the access
+    if (!currentUser?.userRoles.includes('Admin') && currentUser.userId !== userId) {
+      throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
+    }
+
+    // the order which has not been delivered or cancelled can only be deleted
+    const [updatedOrderCnt, updatedOrder] = await models.Order.update(
+      {
+        delivery_partner_id: userId,
+      },
+      { where: { id: orderId, status: 'preparing' }, returning: true, transaction: transactionContext }
+    );
+
+    if (updatedOrderCnt === 0) {
+      throw commonHelpers.customError('No order found', 404);
+    }
+    await transactionContext.commit();
+    return updatedOrder;
+  } catch (err) {
+    await transactionContext.rollback();
+    console.log('Error in deleting dish', err.message);
+    throw commonHelpers.customError(err.message, err.statusCode);
+  }
+};
+
 module.exports = {
   placeOrder,
   getOrder,
   getAllOrders,
   deleteOrder,
   getAllUnassignedOrders,
+  assignOrder,
 };

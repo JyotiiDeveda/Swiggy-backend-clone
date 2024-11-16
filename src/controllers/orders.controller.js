@@ -13,6 +13,21 @@ const getAllUnassignedOrders = async (req, res) => {
   }
 };
 
+const assignOrder = async (req, res) => {
+  try {
+    const orderId = req.params['orderId'];
+    const userId = req.params['userId'];
+    const currentUser = req.user;
+
+    const orders = await orderServices.assignOrder(currentUser, userId, orderId);
+    return commonHelper.customResponseHandler(res, 'Assigned order successfully', 200, orders);
+  } catch (err) {
+    console.log('Error in assigning order to delivery partner: ', err);
+    return commonHelper.customErrorHandler(res, err.message, err.statusCode);
+  }
+};
+
 module.exports = {
   getAllUnassignedOrders,
+  assignOrder,
 };
