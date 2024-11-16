@@ -14,40 +14,6 @@ const placeOrder = async (currentUser, userId, payload) => {
 
     const { cart_id: cartId, restaurant_id: restaurantId } = payload;
 
-    // check if cart exists and get associated restaurant
-    const cartDetails = await models.Cart.findOne({
-      where: { id: cartId, user_id: userId, status: 'active' },
-      attributes: {
-        include: [
-          'id',
-          [sequelize.col('dishes.restaurant_id'), 'restaurant_id'],
-          [sequelize.fn('count', sequelize.col('dishes.id')), 'dishes_cnt'],
-        ],
-        exclude: ['created_at', 'updated_at', 'deleted_at'],
-      },
-      include: {
-        model: models.Dish,
-        as: 'dishes',
-        duplicating: false,
-        attributes: [],
-        through: { attributes: [] },
-      },
-      group: ['Cart.id', 'dishes.restaurant_id'],
-    });
-    if (!cartDetails) {
-      throw commonHelpers.customError('Cart not found', 404);
-    }
-
-    // check if cart is not empty
-    if (parseInt(cartDetails?.dataValues?.dishes_cnt) === 0) {
-      throw commonHelpers.customError('Cart is empty', 400);
-    }
-
-    // check if given restaurant id belongs to cart
-    if (restaurantId !== cartDetails.dataValues.restaurant_id) {
-      throw commonHelpers.customError('Restaurant does not belong to given cart', 422);
-    }
-
     // check if order is already placed
     const orderDetails = await models.Order.findOne({
       where: { cart_id: cartId, restaurant_id: restaurantId },
@@ -57,16 +23,58 @@ const placeOrder = async (currentUser, userId, payload) => {
       throw commonHelpers.customError('Order already placed', 409);
     }
 
-    // get the cart dishes
-    const cartDishDetails = await models.CartDish.findAll({
-      where: { cart_id: cartId },
+    const cartDishDetails = await models.Cart.findOne({
+      where: { id: cartId },
+      include: {
+        model: models.Dish,
+        as: 'dishes',
+        attributes: ['restaurant_id', 'id', 'quantity', 'price'],
+        through: {
+          attributes: ['dish_id', 'quantity', 'price'],
+        },
+      },
       attributes: { exclude: ['created_at', 'updated_at', 'deleted_at'] },
     });
 
-    // order charges, delivery charges, total_amt
+    if (!cartDishDetails) {
+      throw commonHelpers.customError('Cart not found', 404);
+    }
+
+    const dishes = cartDishDetails.dishes;
+
+    // check if cart is not empty
+    if (!dishes || dishes.length === 0) {
+      throw commonHelpers.customError('Cart is empty', 400);
+    }
+
+    const cartsRestaurantId = dishes[0].restaurant_id;
+
+    // check if given restaurant id belongs to cart
+    if (restaurantId !== cartsRestaurantId) {
+      throw commonHelpers.customError('Restaurant does not belong to given cart', 422);
+    }
+
+    // check if required quantity is available and update inventory
+    for (const dish of dishes) {
+      const availableQuantity = dish.quantity;
+      const requiredQuantity = dish.CartDish.quantity;
+
+      if (requiredQuantity > availableQuantity)
+        commonHelpers.customError('Required quantity not available', 400);
+      const updatedDishCnt = await models.Dish.update(
+        {
+          quantity: availableQuantity - requiredQuantity,
+        },
+        { where: { id: dish.id }, returning: true, transaction: transactionContext }
+      );
+
+      if (updatedDishCnt === 0) throw commonHelpers.customError('Failed to update inventory', 400);
+    }
+
+    // calculate order charges, delivery charges, total_amt
     let orderCharges = 0;
-    cartDishDetails.forEach(dish => {
-      orderCharges += dish.quantity * dish.price;
+    dishes.forEach(async dish => {
+      orderCharges += dish.CartDish.quantity * dish.price;
     });
 
     const deliveryCharges = constants.DELIVERY_CHARGES;
@@ -95,9 +103,10 @@ const placeOrder = async (currentUser, userId, payload) => {
     }
 
     // lock the cart if ordered placed
-    cartDetails.status = 'locked';
-    await cartDetails.save({ transaction: transactionContext });
+    cartDishDetails.status = 'locked';
+    await cartDishDetails.save({ transaction: transactionContext });
     await transactionContext.commit();
+
     return order;
   } catch (err) {
     await transactionContext.rollback();
