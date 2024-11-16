@@ -86,6 +86,19 @@ const getOrder = async (req, res) => {
   }
 };
 
+const getAllOrders = async (req, res) => {
+  try {
+    const { page = 1, limit = 10 } = req.query;
+    const userId = req.params['id'];
+    const currentUser = req.user;
+    const users = await orderServices.getAllOrders(currentUser, userId, page, limit);
+    return commonHelper.customResponseHandler(res, "Fetched user's orders successfully", 200, users);
+  } catch (err) {
+    console.log("Error in getting the user's order details: ", err.message);
+    return commonHelper.customErrorHandler(res, err.message, 400);
+  }
+};
+
 module.exports = {
   addAddress,
   addDeliveryPartner,
@@ -94,4 +107,5 @@ module.exports = {
   getAll,
   placeOrder,
   getOrder,
+  getAllOrders,
 };

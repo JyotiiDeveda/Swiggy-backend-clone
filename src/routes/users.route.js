@@ -10,6 +10,7 @@ router.patch(
   userControllers.addAddress
 );
 
+// create delivery partner by assigning delvery partner role to customer
 router.put(
   '/:userid/roles/:roleid',
   authMiddlewares.authenticateToken,
@@ -28,7 +29,7 @@ router.get('/:id', authMiddlewares.authenticateToken, authMiddlewares.isAuthoriz
 
 router.get('/', authMiddlewares.authenticateToken, authMiddlewares.isAdmin, userControllers.getAll);
 
-// place order
+// user's order related routes
 router.post(
   '/:id/orders',
   authMiddlewares.authenticateToken,
@@ -42,6 +43,13 @@ router.get(
   authMiddlewares.authenticateToken,
   authMiddlewares.isAuthorized,
   userControllers.getOrder
+);
+
+router.get(
+  '/:id/orders',
+  authMiddlewares.authenticateToken,
+  authMiddlewares.isAuthorized,
+  userControllers.getAllOrders
 );
 
 module.exports = router;

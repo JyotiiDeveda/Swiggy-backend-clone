@@ -142,7 +142,51 @@ const getOrder = async (currentUser, userId, orderId) => {
   return serialzedOrder;
 };
 
+const getAllOrders = async (currentUser, userId, page, limit) => {
+  // check if user has the access
+  if (!currentUser?.userRoles.includes('Admin') && currentUser.userId !== userId) {
+    throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
+  }
+
+  const startIndex = (page - 1) * limit;
+  const endIndex = page * limit;
+
+  const users = await models.Order.findAll({
+    attributes: [
+      'id',
+      [sequelize.col('Order.created_at'), 'orderDate'],
+      [sequelize.col('Restaurant.name'), 'restaurant'],
+      'delivery_charges',
+      'order_charges',
+      'gst',
+      'total_amount',
+      'status',
+    ],
+
+    include: [
+      {
+        model: models.Restaurant,
+        attributes: [],
+        duplicating: false,
+      },
+      {
+        model: models.Cart,
+        where: { user_id: userId },
+        attributes: [],
+        duplicating: false,
+      },
+    ],
+    offset: startIndex,
+    limit: endIndex,
+  });
+  if (!users || users.length === 0) {
+    throw commonHelpers.customError('No users found', 404);
+  }
+  return users;
+};
+
 module.exports = {
   placeOrder,
   getOrder,
+  getAllOrders,
 };
