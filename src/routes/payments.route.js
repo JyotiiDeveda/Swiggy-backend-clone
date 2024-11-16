@@ -9,4 +9,6 @@ router.post(
   paymentsController.makePayment
 );
 
+router.get('/', authMiddlewares.authenticateToken, authMiddlewares.isAuthorized, paymentsController.getAll);
+
 module.exports = router;

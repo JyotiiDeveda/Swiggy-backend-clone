@@ -63,4 +63,19 @@ const makePayment = async (userId, payload) => {
   }
 };
 
-module.exports = { makePayment };
+const getAllPayments = async (userId, page, limit) => {
+  const startIndex = (page - 1) * limit;
+  const endIndex = page * limit;
+
+  const payments = await models.Payment.findAll({
+    where: { user_id: userId },
+    offset: startIndex,
+    limit: endIndex,
+  });
+  if (!payments || payments.length === 0)
+    throw commonHelpers.customError('No payments found for the user', 404);
+
+  return payments;
+};
+
+module.exports = { makePayment, getAllPayments };
