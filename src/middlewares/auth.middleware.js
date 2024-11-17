@@ -9,7 +9,7 @@ const authenticateToken = async (req, res, next) => {
     // console.log("Token: ", token);
 
     if (!token) {
-      throw commonHelper.customErrorHandler(res, 'Token not found', 401);
+      return commonHelper.customErrorHandler(res, 'Token not found', 401);
     }
 
     const decode = jwtHelper.verifyToken(token);
@@ -19,7 +19,7 @@ const authenticateToken = async (req, res, next) => {
     const userDetails = await models.User.findByPk(decode.userId);
 
     if (!userDetails) {
-      throw commonHelper.customError(res, 'User does not exists', 404);
+      return commonHelper.customErrorHandler(res, 'User does not exists', 404);
     }
 
     req.user = decode;

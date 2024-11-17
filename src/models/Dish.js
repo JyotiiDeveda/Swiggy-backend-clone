@@ -47,7 +47,6 @@ module.exports = (sequelize, DataTypes) => {
       type: {
         type: DataTypes.ENUM,
         values: ['veg', 'non-veg'],
-        onDelete: 'CASCADE',
         allowNull: false,
       },
       price: {

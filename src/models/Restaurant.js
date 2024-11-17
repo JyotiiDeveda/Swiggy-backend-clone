@@ -17,7 +17,7 @@ module.exports = (sequelize, DataTypes) => {
 
       Restaurant.hasMany(models.Order, {
         foreignKey: 'restaurant_id',
-        onDelete: 'CASCADE',
+        onDelete: 'SET NULL',
         as: 'orders',
       });
     }
