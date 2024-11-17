@@ -8,6 +8,18 @@ module.exports = (sequelize, DataTypes) => {
         onDelete: 'CASCADE',
         as: 'dishes',
       });
+
+      Restaurant.hasMany(models.Rating, {
+        foreignKey: 'restaurant_id',
+        onDelete: 'CASCADE',
+        as: 'ratings',
+      });
+
+      Restaurant.hasMany(models.Order, {
+        foreignKey: 'restaurant_id',
+        onDelete: 'CASCADE',
+        as: 'orders',
+      });
     }
   }
   Restaurant.init(
@@ -30,7 +42,7 @@ module.exports = (sequelize, DataTypes) => {
         defaultValue: 'veg',
       },
       address: {
-        type: DataTypes.STRING,
+        type: DataTypes.JSONB,
         allowNull: false,
       },
     },

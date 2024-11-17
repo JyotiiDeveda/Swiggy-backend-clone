@@ -13,6 +13,12 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'dish_id',
         as: 'carts',
       });
+
+      Dish.hasMany(models.Rating, {
+        foreignKey: 'dish_id',
+        onDelete: 'CASCADE',
+        as: 'ratings',
+      });
     }
   }
   Dish.init(

@@ -7,6 +7,16 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'user_id',
         onDelete: 'CASCADE',
       });
+
+      Rating.belongsTo(models.Restaurant, {
+        foreignKey: 'restaurant_id',
+        onDelete: 'CASCADE',
+      });
+
+      Rating.belongsTo(models.Dish, {
+        foreignKey: 'dish_id',
+        onDelete: 'CASCADE',
+      });
     }
   }
   Rating.init(
@@ -25,9 +35,23 @@ module.exports = (sequelize, DataTypes) => {
         values: ['restaurant', 'dish'],
         allowNull: false,
       },
-      entity_id: {
+      restaurant_id: {
         type: DataTypes.UUID,
-        allowNull: false,
+        references: {
+          model: 'restaurants',
+          key: 'id',
+        },
+        allowNull: true,
+        onDelete: 'CASCADE',
+      },
+      dish_id: {
+        type: DataTypes.INTEGER,
+        references: {
+          model: 'DISHES',
+          key: 'id',
+        },
+        allowNull: true,
+        onDelete: 'CASCADE',
       },
       rating: {
         type: DataTypes.INTEGER,
