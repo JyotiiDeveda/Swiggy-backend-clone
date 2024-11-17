@@ -8,10 +8,14 @@ const addItem = async (userId, payload) => {
     const { dish_id: dishId, quantity } = payload;
     // check if dish exists
     const dishDetails = await models.Dish.findOne({ where: { id: dishId } });
-    console.log('Dish details: ', dishDetails);
 
-    if (!dishDetails) {
-      throw commonHelpers.customError('Dish not found', 404);
+    if (!dishDetails || dishDetails.quantity === 0) {
+      throw commonHelpers.customError('Dish not available', 404);
+    }
+
+    // check if quantity is available
+    if (quantity > dishDetails.quantity) {
+      throw commonHelpers.customError('Required quantity is not available , 406');
     }
 
     //find active cart or create one
@@ -35,16 +39,13 @@ const addItem = async (userId, payload) => {
       transaction: transactionContext,
     });
 
-    // console.log('CART DETAILS: ', cart);
-
     // if new cart is not created,
     if (!created) {
       // check if dish exists in cart
       const dishInCart = await models.CartDish.findOne({ where: { cart_id: cart.id, dish_id: dishId } });
-      console.log('Item already exists: ', dishInCart);
       if (dishInCart) {
-        dishInCart.quantity += quantity;
-        await dishInCart.save();
+        dishInCart.quantity = quantity;
+        await dishInCart.save({ transaction: transactionContext });
         return dishInCart;
       }
 
@@ -79,12 +80,15 @@ const addItem = async (userId, payload) => {
   }
 };
 
-const removeItem = async (cartId, dishId) => {
+const removeItem = async (userId, cartId, dishId) => {
   const transactionContext = await sequelize.transaction();
   try {
     const deletedCount = await models.CartDish.destroy({
       where: { cart_id: cartId, dish_id: dishId },
-      force: true,
+      include: {
+        model: models.Cart,
+        where: { user_id: userId },
+      },
       transaction: transactionContext,
     });
 
@@ -99,11 +103,11 @@ const removeItem = async (cartId, dishId) => {
   }
 };
 
-const emptyCart = async cartId => {
+const emptyCart = async (userId, cartId) => {
   const transactionContext = await sequelize.transaction();
   try {
     const activeCartExists = await models.Cart.findOne({
-      where: { id: cartId, status: 'active' },
+      where: { id: cartId, user_id: userId, status: 'active' },
     });
 
     if (!activeCartExists) {
@@ -111,13 +115,12 @@ const emptyCart = async cartId => {
     }
 
     const deletedCount = await models.CartDish.destroy({
-      where: { cart_id: cartId, status: 'active' },
-      force: true,
+      where: { cart_id: cartId },
       transaction: transactionContext,
     });
 
     if (deletedCount === 0) {
-      throw commonHelpers.customError('No dish found', 404);
+      throw commonHelpers.customError('No dishes found in the cart', 404);
     }
     await transactionContext.commit();
   } catch (err) {

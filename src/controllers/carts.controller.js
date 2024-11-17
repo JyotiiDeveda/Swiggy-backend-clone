@@ -17,7 +17,8 @@ const removeItem = async (req, res) => {
   try {
     const cartId = req.params['cartId'];
     const dishId = req.params['dishId'];
-    await cartServices.removeItem(cartId, dishId);
+    const { userId } = req.user;
+    await cartServices.removeItem(userId, cartId, dishId);
     return commonHelper.customResponseHandler(res, 'Removed dish from cart successfully', 204);
   } catch (err) {
     console.log('Error in removing dish from cart: ', err.message);
@@ -28,7 +29,8 @@ const removeItem = async (req, res) => {
 const emptyCart = async (req, res) => {
   try {
     const cartId = req.params['id'];
-    await cartServices.emptyCart(cartId);
+    const userId = req.user.userId;
+    await cartServices.emptyCart(userId, cartId);
     return commonHelper.customResponseHandler(res, 'Cart emptied successfully', 204);
   } catch (err) {
     console.log('Error in emptying cart: ', err.message);
