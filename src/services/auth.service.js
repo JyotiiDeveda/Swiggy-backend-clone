@@ -80,6 +80,7 @@ const verifyOtp = async (email, otp) => {
   const payload = {
     userId: userDetails.id,
     userRoles,
+    email,
   };
 
   const token = generateToken(payload);
