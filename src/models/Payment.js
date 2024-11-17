@@ -7,10 +7,24 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'order_id',
         onDelete: 'CASCADE',
       });
+
+      Payment.belongsTo(models.User, {
+        foreignKey: 'user_id',
+        onDelete: 'CASCADE',
+      });
     }
   }
   Payment.init(
     {
+      user_id: {
+        type: DataTypes.UUID,
+        references: {
+          model: 'User',
+          key: 'id',
+        },
+        allowNull: false,
+        onDelete: 'CASCADE',
+      },
       order_id: {
         type: DataTypes.UUID,
         references: {

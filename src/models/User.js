@@ -22,6 +22,12 @@ module.exports = (sequelize, DataTypes) => {
         as: 'orders',
       });
 
+      User.hasMany(models.Payment, {
+        foreignKey: 'user_id',
+        onDelete: 'CASCADE',
+        as: 'payments',
+      });
+
       User.hasMany(models.Rating, {
         foreignKey: 'user_id',
         onDelete: 'CASCADE',
