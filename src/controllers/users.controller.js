@@ -52,8 +52,8 @@ const get = async (req, res) => {
 
 const getAll = async (req, res) => {
   try {
-    const { page = 1, limit = 10 } = req.query;
-    const users = await userServices.getAll(page, limit);
+    const queryOptions = req.query;
+    const users = await userServices.getAll(queryOptions);
     return commonHelper.customResponseHandler(res, 'Fetched users successfully', 200, users);
   } catch (err) {
     console.log('Error in getting the user details: ', err.message);

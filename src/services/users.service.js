@@ -63,7 +63,7 @@ const addAddress = async (userId, address) => {
   }
 
   await models.User.update({ address: address }, { where: { id: userId } });
-  console.log('Address updated	');
+  console.log('Address updated ');
 };
 
 const removeAccount = async userId => {
@@ -80,11 +80,30 @@ const get = async userId => {
   return userDetails;
 };
 
-const getAll = async (page, limit) => {
+const getAll = async queryOptions => {
+  const { page = 1, limit = 10, role } = queryOptions;
   const startIndex = (page - 1) * limit;
   const endIndex = page * limit;
 
-  const users = await models.User.findAll({ offset: startIndex, limit: endIndex });
+  let filter = {};
+  const userRole = role?.toLowerCase();
+  if (userRole === 'customer') {
+    filter.name = 'Customer';
+  } else if (userRole === 'delivery-partner') {
+    filter.name = 'Delivery Partner';
+  }
+
+  const users = await models.User.findAll({
+    include: {
+      model: models.Role,
+      as: 'roles',
+      attributes: ['id', 'name'],
+      where: filter,
+      through: { attributes: [] },
+    },
+    offset: startIndex,
+    limit: endIndex,
+  });
   if (!users || users.length === 0) {
     throw commonHelpers.customError('No users found', 404);
   }
