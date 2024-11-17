@@ -25,6 +25,29 @@ const get = async (req, res) => {
   }
 };
 
+const getAll = async (req, res) => {
+  try {
+    const queyOptions = req.query;
+    const restaurants = await restaurantServices.getAll(queyOptions);
+    return commonHelper.customResponseHandler(res, 'Fetched restaurants data successfully', 200, restaurants);
+  } catch (err) {
+    console.log('Error in getting all restaurants: ', err);
+    return commonHelper.customErrorHandler(res, err.message, err.statusCode);
+  }
+};
+
+const update = async (req, res) => {
+  try {
+    const payload = req.body;
+    const restaurantId = req.params['id'];
+    const updatedRestaurant = await restaurantServices.update(restaurantId, payload);
+    return commonHelper.customResponseHandler(res, 'Restaurant updated successfully', 200, updatedRestaurant);
+  } catch (err) {
+    console.log('Error in updating restaurant: ', err);
+    return commonHelper.customErrorHandler(res, err.message, err.statusCode);
+  }
+};
+
 const remove = async (req, res) => {
   try {
     const restaurantId = req.params['id'];
@@ -78,6 +101,8 @@ const uploadImage = async (req, res) => {
 module.exports = {
   create,
   get,
+  getAll,
+  update,
   remove,
   createRestaurantsRating,
   createRestaurantsDish,
