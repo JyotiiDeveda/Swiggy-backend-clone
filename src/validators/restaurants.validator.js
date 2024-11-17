@@ -38,10 +38,10 @@ const validateRestaurantSchema = (req, res, next) => {
 const validateImage = (req, res, next) => {
   try {
     const schema = Joi.object({
-      image: Joi.string().uri().required(),
+      image: Joi.binary().required(),
     });
 
-    const imageUrl = req.file.location;
+    const imageUrl = req.file.buffer;
     const { error, value } = schema.validate({ image: imageUrl });
 
     if (error) {
@@ -53,7 +53,6 @@ const validateImage = (req, res, next) => {
 
       return commonHelper.customErrorHandler(res, errMsg, 422);
     }
-
     req.body = value;
     next();
   } catch (err) {

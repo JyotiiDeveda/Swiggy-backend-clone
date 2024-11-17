@@ -2,6 +2,7 @@ const commonHelpers = require('../helpers/common.helper');
 const models = require('../models');
 const { sequelize } = require('../models');
 const { Op } = require('sequelize');
+const { uploadToS3 } = require('../helpers/image-upload.helper');
 
 const create = async data => {
   const transactionContext = await sequelize.transaction();
@@ -13,11 +14,14 @@ const create = async data => {
       { where: { name: sequelize.where(sequelize.fn('LOWER', sequelize.col('name')), lookUpName) } },
       { paranoid: false }
     );
+    console.log('Existing Restaurant: ', restaurantExists);
 
     // if restaurant exists actively
     if (restaurantExists && restaurantExists.deleted_at === null) {
       throw commonHelpers.customError('Restaurant already exists', 409);
     } else if (restaurantExists?.deleted_at) {
+      console.log('Existing Restaurant to restore: ', restaurantExists);
+
       models.user.restore({
         where: { id: restaurantExists.id },
         transaction: transactionContext,
@@ -204,25 +208,21 @@ const remove = async restaurantId => {
 const uploadImage = async (restaurantId, file) => {
   const transactionContext = await sequelize.transaction();
   try {
-    if (!restaurantId) {
-      throw commonHelpers.customError('No restaurant id provided', 400);
+    // check if restaurant exists
+    const restaurantExists = await models.Restaurant.findOne({ where: { id: restaurantId } });
+
+    if (!restaurantExists) {
+      throw commonHelpers.customError('Restaurant not found', 404);
     }
 
-    const url = file.location;
+    const imageUrl = await uploadToS3(file);
 
-    const [updatedCnt, updatedRestaurant] = await models.Restaurant.update(
-      { image_url: url },
-      { where: { id: restaurantId }, returning: true, transaction: transactionContext }
-    );
-
-    if (updatedCnt === 0) {
-      throw commonHelpers.customError('No restaurant found: ', 404);
-    }
-    // console.log('UPDATED RESTAURANT: ', updatedRestaurant);
+    restaurantExists.image_url = imageUrl;
+    await restaurantExists.save({ transaction: transactionContext });
 
     await transactionContext.commit();
 
-    return updatedRestaurant;
+    return restaurantExists;
   } catch (err) {
     console.log('Error in uploading image for dish: ', err);
     await transactionContext.rollback();
