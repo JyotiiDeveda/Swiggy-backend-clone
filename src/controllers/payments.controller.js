@@ -3,9 +3,9 @@ const paymentServices = require('../services/payments.service');
 
 const makePayment = async (req, res) => {
   try {
-    const { userId } = req.user;
+    const currentUser = req.user;
     const payload = req.body;
-    const payment = await paymentServices.makePayment(userId, payload);
+    const payment = await paymentServices.makePayment(currentUser, payload);
     return commonHelper.customResponseHandler(res, 'Payment successfull', 201, payment);
   } catch (err) {
     console.log('Error in making payment: ', err);

@@ -81,9 +81,23 @@ const sendOrderAssignedMail = async (receiver, data) => {
   }
 };
 
+const sendPaymentStatusMail = async (email, orderId, payment) => {
+  try {
+    const content = `
+         Payment of amount Rs.${payment.total_amount} for order id ${orderId} is ${payment.status} 
+        `;
+    await mailSender(email, 'Payment Status update', content);
+    // console.log('Email sent successfully: ');
+  } catch (error) {
+    console.log('Error occurred while sending email: ', error);
+    throw commonHelpers.customError('Mail not send', 400);
+  }
+};
+
 module.exports = {
   sendVerificationEmail,
   sendOrderPlacedMail,
   sendOrderStatusUpdateMail,
   sendOrderAssignedMail,
+  sendPaymentStatusMail,
 };
