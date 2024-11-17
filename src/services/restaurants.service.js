@@ -1,33 +1,48 @@
 const commonHelpers = require('../helpers/common.helper');
 const models = require('../models');
+const { sequelize } = require('../models');
 
 const create = async data => {
-  const { name, description, image, category, address } = data;
-  const restaurantExists = await models.Restaurant.findOne({ where: { name } }, { paranoid: false });
+  const transactionContext = await sequelize.transaction();
+  try {
+    const { name, description, category, address } = data;
 
-  // if user exists actively
-  if (restaurantExists && restaurantExists.deleted_at === null) {
-    throw commonHelpers.customError('Restaurant already exists', 409);
+    const lookUpName = name.toLowerCase();
+    const restaurantExists = await models.Restaurant.findOne(
+      { where: { name: sequelize.where(sequelize.fn('LOWER', sequelize.col('name')), lookUpName) } },
+      { paranoid: false }
+    );
+
+    // if restaurant exists actively
+    if (restaurantExists && restaurantExists.deleted_at === null) {
+      throw commonHelpers.customError('Restaurant already exists', 409);
+    } else if (restaurantExists?.deleted_at) {
+      models.user.restore({
+        where: { id: restaurantExists.id },
+        transaction: transactionContext,
+      });
+      return restaurantExists;
+    }
+
+    // Creating a user
+    const newRestaurant = await models.Restaurant.create(
+      {
+        name,
+        description,
+        category,
+        address: address,
+      },
+      { transaction: transactionContext }
+    );
+
+    if (newRestaurant) await transactionContext.commit();
+
+    return newRestaurant;
+  } catch (err) {
+    console.log('Error in creating restaurant: ', err);
+    await transactionContext.rollback();
+    throw commonHelpers.customError(err.message, err.statusCode);
   }
-
-  // if soft deleted, activate the user
-  else if (restaurantExists?.deleted_at) {
-    models.user.restore({ where: { id: restaurantExists.id } });
-    return restaurantExists;
-  }
-
-  // todo: upload image to cloud and get image url
-
-  // Creating a user
-  const newRestaurant = await models.Restaurant.create({
-    name,
-    description,
-    image_url: image,
-    category,
-    address: JSON.stringify(address),
-  });
-
-  return newRestaurant;
 };
 
 const get = async restaurantId => {
@@ -37,11 +52,29 @@ const get = async restaurantId => {
 
   const restaurant = await models.Restaurant.findOne({
     where: { id: restaurantId },
-    include: {
-      model: models.Dish,
-      as: 'dishes',
-      attributes: { exclude: ['created_at', 'updated_at', 'deleted_at'] },
-    },
+    attributes: [
+      'id',
+      'name',
+      'description',
+      'image_url',
+      'category',
+      'address',
+      [sequelize.fn('round', sequelize.fn('avg', sequelize.col('ratings.rating')), 2), 'avg_rating'],
+      [sequelize.fn('count', sequelize.col('ratings.rating')), 'ratings_cnt'],
+    ],
+    include: [
+      {
+        model: models.Dish,
+        as: 'dishes',
+        attributes: { exclude: ['created_at', 'updated_at', 'deleted_at'] },
+      },
+      {
+        model: models.Rating,
+        as: 'ratings',
+        attributes: [],
+      },
+    ],
+    group: ['Restaurant.id', 'dishes.id'],
   });
 
   if (!restaurant) {
@@ -52,12 +85,27 @@ const get = async restaurantId => {
 };
 
 const remove = async restaurantId => {
-  await models.Restaurant.destroy({ where: { id: restaurantId } });
-  console.log('Deleted Restaurant');
+  const transactionContext = await sequelize.transaction();
+  try {
+    const deletedCount = await models.Restaurant.destroy({
+      where: { id: restaurantId },
+      transaction: transactionContext,
+    });
+    console.log('Deleted Dish: ', deletedCount);
+
+    if (deletedCount === 0) {
+      throw commonHelpers.customError('No restaurant found', 404);
+    }
+    await transactionContext.commit();
+  } catch (err) {
+    await transactionContext.rollback();
+    console.log('Error in deleting restaurant', err.message);
+    throw commonHelpers.customError(err.message, err.statusCode);
+  }
 };
 
 const uploadImage = async (restaurantId, file) => {
-  const transactionContext = await models.sequelize.transaction();
+  const transactionContext = await sequelize.transaction();
   try {
     if (!restaurantId) {
       throw commonHelpers.customError('No restaurant id provided', 400);

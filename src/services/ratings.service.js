@@ -2,20 +2,20 @@ const commonHelpers = require('../helpers/common.helper');
 const models = require('../models');
 const { Op } = require('sequelize');
 
-const createRestaurantsRating = async (entityId, value, userId) => {
+const createRestaurantsRating = async (restaurantId, value, userId) => {
   const transactionContext = await models.sequelize.transaction();
 
   try {
-    // console.log(`${entityType} ${entityId} ${value} ${userId}`);
+    // console.log(`${entityType} ${restaurantId} ${value} ${userId}`);
     let payload = {
       user_id: userId,
-      restaurant_id: entityId,
+      restaurant_id: restaurantId,
       entity_type: 'restaurant',
       rating: value,
     };
 
     //check if restaurant exists
-    const restaurantExists = await models.Restaurant.findOne({ where: { id: entityId } });
+    const restaurantExists = await models.Restaurant.findOne({ where: { id: restaurantId } });
     console.log('RESTAURANT EXISTS: ', restaurantExists);
 
     if (!restaurantExists) {
@@ -26,7 +26,7 @@ const createRestaurantsRating = async (entityId, value, userId) => {
     const ratingExists = await models.Rating.findOne(
       {
         where: {
-          [Op.and]: [{ user_id: userId }, { entity_type: 'restaurant' }, { restaurant_id: entityId }],
+          [Op.and]: [{ user_id: userId }, { entity_type: 'restaurant' }, { restaurant_id: restaurantId }],
         },
       },
       { paranoid: false }
@@ -39,7 +39,7 @@ const createRestaurantsRating = async (entityId, value, userId) => {
 
     //check if user has ordered something from the restaurant
     const order = await models.Order.findOne(
-      { where: { restaurant_id: entityId } },
+      { where: { restaurant_id: restaurantId } },
       { include: { model: models.Cart, where: { user_id: userId } } }
     );
     console.log('Order for the restaurant: ', order);
@@ -63,7 +63,7 @@ const createDishesRating = async (dishId, value, userId) => {
   const transactionContext = await models.sequelize.transaction();
 
   try {
-    // console.log(`${entityType} ${entityId} ${value} ${userId}`);
+    // console.log(`${entityType} ${dishId} ${value} ${userId}`);
     let payload = {
       user_id: userId,
       dish_id: dishId,
@@ -133,11 +133,23 @@ const createDishesRating = async (dishId, value, userId) => {
 };
 
 const remove = async ratingId => {
-  const deletedCount = await models.Rating.destroy({ where: { id: ratingId } });
-  console.log('Deleted Rating: ', deletedCount);
+  const transactionContext = await models.sequelize.transaction();
+  try {
+    const deletedCount = await models.Rating.destroy({
+      where: { id: ratingId },
+      transaction: transactionContext,
+    });
 
-  if (deletedCount === 0) {
-    throw commonHelpers.customError('No rating found', 404);
+    console.log('Deleted Dish: ', deletedCount);
+
+    if (deletedCount === 0) {
+      throw commonHelpers.customError('No rating found', 404);
+    }
+    await transactionContext.commit();
+  } catch (err) {
+    await transactionContext.rollback();
+    console.log('Error in deleting rating', err.message);
+    throw commonHelpers.customError(err.message, err.statusCode);
   }
 };
 

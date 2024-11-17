@@ -39,10 +39,9 @@ const remove = async (req, res) => {
 const createRestaurantsRating = async (req, res) => {
   try {
     const { rating } = req.body;
-    const entityId = req.params['id'];
+    const restaurantId = req.params['id'];
     const userId = req.user.userId;
-    console.log(`${rating} ${entityId} ${userId}`);
-    const newRating = await ratingServices.createRestaurantsRating(entityId, rating, userId);
+    const newRating = await ratingServices.createRestaurantsRating(restaurantId, rating, userId);
     console.log('New rating: ', newRating);
     return commonHelper.customResponseHandler(res, 'Restaurant rated successfully', 201, newRating);
   } catch (err) {
