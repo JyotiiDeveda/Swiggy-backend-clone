@@ -17,4 +17,12 @@ router.patch(
   orderControllers.assignOrder
 );
 
+// update order status
+router.patch(
+  '/:orderId',
+  authMiddlewares.authenticateToken,
+  authMiddlewares.isAuthorizedDeliveryPartner,
+  orderControllers.updateOrderStatus
+);
+
 module.exports = router;

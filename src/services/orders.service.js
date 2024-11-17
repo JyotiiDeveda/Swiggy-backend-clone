@@ -269,7 +269,7 @@ const assignOrder = async (currentUser, userId, orderId) => {
     return updatedOrder;
   } catch (err) {
     await transactionContext.rollback();
-    console.log('Error in deleting dish', err.message);
+    console.log('Error in assigning order', err.message);
     throw commonHelpers.customError(err.message, err.statusCode);
   }
 };
@@ -293,6 +293,28 @@ const getPendingOrders = async (currentUser, userId, page, limit) => {
   return orders;
 };
 
+const updateOrderStatus = async (userId, orderId, status) => {
+  const transactionContext = await sequelize.transaction();
+  try {
+    const [updatedOrderCnt, updatedOrder] = await models.Order.update(
+      {
+        status: status,
+      },
+      { where: { id: orderId }, returning: true, transaction: transactionContext }
+    );
+
+    if (updatedOrderCnt === 0) {
+      throw commonHelpers.customError('No order found', 404);
+    }
+    await transactionContext.commit();
+    return updatedOrder;
+  } catch (err) {
+    await transactionContext.rollback();
+    console.log('Error in updating order status', err.message);
+    throw commonHelpers.customError(err.message, err.statusCode);
+  }
+};
+
 module.exports = {
   placeOrder,
   getOrder,
@@ -301,4 +323,5 @@ module.exports = {
   getAllUnassignedOrders,
   getPendingOrders,
   assignOrder,
+  updateOrderStatus,
 };
