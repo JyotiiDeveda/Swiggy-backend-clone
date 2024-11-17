@@ -14,7 +14,7 @@ router.patch(
 
 // create delivery partner by assigning delvery partner role to customer
 router.put(
-  '/:userid/roles/:roleid',
+  '/:userId/roles/:roleId',
   authMiddlewares.authenticateToken,
   authMiddlewares.isAdmin,
   userControllers.addDeliveryPartner

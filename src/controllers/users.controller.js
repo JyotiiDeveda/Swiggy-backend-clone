@@ -18,8 +18,8 @@ const addAddress = async (req, res) => {
 // admin can assign a delivery partner role to a reistered user
 const addDeliveryPartner = async (req, res) => {
   try {
-    const userId = req.params['userid'];
-    const roleId = req.params['roleid'];
+    const userId = req.params['userId'];
+    const roleId = req.params['roleId'];
     const currentUser = req.user;
 
     await userServices.assignRole(currentUser, userId, roleId);
