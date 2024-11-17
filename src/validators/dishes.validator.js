@@ -8,7 +8,6 @@ const validateDishSchema = (req, res, next) => {
     const schema = Joi.object({
       name: Joi.string().required().min(3),
       description: Joi.string().required().min(10),
-      image: Joi.string().uri(),
       category: Joi.string()
         .required()
         .valid(...constants.DISH_CATEGORY),
