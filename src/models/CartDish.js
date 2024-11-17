@@ -1,10 +1,10 @@
 'use strict';
 const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-  class CartDishes extends Model {
+  class CartDish extends Model {
     static associate() {}
   }
-  CartDishes.init(
+  CartDish.init(
     {
       cart_id: {
         type: DataTypes.UUID,
@@ -36,11 +36,11 @@ module.exports = (sequelize, DataTypes) => {
     },
     {
       sequelize,
-      modelName: 'CartDishes',
+      modelName: 'CartDish',
       tableName: 'cart_dishes',
       timestamps: true,
       paranoid: true,
     }
   );
-  return CartDishes;
+  return CartDish;
 };
