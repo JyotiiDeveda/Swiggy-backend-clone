@@ -22,18 +22,13 @@ const createRestaurantsRating = async (restaurantId, value, userId) => {
     }
 
     // check if rating already exists
-    const ratingExists = await models.Rating.findOne(
-      {
-        where: {
-          [Op.and]: [{ user_id: userId }, { entity_type: 'restaurant' }, { restaurant_id: restaurantId }],
-        },
+    const ratingExists = await models.Rating.findOne({
+      where: {
+        [Op.and]: [{ user_id: userId }, { entity_type: 'restaurant' }, { restaurant_id: restaurantId }],
       },
-      { paranoid: false }
-    );
+    });
 
     if (ratingExists) {
-      if (ratingExists.deleted_at)
-        await models.Rating.restore({ where: { id: ratingExists.id }, transaction: transactionContext });
       throw commonHelpers.customError('User has already rated the restaurant', 409);
     }
 
@@ -80,20 +75,16 @@ const createDishesRating = async (dishId, value, userId) => {
     }
 
     //check if rating already exists
-    const ratingExists = await models.Rating.findOne(
-      {
-        where: {
-          [Op.and]: [{ user_id: userId }, { entity_type: 'dish' }, { dish_id: dishId }],
-        },
+    const ratingExists = await models.Rating.findOne({
+      where: {
+        [Op.and]: [{ user_id: userId }, { entity_type: 'dish' }, { dish_id: dishId }],
       },
-      { paranoid: false }
-    );
+    });
 
     if (ratingExists) {
-      if (ratingExists.deleted_at === null) await models.Rating.restore({ where: { id: ratingExists.id } });
       throw commonHelpers.customError('User has already rated the dish', 409);
     }
-    //check if user has ordered the dish
+    // check if user has ordered the dish
     const order = await models.Order.findOne({
       include: [
         {
