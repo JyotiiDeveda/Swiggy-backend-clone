@@ -2,11 +2,13 @@ const router = require('express').Router();
 const userControllers = require('../controllers/users.controller');
 const authMiddlewares = require('../middlewares/auth.middleware');
 const orderValidators = require('../validators/orders.validator');
+const userValidators = require('../validators/users.validator');
 
 router.patch(
   '/:id',
   authMiddlewares.authenticateToken,
   authMiddlewares.isAuthorized,
+  userValidators.validateUserAddress,
   userControllers.addAddress
 );
 

@@ -6,8 +6,9 @@ const addAddress = async (req, res) => {
   try {
     const { address } = req.body;
     const userId = req.params['id'];
-    await userServices.addAddress(userId, address);
-    return commonHelper.customResponseHandler(res, 'Address updated successfully', 204);
+    const currentUser = req.user;
+    const updatedUser = await userServices.addAddress(currentUser, userId, address);
+    return commonHelper.customResponseHandler(res, 'Address updated successfully', 200, updatedUser);
   } catch (err) {
     console.log('Error in updating address: ', err.message);
     return commonHelper.customErrorHandler(res, err.message, 400);
@@ -19,8 +20,9 @@ const addDeliveryPartner = async (req, res) => {
   try {
     const userId = req.params['userid'];
     const roleId = req.params['roleid'];
+    const currentUser = req.user;
 
-    await userServices.assignRole(userId, roleId);
+    await userServices.assignRole(currentUser, userId, roleId);
     return commonHelper.customResponseHandler(res, 'Added delivery partner successfully', 201);
   } catch (err) {
     console.log('Error in adding delivery partner: ', err.message);
@@ -31,7 +33,9 @@ const addDeliveryPartner = async (req, res) => {
 const removeAccount = async (req, res) => {
   try {
     const userId = req.params['id'];
-    await userServices.removeAccount(userId);
+    const currentUser = req.user;
+
+    await userServices.removeAccount(currentUser, userId);
     return commonHelper.customResponseHandler(res, 'Deleted user successfully', 204);
   } catch (err) {
     console.log('Error in deleting user: ', err.message);
@@ -42,7 +46,9 @@ const removeAccount = async (req, res) => {
 const get = async (req, res) => {
   try {
     const userId = req.params['id'];
-    const userDetails = await userServices.get(userId);
+    const currentUser = req.user;
+
+    const userDetails = await userServices.get(currentUser, userId);
     return commonHelper.customResponseHandler(res, 'Fetched user details successfully', 200, userDetails);
   } catch (err) {
     console.log('Error in getting the user details: ', err.message);

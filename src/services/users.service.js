@@ -1,78 +1,159 @@
 const commonHelpers = require('../helpers/common.helper');
 const { Op } = require('sequelize');
 const models = require('../models');
+const { sequelize } = require('../models');
 
 const create = async data => {
-  const { first_name, last_name, email, phone, address } = data;
-  const userExists = await models.User.findOne(
-    { where: { [Op.or]: [{ email }, { phone }] } },
-    { paranoid: false }
-  );
-  console.log('Existing uer: ', userExists);
+  const transactionContext = await sequelize.transaction();
+  try {
+    const { first_name, last_name, email, phone, address } = data;
+    const userExists = await models.User.findOne({
+      where: { [Op.or]: [{ email }, { phone }] },
+      paranoid: false,
+    });
 
-  // if user exists actively
-  if (userExists && userExists.deleted_at === null) {
-    throw commonHelpers.customError('User already exists (email and phone number should be unique)', 409);
+    // if user exists actively
+    if (userExists && userExists.deleted_at === null) {
+      throw commonHelpers.customError(
+        'User with given credentials already exists (email and phone number should be unique)',
+        409
+      );
+    } else if (userExists?.deleted_at) {
+      // if soft deleted user exists with same credentials, activate the user
+      const [restoredUser] = await models.User.restore({
+        where: { email, phone },
+        returning: true,
+        transaction: transactionContext,
+      });
+      if (!restoredUser) throw commonHelpers.customError('Credentials should be unique', 409);
+      await transactionContext.commit();
+      return restoredUser;
+    }
+
+    // Creating a user
+    const newUser = models.User.build({
+      first_name,
+      last_name,
+      email,
+      phone,
+    });
+
+    newUser.address = address ? address : null;
+    await newUser.save({ transaction: transactionContext });
+
+    // a user can signup with customer role only
+    const roleDetails = await models.Role.findOne({ where: { name: 'Customer' } });
+
+    // assign role to user
+    const userRole = await models.UserRole.findOrCreate({
+      where: {
+        user_id: newUser.id,
+        role_id: roleDetails.id,
+      },
+      transaction: transactionContext,
+    });
+
+    if (!userRole) throw commonHelpers.customError('Failed to assign user role', 400);
+
+    await transactionContext.commit();
+    return newUser;
+  } catch (err) {
+    await transactionContext.rollback();
+    console.log('Error in creating user', err.message);
+    throw commonHelpers.customError(err.message, 400);
   }
-
-  // if soft deleted, activate the user
-  else if (userExists?.deleted_at) {
-    models.user.restore({ where: { email } });
-    return userExists;
-  }
-
-  // Creating a user
-  const newUser = models.User.build({
-    first_name,
-    last_name,
-    email,
-    phone,
-  });
-
-  newUser.address = address ? address : '';
-  await newUser.save();
-
-  // a user can signup with customer role only
-  const roleDetails = await models.Role.findOne({ where: { name: 'Customer' } });
-
-  await assignRole(newUser.id, roleDetails.id);
-
-  return newUser;
 };
 
-const assignRole = async (user_id, roleId) => {
-  // a user can signup with customer role only
-  const roleDetails = await models.Role.findOne({ where: { id: roleId } });
+const assignRole = async (currentUser, userId, roleId) => {
+  const transactionContext = await sequelize.transaction();
+  try {
+    if (!currentUser?.userRoles.includes('Admin') && currentUser.userId !== userId) {
+      throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
+    }
+    // a user can signup with customer role only
+    const roleDetails = await models.Role.findOne({ where: { id: roleId } });
 
-  if (!roleDetails) {
-    throw commonHelpers.customError('Role does not exist', 404);
+    if (!roleDetails) {
+      throw commonHelpers.customError('Role does not exist', 404);
+    }
+
+    const usersRole = {
+      user_id: userId,
+      role_id: roleDetails.id,
+    };
+
+    const userRole = await models.UserRole.findOrCreate({
+      where: usersRole,
+      transaction: transactionContext,
+    });
+    if (!userRole) {
+      commonHelpers.customError('Failed to assign role', 400);
+    }
+    console.log('Assigned role successfully');
+    await transactionContext.commit();
+  } catch (err) {
+    await transactionContext.rollback();
+    console.log('Error while adding delivery partner', err.message);
+    throw commonHelpers.customError(err.message, 400);
   }
-
-  const usersRole = {
-    user_id,
-    role_id: roleDetails.id,
-  };
-
-  await models.UserRole.create(usersRole);
-  console.log('Assigned role successfully');
 };
 
-const addAddress = async (userId, address) => {
-  if (!address) {
-    throw commonHelpers.customError('No address provided', 422);
-  }
+const addAddress = async (currentUser, userId, address) => {
+  const transactionContext = await sequelize.transaction();
+  try {
+    if (!currentUser?.userRoles.includes('Admin') && currentUser.userId !== userId) {
+      throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
+    }
 
-  await models.User.update({ address: address }, { where: { id: userId } });
-  console.log('Address updated ');
+    const [updatedCnt, updatedUser] = await models.User.update(
+      { address: address },
+      { where: { id: userId }, returning: true, transaction: transactionContext }
+    );
+    if (updatedCnt === 0) {
+      throw commonHelpers.customError('No user found', 404);
+    }
+    await transactionContext.commit();
+    return updatedUser;
+  } catch (err) {
+    await transactionContext.rollback();
+    console.log('Error while updating address', err.message);
+    throw commonHelpers.customError(err.message, 400);
+  }
 };
 
-const removeAccount = async userId => {
-  await models.User.destroy({ where: { id: userId } });
+const removeAccount = async (currentUser, userId) => {
+  const transactionContext = await sequelize.transaction();
+  try {
+    if (!currentUser?.userRoles.includes('Admin') && currentUser.userId !== userId) {
+      throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
+    }
+    const deletedCount = await models.User.destroy({
+      where: { id: userId },
+      transaction: transactionContext,
+    });
+    console.log('Deleted user count: ', deletedCount);
+
+    if (deletedCount === 0) {
+      throw commonHelpers.customError('No user found', 404);
+    }
+    await transactionContext.commit();
+  } catch (err) {
+    await transactionContext.rollback();
+    console.log('Error in deleting user', err.message);
+    throw commonHelpers.customError(err.message, err.statusCode);
+  }
+
   console.log('Deleted user');
 };
 
-const get = async userId => {
-  const userDetails = await models.User.findOne({ where: { id: userId } });
+const get = async (currentUser, userId) => {
+  if (!currentUser?.userRoles.includes('Admin') && currentUser.userId !== userId) {
+    throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
+  }
+  const userDetails = await models.User.findOne({
+    where: { id: userId },
+    include: { model: models.Role, as: 'roles', attributes: ['id', 'name'], through: { attributes: [] } },
+  });
 
   if (!userDetails) {
     throw commonHelpers.customError('User not found', 404);
