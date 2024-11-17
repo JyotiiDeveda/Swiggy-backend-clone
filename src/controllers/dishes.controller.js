@@ -16,6 +16,18 @@ const createDishesRating = async (req, res) => {
   }
 };
 
+const deleteRating = async (req, res) => {
+  try {
+    const dishId = req.params['dishId'];
+    const ratingId = req.params['ratingId'];
+    await ratingServices.deleteDishRating(dishId, ratingId);
+    return commonHelper.customResponseHandler(res, 'Deleted rating successfully', 204);
+  } catch (err) {
+    console.log('Error in deleting rating: ', err.message);
+    return commonHelper.customErrorHandler(res, err.message, 400);
+  }
+};
+
 const get = async (req, res) => {
   try {
     const dishId = req.params['id'];
@@ -76,6 +88,7 @@ const uplaodImage = async (req, res) => {
 
 module.exports = {
   createDishesRating,
+  deleteRating,
   get,
   getAll,
   update,

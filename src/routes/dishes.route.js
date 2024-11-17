@@ -2,7 +2,7 @@ const router = require('express').Router();
 const authMiddlewares = require('../middlewares/auth.middleware');
 const dishControllers = require('../controllers/dishes.controller');
 const dishValidators = require('../validators/dishes.validator');
-const multerMiddleware = require('../middlewares/multer.middleware');
+const upload = require('../middlewares/multer.middleware');
 const restaurantValidators = require('../validators/restaurants.validator');
 const ratingsValidator = require('../validators/ratings.validator');
 
@@ -13,6 +13,14 @@ router.post(
   authMiddlewares.isAdmin,
   ratingsValidator.validateRatingScore,
   dishControllers.createDishesRating
+);
+
+// delete rating
+router.delete(
+  '/:dishId/ratings/:ratingId',
+  authMiddlewares.authenticateToken,
+  authMiddlewares.isAuthorized,
+  dishControllers.deleteRating
 );
 
 router.get('/:id', dishControllers.get);
@@ -33,7 +41,7 @@ router.patch(
   '/:id/images',
   authMiddlewares.authenticateToken,
   authMiddlewares.isAdmin,
-  multerMiddleware.upload.single('image'),
+  upload.single('image'),
   restaurantValidators.validateImage,
   dishControllers.uplaodImage
 );

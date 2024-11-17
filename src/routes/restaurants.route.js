@@ -36,6 +36,14 @@ router.post(
   restaurantsController.createRestaurantsRating
 );
 
+// delete rating
+router.delete(
+  '/:restaurantId/ratings/:ratingId',
+  authMiddlewares.authenticateToken,
+  authMiddlewares.isAuthorized,
+  restaurantsController.deleteRating
+);
+
 router.delete(
   '/:id',
   authMiddlewares.authenticateToken,
