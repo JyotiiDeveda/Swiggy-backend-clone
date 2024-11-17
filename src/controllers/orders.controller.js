@@ -29,11 +29,11 @@ const assignOrder = async (req, res) => {
 
 const updateOrderStatus = async (req, res) => {
   try {
-    const orderId = req.params['orderId'];
-    const { userId } = req.user;
+    const orderId = req.params['id'];
+    const deliveryPartner = req.user;
     const { status } = req.body;
 
-    const orders = await orderServices.updateOrderStatus(userId, orderId, status);
+    const orders = await orderServices.updateOrderStatus(deliveryPartner, orderId, status);
     return commonHelper.customResponseHandler(res, 'Updated order status successfully', 200, orders);
   } catch (err) {
     console.log('Error in updating order status: ', err);

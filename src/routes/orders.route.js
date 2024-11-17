@@ -2,6 +2,7 @@ const router = require('express').Router();
 const authMiddlewares = require('../middlewares/auth.middleware');
 const orderControllers = require('../controllers/orders.controller');
 
+// get all unassigned orders
 router.get(
   '/',
   authMiddlewares.authenticateToken,
@@ -19,7 +20,7 @@ router.patch(
 
 // update order status
 router.patch(
-  '/:orderId',
+  '/:id',
   authMiddlewares.authenticateToken,
   authMiddlewares.isAuthorizedDeliveryPartner,
   orderControllers.updateOrderStatus

@@ -24,7 +24,7 @@ const placeOrder = async (currentUser, userId, payload) => {
     }
 
     const cartDishDetails = await models.Cart.findOne({
-      where: { id: cartId },
+      where: { id: cartId, status: 'active' },
       include: {
         model: models.Dish,
         as: 'dishes',
@@ -61,14 +61,15 @@ const placeOrder = async (currentUser, userId, payload) => {
 
       if (requiredQuantity > availableQuantity)
         commonHelpers.customError('Required quantity not available', 400);
-      const updatedDishCnt = await models.Dish.update(
+      const [updatedDishCnt] = await models.Dish.update(
         {
           quantity: availableQuantity - requiredQuantity,
         },
-        { where: { id: dish.id }, returning: true, transaction: transactionContext }
+        { where: { id: dish.id }, transaction: transactionContext }
       );
 
-      if (updatedDishCnt === 0) throw commonHelpers.customError('Failed to update inventory', 400);
+      if (!updatedDishCnt || updatedDishCnt === 0)
+        throw commonHelpers.customError('Failed to update inventory', 400);
     }
 
     // calculate order charges, delivery charges, total_amt
@@ -254,7 +255,6 @@ const assignOrder = async (currentUser, userId, orderId) => {
       throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
     }
 
-    // the order which has not been delivered or cancelled can only be deleted
     const [updatedOrderCnt, updatedOrder] = await models.Order.update(
       {
         delivery_partner_id: userId,
@@ -293,14 +293,23 @@ const getPendingOrders = async (currentUser, userId, page, limit) => {
   return orders;
 };
 
-const updateOrderStatus = async (userId, orderId, status) => {
+const updateOrderStatus = async (deliveryPartner, orderId, status) => {
   const transactionContext = await sequelize.transaction();
   try {
+    if (!status) {
+      throw commonHelpers.customError('Status required', 422);
+    }
+
+    const filter = { id: orderId };
+
+    // if delivery partner is not admin he can update the status of orders assigned to them only
+    if (!deliveryPartner.userRoles.includes('Admin')) filter.delivery_partner_id = deliveryPartner.userId;
+
     const [updatedOrderCnt, updatedOrder] = await models.Order.update(
       {
         status: status,
       },
-      { where: { id: orderId }, returning: true, transaction: transactionContext }
+      { where: filter, returning: true, transaction: transactionContext }
     );
 
     if (updatedOrderCnt === 0) {
