@@ -2,6 +2,7 @@ const commonHelpers = require('../helpers/common.helper');
 const models = require('../models');
 const { sequelize } = require('../models');
 const { Op } = require('sequelize');
+const { uploadToS3 } = require('../helpers/image-upload.helper');
 
 const create = async (restaurantId, data) => {
   const transactionContext = await sequelize.transaction();
@@ -13,6 +14,13 @@ const create = async (restaurantId, data) => {
 
     if (!restaurantExists) {
       throw commonHelpers.customError('Restaurant does not exist', 404);
+    }
+
+    const dishType = category.toLowerCase();
+    if (dishType === 'veg' && restaurantExists.category === 'non-veg') {
+      throw commonHelpers.customError('A vegeterian dish cannot be added to non-vegeterian restaurant', 404);
+    } else if (dishType === 'non-veg' && restaurantExists.category === 'veg') {
+      throw commonHelpers.customError('A non-vegeterian dish cannot be added to vegeterian restaurant', 404);
     }
 
     const lookUpName = name.toLowerCase();
@@ -34,7 +42,7 @@ const create = async (restaurantId, data) => {
         restaurant_id: restaurantId,
         name,
         description,
-        type: category,
+        type: dishType,
         price,
         quantity,
       },
@@ -51,10 +59,6 @@ const create = async (restaurantId, data) => {
 };
 
 const get = async dishId => {
-  if (!dishId) {
-    throw commonHelpers.customError('Dish id not found', 422);
-  }
-
   // get a dish with its average rating and ratings count
   const dish = await models.Dish.findOne({
     where: { id: dishId },
@@ -81,7 +85,7 @@ const get = async dishId => {
   });
 
   if (!dish) {
-    throw commonHelpers.customError('No restaurant found', 404);
+    throw commonHelpers.customError('No dish found', 404);
   }
 
   return dish;
@@ -208,25 +212,20 @@ const remove = async dishId => {
 const uplaodImage = async (dishId, file) => {
   const transactionContext = await models.sequelize.transaction();
   try {
-    if (!dishId) {
-      throw commonHelpers.customError('No dish id provided', 400);
+    // check if restaurant exists
+    const dishExists = await models.Dish.findOne({ where: { id: dishId } });
+
+    if (!dishExists) {
+      throw commonHelpers.customError('Dish not found', 404);
     }
 
-    const url = file.location;
+    const imageUrl = await uploadToS3(file);
 
-    const [updatedCnt, updatedRestaurant] = await models.Dish.update(
-      { image_url: url },
-      { where: { id: dishId }, returning: true, transaction: transactionContext }
-    );
-
-    if (updatedCnt === 0) {
-      throw commonHelpers.customError('No dish found: ', 404);
-    }
-    // console.log('UPDATED DISH: ', updatedRestaurant);
+    dishExists.image_url = imageUrl;
+    await dishExists.save({ transaction: transactionContext });
 
     await transactionContext.commit();
-
-    return updatedRestaurant;
+    return dishExists;
   } catch (err) {
     console.log('Error in uploading image for dish: ', err);
     await transactionContext.rollback();
