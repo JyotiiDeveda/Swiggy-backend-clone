@@ -6,8 +6,6 @@ const signup = async (req, res) => {
     const payload = req.body;
 
     const user = await authServices.signup(payload);
-    console.log('New user: ', user);
-
     if (!user) {
       throw commonHelper.customError('Failed to create user', 400);
     }
@@ -24,7 +22,6 @@ const sendOtp = async (req, res) => {
     const { email } = req.body;
 
     const otp = await authServices.sendOtp(email);
-    console.log('OTP in controller: ', otp);
 
     return commonHelper.customResponseHandler(res, 'Otp sent Successfully', 200, otp);
   } catch (err) {
