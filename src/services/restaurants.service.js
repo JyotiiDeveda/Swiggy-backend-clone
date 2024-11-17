@@ -10,22 +10,22 @@ const create = async data => {
     const { name, description, category, address } = data;
 
     const lookUpName = name.toLowerCase();
-    const restaurantExists = await models.Restaurant.findOne(
-      { where: { name: sequelize.where(sequelize.fn('LOWER', sequelize.col('name')), lookUpName) } },
-      { paranoid: false }
-    );
-    console.log('Existing Restaurant: ', restaurantExists);
+    const restaurantExists = await models.Restaurant.findOne({
+      where: { name: sequelize.where(sequelize.fn('LOWER', sequelize.col('name')), lookUpName) },
+      paranoid: false,
+    });
 
     // if restaurant exists actively
     if (restaurantExists && restaurantExists.deleted_at === null) {
       throw commonHelpers.customError('Restaurant already exists', 409);
     } else if (restaurantExists?.deleted_at) {
-      console.log('Existing Restaurant to restore: ', restaurantExists);
-
-      models.user.restore({
+      const [restoredRestaurant] = await models.Restaurant.restore({
         where: { id: restaurantExists.id },
+        returning: true,
         transaction: transactionContext,
       });
+      if (!restoredRestaurant) throw commonHelpers.customError('Restaurant name should be unique', 409);
+      await transactionContext.commit();
       return restaurantExists;
     }
 
