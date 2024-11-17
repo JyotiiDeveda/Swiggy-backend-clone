@@ -3,6 +3,7 @@ const restaurantsController = require('../controllers/restaurants.controller.js'
 const restaurantValidators = require('../validators/restaurants.validator');
 const authMiddlewares = require('../middlewares/auth.middleware');
 const dishValidators = require('../validators/dishes.validator');
+const multerMiddleware = require('../middlewares/multer.middleware');
 
 router.post(
   '/',
@@ -37,6 +38,16 @@ router.post(
   authMiddlewares.isAdmin,
   dishValidators.validateDishSchema,
   restaurantsController.createRestaurantsDish
+);
+
+router.patch(
+  '/:id/images',
+  authMiddlewares.authenticateToken,
+  authMiddlewares.isAuthorized,
+  authMiddlewares.isAdmin,
+  multerMiddleware.upload.single('image'),
+  restaurantValidators.validateImage,
+  restaurantsController.uploadImage
 );
 
 module.exports = router;

@@ -14,16 +14,37 @@ const validateRestaurantSchema = (req, res, next) => {
       address: Joi.object(),
     });
 
-    console.log('Validated Restaurant schema');
     const { error, value } = schema.validate(req.body);
     // console.log("Value in validate: ", value);
 
     if (error) {
-      console.log('error: ', typeof error);
       const errMsg =
         error.details.map(detail => detail.message).join(', ') || 'Restaurant data validation failed';
 
-      return commonHelper.customErrorHandler(res, errMsg, 400);
+      return commonHelper.customErrorHandler(res, errMsg, 422);
+    }
+
+    req.body = value;
+    next();
+  } catch (err) {
+    console.log('Error validating input fields: ', err);
+    return commonHelper.customErrorHandler(res, err.message, 400);
+  }
+};
+
+const validateImage = (req, res, next) => {
+  try {
+    const schema = Joi.object({
+      image: Joi.string().uri().required(),
+    });
+
+    const imageUrl = req.file.location;
+    const { error, value } = schema.validate({ image: imageUrl });
+
+    if (error) {
+      const errMsg = error.details.map(detail => detail.message).join(', ') || 'Image validation failed';
+
+      return commonHelper.customErrorHandler(res, errMsg, 422);
     }
 
     req.body = value;
@@ -36,4 +57,5 @@ const validateRestaurantSchema = (req, res, next) => {
 
 module.exports = {
   validateRestaurantSchema,
+  validateImage,
 };

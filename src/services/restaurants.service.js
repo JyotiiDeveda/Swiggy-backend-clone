@@ -4,7 +4,6 @@ const models = require('../models');
 const create = async data => {
   const { name, description, image, category, address } = data;
   const restaurantExists = await models.Restaurant.findOne({ where: { name } }, { paranoid: false });
-  console.log('Existing restaurant: ', restaurantExists);
 
   // if user exists actively
   if (restaurantExists && restaurantExists.deleted_at === null) {
@@ -57,8 +56,38 @@ const remove = async restaurantId => {
   console.log('Deleted Restaurant');
 };
 
+const uploadImage = async (restaurantId, file) => {
+  const transactionContext = await models.sequelize.transaction();
+  try {
+    if (!restaurantId) {
+      throw commonHelpers.customError('No restaurant id provided', 400);
+    }
+
+    const url = file.location;
+
+    const [updatedCnt, updatedRestaurant] = await models.Restaurant.update(
+      { image_url: url },
+      { where: { id: restaurantId }, returning: true, transaction: transactionContext }
+    );
+
+    if (updatedCnt === 0) {
+      throw commonHelpers.customError('No restaurant found: ', 404);
+    }
+    // console.log('UPDATED RESTAURANT: ', updatedRestaurant);
+
+    await transactionContext.commit();
+
+    return updatedRestaurant;
+  } catch (err) {
+    console.log('Error in uploading image for dish: ', err);
+    await transactionContext.rollback();
+    throw commonHelpers.customError(err.message, err.statusCode);
+  }
+};
+
 module.exports = {
   create,
   get,
   remove,
+  uploadImage,
 };

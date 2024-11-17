@@ -139,9 +139,39 @@ const remove = async dishId => {
   }
 };
 
+const uplaodImage = async (dishId, file) => {
+  const transactionContext = await models.sequelize.transaction();
+  try {
+    if (!dishId) {
+      throw commonHelpers.customError('No dish id provided', 400);
+    }
+
+    const url = file.location;
+
+    const [updatedCnt, updatedRestaurant] = await models.Dish.update(
+      { image_url: url },
+      { where: { id: dishId }, returning: true, transaction: transactionContext }
+    );
+
+    if (updatedCnt === 0) {
+      throw commonHelpers.customError('No dish found: ', 404);
+    }
+    // console.log('UPDATED DISH: ', updatedRestaurant);
+
+    await transactionContext.commit();
+
+    return updatedRestaurant;
+  } catch (err) {
+    console.log('Error in uploading image for dish: ', err);
+    await transactionContext.rollback();
+    throw commonHelpers.customError(err.message, err.statusCode);
+  }
+};
+
 module.exports = {
   create,
   get,
   update,
   remove,
+  uplaodImage,
 };
