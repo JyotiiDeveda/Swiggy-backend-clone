@@ -160,7 +160,7 @@ const getAllOrders = async (currentUser, userId, page, limit) => {
   const startIndex = (page - 1) * limit;
   const endIndex = page * limit;
 
-  const users = await models.Order.findAll({
+  const orders = await models.Order.findAll({
     attributes: [
       'id',
       [sequelize.col('Order.created_at'), 'orderDate'],
@@ -188,10 +188,10 @@ const getAllOrders = async (currentUser, userId, page, limit) => {
     offset: startIndex,
     limit: endIndex,
   });
-  if (!users || users.length === 0) {
+  if (!orders || orders.length === 0) {
     throw commonHelpers.customError('No users found', 404);
   }
-  return users;
+  return orders;
 };
 
 const deleteOrder = async (currentUser, userId, orderId) => {
@@ -231,9 +231,97 @@ const deleteOrder = async (currentUser, userId, orderId) => {
   }
 };
 
+const getAllUnassignedOrders = async (page, limit) => {
+  const startIndex = (page - 1) * limit;
+  const endIndex = page * limit;
+
+  const orders = await models.Order.findAll({
+    where: { status: 'preparing' },
+    offset: startIndex,
+    limit: endIndex,
+  });
+  if (!orders || orders.length === 0) {
+    throw commonHelpers.customError('No orders found', 404);
+  }
+  return orders;
+};
+
+const assignOrder = async (currentUser, userId, orderId) => {
+  const transactionContext = await sequelize.transaction();
+  try {
+    // check if user has the access
+    if (!currentUser?.userRoles.includes('Admin') && currentUser.userId !== userId) {
+      throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
+    }
+
+    // the order which has not been delivered or cancelled can only be deleted
+    const [updatedOrderCnt, updatedOrder] = await models.Order.update(
+      {
+        delivery_partner_id: userId,
+      },
+      { where: { id: orderId, status: 'preparing' }, returning: true, transaction: transactionContext }
+    );
+
+    if (updatedOrderCnt === 0) {
+      throw commonHelpers.customError('No order found', 404);
+    }
+    await transactionContext.commit();
+    return updatedOrder;
+  } catch (err) {
+    await transactionContext.rollback();
+    console.log('Error in assigning order', err.message);
+    throw commonHelpers.customError(err.message, err.statusCode);
+  }
+};
+
+const getPendingOrders = async (currentUser, userId, page, limit) => {
+  if (!currentUser?.userRoles.includes('Admin') && currentUser.userId !== userId) {
+    throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
+  }
+
+  const startIndex = (page - 1) * limit;
+  const endIndex = page * limit;
+
+  const orders = await models.Order.findAll({
+    where: { delivery_partner_id: userId, status: 'preparing' },
+    offset: startIndex,
+    limit: endIndex,
+  });
+  if (!orders || orders.length === 0) {
+    throw commonHelpers.customError('No pending orders found', 404);
+  }
+  return orders;
+};
+
+const updateOrderStatus = async (userId, orderId, status) => {
+  const transactionContext = await sequelize.transaction();
+  try {
+    const [updatedOrderCnt, updatedOrder] = await models.Order.update(
+      {
+        status: status,
+      },
+      { where: { id: orderId }, returning: true, transaction: transactionContext }
+    );
+
+    if (updatedOrderCnt === 0) {
+      throw commonHelpers.customError('No order found', 404);
+    }
+    await transactionContext.commit();
+    return updatedOrder;
+  } catch (err) {
+    await transactionContext.rollback();
+    console.log('Error in updating order status', err.message);
+    throw commonHelpers.customError(err.message, err.statusCode);
+  }
+};
+
 module.exports = {
   placeOrder,
   getOrder,
   getAllOrders,
   deleteOrder,
+  getAllUnassignedOrders,
+  getPendingOrders,
+  assignOrder,
+  updateOrderStatus,
 };
