@@ -87,6 +87,9 @@ const verifyOtp = async (email, otp) => {
 
   return token;
 };
+const logout = async () => {
+  return {};
+};
 
 const generateToken = payload => {
   const token = jwt.sign(payload, process.env.JWT_SECRET, {
@@ -101,4 +104,4 @@ const verifyToken = token => {
   return decodedToken;
 };
 
-module.exports = { signup, sendOtp, verifyOtp, generateToken, verifyToken };
+module.exports = { signup, sendOtp, verifyOtp, logout, generateToken, verifyToken };

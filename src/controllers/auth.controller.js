@@ -46,9 +46,11 @@ const login = async (req, res) => {
 const logout = async (req, res) => {
   try {
     // logout logic
-    return commonHelper.customResponseHandler(res, 'Logout Successfully', 204);
+    const token = req.user;
+    const response = await authServices.logout(token);
+    return commonHelper.customResponseHandler(res, 'Logout Successfully', 200, response);
   } catch (err) {
-    console.log(err);
+    console.log('Error in logout: ', err);
     return commonHelper.customErrorHandler(res, err.message, err.statusCode || 400);
   }
 };
