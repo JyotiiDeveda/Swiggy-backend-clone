@@ -25,7 +25,7 @@ const ORDER_STATUS = {
 };
 
 const CART_STATUS = {
-  active: 'active',
+  ACTIVE: 'active',
   LOCKED: 'locked',
 };
 
@@ -40,6 +40,11 @@ const ENTITY_TYPE = {
   DISH: 'dish',
 };
 
+const PAYMENT_TYPE = {
+  ONLINE: 'online',
+  CASH_ON_DELIVERY: 'cash-on-delivery',
+};
+
 module.exports = {
   ROLES,
   RESTAURANT_CATEGORY,
@@ -50,4 +55,5 @@ module.exports = {
   CART_STATUS,
   PAYMENT_STATUS,
   ENTITY_TYPE,
+  PAYMENT_TYPE,
 };
