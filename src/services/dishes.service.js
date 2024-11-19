@@ -151,7 +151,7 @@ const getAll = async queryOptions => {
     ],
     group: ['Dish.id', 'Restaurant.id'],
     offset: startIndex,
-    order: [[sort, order]],
+    order: [[sort, `${order} NULLS LAST`]],
     limit: endIndex,
   });
 
