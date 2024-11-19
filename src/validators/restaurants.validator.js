@@ -9,7 +9,7 @@ const validateRestaurantSchema = (req, res, next) => {
       description: Joi.string().required().min(10),
       category: Joi.string()
         .required()
-        .valid(...constants.RESTAURANT_CATEGORY),
+        .valid(...Object.values(constants.RESTAURANT_CATEGORY)),
       address: Joi.object(),
     });
 
