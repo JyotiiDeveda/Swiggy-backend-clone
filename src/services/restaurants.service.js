@@ -11,7 +11,10 @@ const create = async data => {
 
     const lookUpName = name.toLowerCase();
     const restaurantExists = await models.Restaurant.findOne({
-      where: { name: sequelize.where(sequelize.fn('LOWER', sequelize.col('name')), lookUpName) },
+      where: {
+        name: sequelize.where(sequelize.fn('LOWER', sequelize.col('name')), lookUpName),
+        'address.pincode': { [Op.eq]: address.pincode },
+      },
       paranoid: false,
     });
 
@@ -57,16 +60,12 @@ const get = async restaurantId => {
 
   const restaurant = await models.Restaurant.findOne({
     where: { id: restaurantId },
-    attributes: [
-      'id',
-      'name',
-      'description',
-      'image_url',
-      'category',
-      'address',
-      [sequelize.fn('round', sequelize.fn('avg', sequelize.col('ratings.rating')), 2), 'avg_rating'],
-      [sequelize.fn('count', sequelize.col('ratings.rating')), 'ratings_cnt'],
-    ],
+    attributes: {
+      include: [
+        [sequelize.fn('round', sequelize.fn('avg', sequelize.col('ratings.rating')), 2), 'avg_rating'],
+        [sequelize.fn('count', sequelize.col('ratings.rating')), 'ratings_cnt'],
+      ],
+    },
     include: [
       {
         model: models.Dish,
