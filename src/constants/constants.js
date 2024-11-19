@@ -1,3 +1,9 @@
+const ROLES = {
+  ADMIN: 'Admin',
+  CUSTOMER: 'Customer',
+  DELIVERY_PARTNER: 'Delivery Partner',
+};
+
 const RESTAURANT_CATEGORY = {
   VEG: 'veg',
   NON_VEG: 'non-veg',
@@ -35,6 +41,7 @@ const ENTITY_TYPE = {
 };
 
 module.exports = {
+  ROLES,
   RESTAURANT_CATEGORY,
   DISH_CATEGORY,
   GST_RATE,
