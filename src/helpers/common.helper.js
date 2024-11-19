@@ -4,11 +4,11 @@ const customError = (msg, statusCode = 400) => {
   return error;
 };
 
-const customResponseHandler = (res, message, statusCode = 200, data = {}) => {
-  return res.status(statusCode).json({
+const customResponseHandler = (req, res) => {
+  return res.status(res.statusCode).json({
     success: true,
-    message: message,
-    data: data,
+    message: res.message,
+    data: res.data,
   });
 };
 
