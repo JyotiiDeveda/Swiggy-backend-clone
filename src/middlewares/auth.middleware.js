@@ -1,6 +1,7 @@
 const commonHelper = require('../helpers/common.helper');
 const jwtHelper = require('../helpers/jwt.helper');
 const models = require('../models');
+const constants = require('../constants/constants');
 
 const authenticateToken = async (req, res, next) => {
   try {
@@ -31,10 +32,13 @@ const authenticateToken = async (req, res, next) => {
 const isAuthorized = (req, res, next) => {
   try {
     const userRoles = req?.user?.userRoles;
-    if (userRoles && (userRoles.includes('Customer') || userRoles.includes('Admin'))) {
+    if (
+      userRoles &&
+      (userRoles.includes(constants.ROLES.ADMIN) || userRoles.includes(constants.ROLES.CUSTOMER))
+    ) {
       return next();
     }
-    return commonHelper.customErrorHandler(res, 'User is not authorized', 403);
+    return commonHelper.customErrorHandler(res, 'Admin or authorized user can access this route', 403);
   } catch (err) {
     console.log('Error in authorizing: ', err.message);
     return commonHelper.customErrorHandler(res, err.message, 401);
@@ -44,10 +48,10 @@ const isAuthorized = (req, res, next) => {
 const isAdmin = (req, res, next) => {
   try {
     const userRoles = req?.user?.userRoles;
-    if (userRoles && userRoles.includes('Admin')) {
+    if (userRoles && userRoles.includes(constants.ROLES.ADMIN)) {
       return next();
     }
-    return commonHelper.customErrorHandler(res, 'User is not authorized as Customer or admin', 403);
+    return commonHelper.customErrorHandler(res, 'User is not authorized.', 403);
   } catch (err) {
     console.log('Error in authorizing customer: ', err.message);
     return commonHelper.customErrorHandler(res, err.message, 401);
@@ -57,10 +61,17 @@ const isAdmin = (req, res, next) => {
 const isAuthorizedDeliveryPartner = (req, res, next) => {
   try {
     const userRoles = req?.user?.userRoles;
-    if (userRoles && (userRoles.includes('Delivery Partner') || userRoles.includes('Admin'))) {
+    if (
+      userRoles &&
+      (userRoles.includes(constants.ROLES.ADMIN) || userRoles.includes(constants.ROLES.DELIVERY_PARTNER))
+    ) {
       return next();
     }
-    return commonHelper.customErrorHandler(res, 'User is not authorized as delivery partner or admin', 403);
+    return commonHelper.customErrorHandler(
+      res,
+      'Admin or authorized Delivery partner can access this route.',
+      403
+    );
   } catch (err) {
     console.log('Error in authorizing Delivery Partner: ', err.message);
     return commonHelper.customErrorHandler(res, err.message, 401);

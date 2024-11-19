@@ -1,4 +1,5 @@
 const commonHelpers = require('../helpers/common.helper');
+const constants = require('../constants/constants');
 const models = require('../models');
 const { Op } = require('sequelize');
 
@@ -10,7 +11,7 @@ const createRestaurantsRating = async (restaurantId, value, userId) => {
     let payload = {
       user_id: userId,
       restaurant_id: restaurantId,
-      entity_type: 'restaurant',
+      entity_type: constants.ENTITY_TYPE.RESTAURANT,
       rating: value,
     };
 
@@ -24,7 +25,11 @@ const createRestaurantsRating = async (restaurantId, value, userId) => {
     // check if rating already exists
     const ratingExists = await models.Rating.findOne({
       where: {
-        [Op.and]: [{ user_id: userId }, { entity_type: 'restaurant' }, { restaurant_id: restaurantId }],
+        [Op.and]: [
+          { user_id: userId },
+          { entity_type: constants.ENTITY_TYPE.RESTAURANT },
+          { restaurant_id: restaurantId },
+        ],
       },
     });
 
@@ -61,7 +66,7 @@ const createDishesRating = async (dishId, value, userId) => {
     let payload = {
       user_id: userId,
       dish_id: dishId,
-      entity_type: 'dish',
+      entity_type: constants.ENTITY_TYPE.DISH,
       rating: value,
     };
 
@@ -77,7 +82,7 @@ const createDishesRating = async (dishId, value, userId) => {
     //check if rating already exists
     const ratingExists = await models.Rating.findOne({
       where: {
-        [Op.and]: [{ user_id: userId }, { entity_type: 'dish' }, { dish_id: dishId }],
+        [Op.and]: [{ user_id: userId }, { entity_type: constants.ENTITY_TYPE.DISH }, { dish_id: dishId }],
       },
     });
 

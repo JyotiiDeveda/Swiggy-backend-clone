@@ -1,4 +1,5 @@
 const commonHelpers = require('../helpers/common.helper');
+const constants = require('../constants/constants');
 const paymentsHelper = require('../helpers/payments.helper');
 const models = require('../models');
 const { sequelize } = require('../models');
@@ -14,7 +15,7 @@ const makePayment = async (currentUser, payload) => {
     const orderExists = await models.Order.findOne({
       where: {
         id: orderId,
-        status: 'preparing',
+        status: constants.ORDER_STATUS.PREPARING,
       },
       include: {
         model: models.Cart,
@@ -48,7 +49,7 @@ const makePayment = async (currentUser, payload) => {
         order_id: orderId,
         total_amount: totalCost,
         type,
-        status: 'successfull',
+        status: constants.PAYMENT_STATUS.SUCCESSFUL,
       },
       { transaction: transactionContext }
     );

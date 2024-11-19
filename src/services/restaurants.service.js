@@ -191,7 +191,6 @@ const remove = async restaurantId => {
       where: { id: restaurantId },
       transaction: transactionContext,
     });
-    console.log('Deleted Dish: ', deletedCount);
 
     if (deletedCount === 0) {
       throw commonHelpers.customError('No restaurant found', 404);
