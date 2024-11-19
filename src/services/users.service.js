@@ -166,10 +166,12 @@ const getAll = async queryOptions => {
 
   let filter = {};
   const userRole = role?.toLowerCase();
-  if (userRole === constants.ROLES.CUSTOMER) {
-    filter.name = constants.ROLES.CUSTOMER;
-  } else if (userRole === constants.ROLES.DELIVERY_PARTNER) {
+  if (userRole === 'admin') {
+    filter.name = constants.ROLES.ADMIN;
+  } else if (userRole === 'delivery-partner') {
     filter.name = constants.ROLES.DELIVERY_PARTNER;
+  } else if (userRole === 'customer') {
+    filter.name = constants.ROLES.CUSTOMER;
   }
 
   const users = await models.User.findAll({
