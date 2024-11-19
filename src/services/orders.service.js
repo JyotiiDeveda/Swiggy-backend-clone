@@ -25,7 +25,7 @@ const placeOrder = async (currentUser, userId, payload) => {
     }
 
     const cartDishDetails = await models.Cart.findOne({
-      where: { id: cartId, status: constants.ORDER_STATUS.ACTIVE },
+      where: { id: cartId, status: constants.CART_STATUS.ACTIVE },
       include: {
         model: models.Dish,
         as: 'dishes',
