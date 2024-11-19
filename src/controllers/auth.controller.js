@@ -1,7 +1,7 @@
 const authServices = require('../services/auth.service');
 const commonHelper = require('../helpers/common.helper');
 
-const signup = async (req, res) => {
+const signup = async (req, res, next) => {
   try {
     const payload = req.body;
 
@@ -10,48 +10,63 @@ const signup = async (req, res) => {
       throw commonHelper.customError('Failed to create user', 400);
     }
 
-    return commonHelper.customResponseHandler(res, 'User created successfully', 201, user);
+    res.statusCode = 201;
+    res.data = user;
+    res.message = 'User created successfully';
+    next();
   } catch (err) {
     console.log('Error in signup', err);
     return commonHelper.customErrorHandler(res, err.message, err.statusCode);
   }
 };
 
-const sendOtp = async (req, res) => {
+const sendOtp = async (req, res, next) => {
   try {
     const { email } = req.body;
-
     const otp = await authServices.sendOtp(email);
 
-    return commonHelper.customResponseHandler(res, 'Otp sent Successfully', 200, otp);
+    res.statusCode = 200;
+    // res.message = 'Otp sent Successfully';
+    res.data = otp;
+
+    next();
   } catch (err) {
     console.log(err);
-    return commonHelper.customErrorHandler(res, err.message, err.statusCode || 400);
+    return commonHelper.customErrorHandler(res, err.message, err.statusCode);
   }
 };
 
-const login = async (req, res) => {
+const login = async (req, res, next) => {
   try {
     const { email, otp } = req.body;
 
     const token = await authServices.verifyOtp(email, otp);
 
-    return commonHelper.customResponseHandler(res, 'Login Successfully', 200, token);
+    res.statusCode = 200;
+    res.message = 'Login Successfully';
+    res.data = token;
+
+    next();
   } catch (err) {
     console.log(err);
-    return commonHelper.customErrorHandler(res, err.message, err.statusCode || 400);
+    return commonHelper.customErrorHandler(res, err.message, err.statusCode);
   }
 };
 
-const logout = async (req, res) => {
+const logout = async (req, res, next) => {
   try {
     // logout logic
     const token = req.user;
     const response = await authServices.logout(token);
-    return commonHelper.customResponseHandler(res, 'Logout Successfully', 200, response);
+
+    res.statusCode = 200;
+    res.message = 'Logout Successfully';
+    res.data = response;
+
+    return next();
   } catch (err) {
     console.log('Error in logout: ', err);
-    return commonHelper.customErrorHandler(res, err.message, err.statusCode || 400);
+    return commonHelper.customErrorHandler(res, err.message, err.statusCode);
   }
 };
 
