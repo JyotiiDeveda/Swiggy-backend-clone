@@ -65,11 +65,22 @@ const createRestaurantsRating = async (req, res) => {
     const restaurantId = req.params['id'];
     const userId = req.user.userId;
     const newRating = await ratingServices.createRestaurantsRating(restaurantId, rating, userId);
-    console.log('New rating: ', newRating);
     return commonHelper.customResponseHandler(res, 'Restaurant rated successfully', 201, newRating);
   } catch (err) {
     console.log('Error in rating restaurant: ', err);
     return commonHelper.customErrorHandler(res, err.message, err.statusCode);
+  }
+};
+
+const deleteRating = async (req, res) => {
+  try {
+    const restaurantId = req.params['restaurantId'];
+    const ratingId = req.params['ratingId'];
+    await ratingServices.deleteRestaurantRating(restaurantId, ratingId);
+    return commonHelper.customResponseHandler(res, 'Deleted rating successfully', 204);
+  } catch (err) {
+    console.log('Error in deleting rating: ', err.message);
+    return commonHelper.customErrorHandler(res, err.message, 400);
   }
 };
 
@@ -105,6 +116,7 @@ module.exports = {
   update,
   remove,
   createRestaurantsRating,
+  deleteRating,
   createRestaurantsDish,
   uploadImage,
 };

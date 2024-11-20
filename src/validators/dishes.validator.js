@@ -4,14 +4,12 @@ const constants = require('../constants/constants');
 
 const validateDishSchema = (req, res, next) => {
   try {
-    console.log('DISH CATEGORY: ', ...constants.DISH_CATEGORY);
     const schema = Joi.object({
       name: Joi.string().required().min(3),
       description: Joi.string().required().min(10),
-      image: Joi.string().uri(),
       category: Joi.string()
         .required()
-        .valid(...constants.DISH_CATEGORY),
+        .valid(...Object.values(constants.DISH_CATEGORY)),
       price: Joi.number().precision(2).options({ convert: false }).required(),
       quantity: Joi.number().options({ convert: false }).required(),
     });

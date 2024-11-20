@@ -2,12 +2,15 @@ const commonHelpers = require('../helpers/common.helper');
 const paymentsHelper = require('../helpers/payments.helper');
 const models = require('../models');
 const { sequelize } = require('../models');
+const mailHelper = require('../helpers/mail.helper');
 
-const makePayment = async (userId, payload) => {
+const makePayment = async (currentUser, payload) => {
   const transactionContext = await sequelize.transaction();
   try {
+    const { userId, email } = currentUser;
     const { orderId, type } = payload;
     // check if an unplaced order exists
+
     const orderExists = await models.Order.findOne({
       where: {
         id: orderId,
@@ -54,6 +57,7 @@ const makePayment = async (userId, payload) => {
       throw commonHelpers.customError('Error in payment', 400);
     }
 
+    await mailHelper.sendPaymentStatusMail(email, orderId, newPayment);
     await transactionContext.commit();
     return newPayment;
   } catch (err) {

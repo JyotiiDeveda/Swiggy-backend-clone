@@ -7,10 +7,9 @@ const validateRestaurantSchema = (req, res, next) => {
     const schema = Joi.object({
       name: Joi.string().required().min(3),
       description: Joi.string().required().min(10),
-      image: Joi.string().uri(),
       category: Joi.string()
         .required()
-        .valid(...constants.RESTAURANT_CATEGORY),
+        .valid(...Object.values(constants.RESTAURANT_CATEGORY)),
       address: Joi.object(),
     });
 
@@ -38,10 +37,10 @@ const validateRestaurantSchema = (req, res, next) => {
 const validateImage = (req, res, next) => {
   try {
     const schema = Joi.object({
-      image: Joi.string().uri().required(),
+      image: Joi.binary().required(),
     });
 
-    const imageUrl = req.file.location;
+    const imageUrl = req.file.buffer;
     const { error, value } = schema.validate({ image: imageUrl });
 
     if (error) {
@@ -53,7 +52,6 @@ const validateImage = (req, res, next) => {
 
       return commonHelper.customErrorHandler(res, errMsg, 422);
     }
-
     req.body = value;
     next();
   } catch (err) {

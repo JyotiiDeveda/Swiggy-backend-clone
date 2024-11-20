@@ -6,14 +6,12 @@ const authenticateToken = async (req, res, next) => {
   try {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
-    // console.log("Token: ", token);
 
     if (!token) {
       return commonHelper.customErrorHandler(res, 'Token not found', 401);
     }
 
     const decode = jwtHelper.verifyToken(token);
-    console.log('Decode: ', decode);
 
     // check if user exists
     const userDetails = await models.User.findByPk(decode.userId);
@@ -33,7 +31,6 @@ const authenticateToken = async (req, res, next) => {
 const isAuthorized = (req, res, next) => {
   try {
     const userRoles = req?.user?.userRoles;
-    console.log('User roles: ', req.user);
     if (userRoles && (userRoles.includes('Customer') || userRoles.includes('Admin'))) {
       return next();
     }
@@ -47,7 +44,6 @@ const isAuthorized = (req, res, next) => {
 const isAdmin = (req, res, next) => {
   try {
     const userRoles = req?.user?.userRoles;
-    console.log('User roles: ', req.user);
     if (userRoles && userRoles.includes('Admin')) {
       return next();
     }
@@ -61,7 +57,6 @@ const isAdmin = (req, res, next) => {
 const isAuthorizedDeliveryPartner = (req, res, next) => {
   try {
     const userRoles = req?.user?.userRoles;
-    console.log('User roles: ', req.user);
     if (userRoles && (userRoles.includes('Delivery Partner') || userRoles.includes('Admin'))) {
       return next();
     }

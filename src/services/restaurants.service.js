@@ -2,6 +2,7 @@ const commonHelpers = require('../helpers/common.helper');
 const models = require('../models');
 const { sequelize } = require('../models');
 const { Op } = require('sequelize');
+const { uploadToS3 } = require('../helpers/image-upload.helper');
 
 const create = async data => {
   const transactionContext = await sequelize.transaction();
@@ -9,19 +10,25 @@ const create = async data => {
     const { name, description, category, address } = data;
 
     const lookUpName = name.toLowerCase();
-    const restaurantExists = await models.Restaurant.findOne(
-      { where: { name: sequelize.where(sequelize.fn('LOWER', sequelize.col('name')), lookUpName) } },
-      { paranoid: false }
-    );
+    const restaurantExists = await models.Restaurant.findOne({
+      where: {
+        name: sequelize.where(sequelize.fn('LOWER', sequelize.col('name')), lookUpName),
+        'address.pincode': { [Op.eq]: address.pincode },
+      },
+      paranoid: false,
+    });
 
     // if restaurant exists actively
     if (restaurantExists && restaurantExists.deleted_at === null) {
       throw commonHelpers.customError('Restaurant already exists', 409);
     } else if (restaurantExists?.deleted_at) {
-      models.user.restore({
+      const [restoredRestaurant] = await models.Restaurant.restore({
         where: { id: restaurantExists.id },
+        returning: true,
         transaction: transactionContext,
       });
+      if (!restoredRestaurant) throw commonHelpers.customError('Restaurant name should be unique', 409);
+      await transactionContext.commit();
       return restaurantExists;
     }
 
@@ -53,16 +60,12 @@ const get = async restaurantId => {
 
   const restaurant = await models.Restaurant.findOne({
     where: { id: restaurantId },
-    attributes: [
-      'id',
-      'name',
-      'description',
-      'image_url',
-      'category',
-      'address',
-      [sequelize.fn('round', sequelize.fn('avg', sequelize.col('ratings.rating')), 2), 'avg_rating'],
-      [sequelize.fn('count', sequelize.col('ratings.rating')), 'ratings_cnt'],
-    ],
+    attributes: {
+      include: [
+        [sequelize.fn('round', sequelize.fn('avg', sequelize.col('ratings.rating')), 2), 'avg_rating'],
+        [sequelize.fn('count', sequelize.col('ratings.rating')), 'ratings_cnt'],
+      ],
+    },
     include: [
       {
         model: models.Dish,
@@ -204,25 +207,21 @@ const remove = async restaurantId => {
 const uploadImage = async (restaurantId, file) => {
   const transactionContext = await sequelize.transaction();
   try {
-    if (!restaurantId) {
-      throw commonHelpers.customError('No restaurant id provided', 400);
+    // check if restaurant exists
+    const restaurantExists = await models.Restaurant.findOne({ where: { id: restaurantId } });
+
+    if (!restaurantExists) {
+      throw commonHelpers.customError('Restaurant not found', 404);
     }
 
-    const url = file.location;
+    const imageUrl = await uploadToS3(file);
 
-    const [updatedCnt, updatedRestaurant] = await models.Restaurant.update(
-      { image_url: url },
-      { where: { id: restaurantId }, returning: true, transaction: transactionContext }
-    );
-
-    if (updatedCnt === 0) {
-      throw commonHelpers.customError('No restaurant found: ', 404);
-    }
-    // console.log('UPDATED RESTAURANT: ', updatedRestaurant);
+    restaurantExists.image_url = imageUrl;
+    await restaurantExists.save({ transaction: transactionContext });
 
     await transactionContext.commit();
 
-    return updatedRestaurant;
+    return restaurantExists;
   } catch (err) {
     console.log('Error in uploading image for dish: ', err);
     await transactionContext.rollback();

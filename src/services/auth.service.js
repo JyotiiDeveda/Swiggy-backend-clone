@@ -80,11 +80,15 @@ const verifyOtp = async (email, otp) => {
   const payload = {
     userId: userDetails.id,
     userRoles,
+    email,
   };
 
   const token = generateToken(payload);
 
   return token;
+};
+const logout = async () => {
+  return {};
 };
 
 const generateToken = payload => {
@@ -100,4 +104,4 @@ const verifyToken = token => {
   return decodedToken;
 };
 
-module.exports = { signup, sendOtp, verifyOtp, generateToken, verifyToken };
+module.exports = { signup, sendOtp, verifyOtp, logout, generateToken, verifyToken };
