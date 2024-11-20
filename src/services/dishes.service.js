@@ -1,5 +1,6 @@
 const commonHelpers = require('../helpers/common.helper');
 const models = require('../models');
+const constants = require('../constants/constants');
 const { sequelize } = require('../models');
 const { Op } = require('sequelize');
 const { uploadToS3 } = require('../helpers/image-upload.helper');
@@ -17,10 +18,16 @@ const create = async (restaurantId, data) => {
     }
 
     const dishType = category.toLowerCase();
-    if (dishType === 'veg' && restaurantExists.category === 'non-veg') {
-      throw commonHelpers.customError('A vegeterian dish cannot be added to non-vegeterian restaurant', 404);
-    } else if (dishType === 'non-veg' && restaurantExists.category === 'veg') {
-      throw commonHelpers.customError('A non-vegeterian dish cannot be added to vegeterian restaurant', 404);
+    if (
+      dishType === constants.DISH_CATEGORY.VEG &&
+      restaurantExists.category === constants.RESTAURANT_CATEGORY.NON_VEG
+    ) {
+      throw commonHelpers.customError('A vegeterian dish cannot be added to non-vegeterian restaurant', 422);
+    } else if (
+      dishType === constants.DISH_CATEGORY.NON_VEG &&
+      restaurantExists.category === constants.RESTAURANT_CATEGORY.VEG
+    ) {
+      throw commonHelpers.customError('A non-vegeterian dish cannot be added to vegeterian restaurant', 422);
     }
 
     const lookUpName = name.toLowerCase();
@@ -54,7 +61,7 @@ const create = async (restaurantId, data) => {
   } catch (err) {
     await transactionContext.rollback();
     console.log('Error in creating dish', err.message);
-    throw commonHelpers.customError(err.message, 409);
+    throw commonHelpers.customError(err.message, err.statusCode);
   }
 };
 
@@ -95,7 +102,6 @@ const getAll = async queryOptions => {
   // sortBy --- price or rating
   // orderBy --- ascending or descending
   const { name = '', category, sortBy = '', orderBy = 1, page = 1, limit = 10 } = queryOptions;
-  console.log('Query options: ', queryOptions);
 
   const startIndex = (page - 1) * limit;
   const endIndex = page * limit;
@@ -196,7 +202,6 @@ const remove = async dishId => {
       where: { id: dishId },
       transaction: transactionContext,
     });
-    console.log('Deleted Dish: ', deletedCount);
 
     if (deletedCount === 0) {
       throw commonHelpers.customError('No dish found', 404);

@@ -1,4 +1,5 @@
 const commonHelpers = require('../helpers/common.helper');
+const constants = require('../constants/constants');
 const { Op } = require('sequelize');
 const models = require('../models');
 const { sequelize } = require('../models');
@@ -42,7 +43,7 @@ const create = async data => {
     await newUser.save({ transaction: transactionContext });
 
     // a user can signup with customer role only
-    const roleDetails = await models.Role.findOne({ where: { name: 'Customer' } });
+    const roleDetails = await models.Role.findOne({ where: { name: constants.ROLES.CUSTOMER } });
 
     // assign role to user
     const userRole = await models.UserRole.findOrCreate({
@@ -60,14 +61,14 @@ const create = async data => {
   } catch (err) {
     await transactionContext.rollback();
     console.log('Error in creating user', err.message);
-    throw commonHelpers.customError(err.message, 400);
+    throw commonHelpers.customError(err.message, err.statusCode);
   }
 };
 
 const assignRole = async (currentUser, userId, roleId) => {
   const transactionContext = await sequelize.transaction();
   try {
-    if (!currentUser?.userRoles.includes('Admin') && currentUser.userId !== userId) {
+    if (!currentUser?.userRoles.includes(constants.ROLES.ADMIN) && currentUser.userId !== userId) {
       throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
     }
     // a user can signup with customer role only
@@ -94,14 +95,14 @@ const assignRole = async (currentUser, userId, roleId) => {
   } catch (err) {
     await transactionContext.rollback();
     console.log('Error while adding delivery partner', err.message);
-    throw commonHelpers.customError(err.message, 400);
+    throw commonHelpers.customError(err.message, err.statusCode);
   }
 };
 
 const addAddress = async (currentUser, userId, address) => {
   const transactionContext = await sequelize.transaction();
   try {
-    if (!currentUser?.userRoles.includes('Admin') && currentUser.userId !== userId) {
+    if (!currentUser?.userRoles.includes(constants.ROLES.ADMIN) && currentUser.userId !== userId) {
       throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
     }
 
@@ -117,21 +118,20 @@ const addAddress = async (currentUser, userId, address) => {
   } catch (err) {
     await transactionContext.rollback();
     console.log('Error while updating address', err.message);
-    throw commonHelpers.customError(err.message, 400);
+    throw commonHelpers.customError(err.message, err.statusCode);
   }
 };
 
 const removeAccount = async (currentUser, userId) => {
   const transactionContext = await sequelize.transaction();
   try {
-    if (!currentUser?.userRoles.includes('Admin') && currentUser.userId !== userId) {
+    if (!currentUser?.userRoles.includes(constants.ROLES.ADMIN) && currentUser.userId !== userId) {
       throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
     }
     const deletedCount = await models.User.destroy({
       where: { id: userId },
       transaction: transactionContext,
     });
-    console.log('Deleted user count: ', deletedCount);
 
     if (deletedCount === 0) {
       throw commonHelpers.customError('No user found', 404);
@@ -142,12 +142,10 @@ const removeAccount = async (currentUser, userId) => {
     console.log('Error in deleting user', err.message);
     throw commonHelpers.customError(err.message, err.statusCode);
   }
-
-  console.log('Deleted user');
 };
 
 const get = async (currentUser, userId) => {
-  if (!currentUser?.userRoles.includes('Admin') && currentUser.userId !== userId) {
+  if (!currentUser?.userRoles.includes(constants.ROLES.ADMIN) && currentUser.userId !== userId) {
     throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
   }
   const userDetails = await models.User.findOne({
@@ -168,10 +166,10 @@ const getAll = async queryOptions => {
 
   let filter = {};
   const userRole = role?.toLowerCase();
-  if (userRole === 'customer') {
-    filter.name = 'Customer';
-  } else if (userRole === 'delivery-partner') {
-    filter.name = 'Delivery Partner';
+  if (userRole === constants.ROLES.CUSTOMER) {
+    filter.name = constants.ROLES.CUSTOMER;
+  } else if (userRole === constants.ROLES.DELIVERY_PARTNER) {
+    filter.name = constants.ROLES.DELIVERY_PARTNER;
   }
 
   const users = await models.User.findAll({

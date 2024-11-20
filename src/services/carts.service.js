@@ -1,4 +1,5 @@
 const commonHelpers = require('../helpers/common.helper');
+const constants = require('../constants/constants');
 const models = require('../models');
 const { sequelize } = require('../models');
 
@@ -20,7 +21,7 @@ const addItem = async (userId, payload) => {
 
     //find active cart or create one
     const [cart, created] = await models.Cart.findOrCreate({
-      where: { user_id: userId, status: 'active' },
+      where: { user_id: userId, status: constants.CART_STATUS.ACTIVE },
       attributes: {
         include: [
           [sequelize.fn('count', sequelize.col('dishes.id')), 'dishes_cnt'],
@@ -107,7 +108,7 @@ const emptyCart = async (userId, cartId) => {
   const transactionContext = await sequelize.transaction();
   try {
     const activeCartExists = await models.Cart.findOne({
-      where: { id: cartId, user_id: userId, status: 'active' },
+      where: { id: cartId, user_id: userId, status: constants.CART_STATUS.ACTIVE },
     });
 
     if (!activeCartExists) {

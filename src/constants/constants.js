@@ -1,3 +1,9 @@
+const ROLES = {
+  ADMIN: 'Admin',
+  CUSTOMER: 'Customer',
+  DELIVERY_PARTNER: 'Delivery Partner',
+};
+
 const RESTAURANT_CATEGORY = {
   VEG: 'veg',
   NON_VEG: 'non-veg',
@@ -19,7 +25,7 @@ const ORDER_STATUS = {
 };
 
 const CART_STATUS = {
-  active: 'active',
+  ACTIVE: 'active',
   LOCKED: 'locked',
 };
 
@@ -34,7 +40,13 @@ const ENTITY_TYPE = {
   DISH: 'dish',
 };
 
+const PAYMENT_TYPE = {
+  ONLINE: 'online',
+  CASH_ON_DELIVERY: 'cash-on-delivery',
+};
+
 module.exports = {
+  ROLES,
   RESTAURANT_CATEGORY,
   DISH_CATEGORY,
   GST_RATE,
@@ -43,4 +55,5 @@ module.exports = {
   CART_STATUS,
   PAYMENT_STATUS,
   ENTITY_TYPE,
+  PAYMENT_TYPE,
 };

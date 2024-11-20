@@ -9,7 +9,7 @@ const placeOrder = async (currentUser, userId, payload) => {
   const transactionContext = await sequelize.transaction();
   try {
     // check if user can access the endpoint
-    if (!currentUser?.userRoles.includes('Admin') && currentUser.userId !== userId) {
+    if (!currentUser?.userRoles.includes(constants.ROLES.ADMIN) && currentUser.userId !== userId) {
       throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
     }
 
@@ -25,7 +25,7 @@ const placeOrder = async (currentUser, userId, payload) => {
     }
 
     const cartDishDetails = await models.Cart.findOne({
-      where: { id: cartId, status: 'active' },
+      where: { id: cartId, status: constants.ORDER_STATUS.ACTIVE },
       include: {
         model: models.Dish,
         as: 'dishes',
@@ -105,7 +105,7 @@ const placeOrder = async (currentUser, userId, payload) => {
     }
 
     // lock the cart if ordered placed
-    cartDishDetails.status = 'locked';
+    cartDishDetails.status = constants.ORDER_STATUS.LOCKED;
     await cartDishDetails.save({ transaction: transactionContext });
 
     // send mail
@@ -122,7 +122,7 @@ const placeOrder = async (currentUser, userId, payload) => {
 
 const getOrder = async (currentUser, userId, orderId) => {
   // check if user has the access
-  if (!currentUser?.userRoles.includes('Admin') && currentUser.userId !== userId) {
+  if (!currentUser?.userRoles.includes(constants.ROLES.ADMIN) && currentUser.userId !== userId) {
     throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
   }
 
@@ -158,7 +158,7 @@ const getOrder = async (currentUser, userId, orderId) => {
 
 const getAllOrders = async (currentUser, userId, page, limit) => {
   // check if user has the access
-  if (!currentUser?.userRoles.includes('Admin') && currentUser.userId !== userId) {
+  if (!currentUser?.userRoles.includes(constants.ROLES.ADMIN) && currentUser.userId !== userId) {
     throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
   }
 
@@ -169,7 +169,7 @@ const getAllOrders = async (currentUser, userId, page, limit) => {
     attributes: [
       'id',
       [sequelize.col('Order.created_at'), 'orderDate'],
-      [sequelize.col('Restaurant.name'), 'restaurant'],
+      [sequelize.col('Restaurant.name'), constants.ENTITY_TYPE.RESTAURANT],
       'delivery_charges',
       'order_charges',
       'gst',
@@ -203,13 +203,13 @@ const deleteOrder = async (currentUser, userId, orderId) => {
   const transactionContext = await sequelize.transaction();
   try {
     // check if user has the access
-    if (!currentUser?.userRoles.includes('Admin') && currentUser.userId !== userId) {
+    if (!currentUser?.userRoles.includes(constants.ROLES.ADMIN) && currentUser.userId !== userId) {
       throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
     }
 
     // the order which has not been delivered or cancelled can only be deleted
     const deletedOrder = await models.Order.destroy({
-      where: { id: orderId, status: 'preparing' },
+      where: { id: orderId, status: constants.ORDER_STATUS.PREPARING },
       returning: true,
       transaction: transactionContext,
     });
@@ -241,7 +241,7 @@ const getAllUnassignedOrders = async (page, limit) => {
   const endIndex = page * limit;
 
   const orders = await models.Order.findAll({
-    where: { status: 'preparing' },
+    where: { status: constants.ORDER_STATUS.PREPARING },
     offset: startIndex,
     limit: endIndex,
   });
@@ -255,7 +255,7 @@ const assignOrder = async (currentUser, userId, orderId) => {
   const transactionContext = await sequelize.transaction();
   try {
     // check if user has the access
-    if (!currentUser?.userRoles.includes('Admin') && currentUser.userId !== userId) {
+    if (!currentUser?.userRoles.includes(constants.ROLES.ADMIN) && currentUser.userId !== userId) {
       throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
     }
 
@@ -264,7 +264,7 @@ const assignOrder = async (currentUser, userId, orderId) => {
         delivery_partner_id: userId,
       },
       {
-        where: { id: orderId, status: 'preparing' },
+        where: { id: orderId, status: constants.ORDER_STATUS.PREPARING },
         returning: true,
         transaction: transactionContext,
       }
@@ -293,7 +293,7 @@ const assignOrder = async (currentUser, userId, orderId) => {
 };
 
 const getPendingOrders = async (currentUser, userId, page, limit) => {
-  if (!currentUser?.userRoles.includes('Admin') && currentUser.userId !== userId) {
+  if (!currentUser?.userRoles.includes(constants.ROLES.ADMIN) && currentUser.userId !== userId) {
     throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
   }
 
@@ -301,7 +301,7 @@ const getPendingOrders = async (currentUser, userId, page, limit) => {
   const endIndex = page * limit;
 
   const orders = await models.Order.findAll({
-    where: { delivery_partner_id: userId, status: 'preparing' },
+    where: { delivery_partner_id: userId, status: constants.ORDER_STATUS.PREPARING },
     offset: startIndex,
     limit: endIndex,
   });
@@ -321,7 +321,8 @@ const updateOrderStatus = async (deliveryPartner, orderId, status) => {
     const filter = { id: orderId };
 
     // if delivery partner is not admin he can update the status of orders assigned to them only
-    if (!deliveryPartner.userRoles.includes('Admin')) filter.delivery_partner_id = deliveryPartner.userId;
+    if (!deliveryPartner.userRoles.includes(constants.ROLES.ADMIN))
+      filter.delivery_partner_id = deliveryPartner.userId;
 
     const [updatedOrderCnt, updatedOrder] = await models.Order.update(
       {
