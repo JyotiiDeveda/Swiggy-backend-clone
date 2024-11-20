@@ -25,11 +25,11 @@ const placeOrder = async (currentUser, userId, payload) => {
     }
 
     const cartDishDetails = await models.Cart.findOne({
-      where: { id: cartId, status: constants.CART_STATUS.ACTIVE },
+      where: { id: cartId, user_id: userId, status: constants.CART_STATUS.ACTIVE },
       include: {
         model: models.Dish,
         as: 'dishes',
-        attributes: ['restaurant_id', 'id', 'quantity', 'price'],
+        attributes: ['restaurant_id', 'id', 'price'],
         through: {
           attributes: ['dish_id', 'quantity', 'price'],
         },
@@ -53,24 +53,6 @@ const placeOrder = async (currentUser, userId, payload) => {
     // check if given restaurant id belongs to cart
     if (restaurantId !== cartsRestaurantId) {
       throw commonHelpers.customError('Restaurant does not belong to given cart', 422);
-    }
-
-    // check if required quantity is available and update inventory
-    for (const dish of dishes) {
-      const availableQuantity = dish.quantity;
-      const requiredQuantity = dish.CartDish.quantity;
-
-      if (requiredQuantity > availableQuantity)
-        commonHelpers.customError('Required quantity not available', 400);
-      const [updatedDishCnt] = await models.Dish.update(
-        {
-          quantity: availableQuantity - requiredQuantity,
-        },
-        { where: { id: dish.id }, transaction: transactionContext }
-      );
-
-      if (!updatedDishCnt || updatedDishCnt === 0)
-        throw commonHelpers.customError('Failed to update inventory', 400);
     }
 
     // calculate order charges, delivery charges, total_amt

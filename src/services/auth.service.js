@@ -87,6 +87,7 @@ const verifyOtp = async (email, otp) => {
 
   return token;
 };
+
 const logout = async () => {
   return {};
 };
