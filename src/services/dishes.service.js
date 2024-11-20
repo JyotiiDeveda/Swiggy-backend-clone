@@ -8,9 +8,9 @@ const { uploadToS3 } = require('../helpers/image-upload.helper');
 const create = async (restaurantId, data) => {
   const transactionContext = await sequelize.transaction();
   try {
-    const { name, description, category, price, quantity } = data;
+    const { name, description, category, price } = data;
 
-    // console.log(`${name}, ${restaurantId}, ${description}, ${image}, ${category}, ${price}, ${quantity}`);
+    // console.log(`${name}, ${restaurantId}, ${description}, ${image}, ${category}, ${price}`);
     const restaurantExists = await models.Restaurant.findOne({ where: { id: restaurantId } });
 
     if (!restaurantExists) {
@@ -39,7 +39,6 @@ const create = async (restaurantId, data) => {
     });
 
     if (dishExists) {
-      console.log('DISH ALERADY EXISTS');
       throw commonHelpers.customError('Dish already exists', 409);
     }
 
@@ -51,7 +50,6 @@ const create = async (restaurantId, data) => {
         description,
         type: dishType,
         price,
-        quantity,
       },
       { transaction: transactionContext }
     );
@@ -76,7 +74,6 @@ const get = async dishId => {
       'image_url',
       'type',
       'price',
-      'quantity',
       [
         models.sequelize.fn('round', models.sequelize.fn('avg', models.sequelize.col('ratings.rating')), 2),
         'avg_rating',
@@ -165,7 +162,7 @@ const getAll = async queryOptions => {
 const update = async (dishId, payload) => {
   const transactionContext = await models.sequelize.transaction();
   try {
-    const { name, description, category, price, quantity } = payload;
+    const { name, description, category, price } = payload;
 
     const [updatedDishCnt, updatedDish] = await models.Dish.update(
       {
@@ -173,7 +170,6 @@ const update = async (dishId, payload) => {
         description,
         type: category,
         price,
-        quantity,
       },
       {
         where: { id: dishId },

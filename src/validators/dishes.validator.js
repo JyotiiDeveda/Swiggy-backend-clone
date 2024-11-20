@@ -11,7 +11,6 @@ const validateDishSchema = (req, res, next) => {
         .required()
         .valid(...Object.values(constants.DISH_CATEGORY)),
       price: Joi.number().precision(2).options({ convert: false }).required(),
-      quantity: Joi.number().options({ convert: false }).required(),
     });
 
     const { error, value } = schema.validate(req.body);

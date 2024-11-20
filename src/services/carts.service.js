@@ -10,13 +10,8 @@ const addItem = async (userId, payload) => {
     // check if dish exists
     const dishDetails = await models.Dish.findOne({ where: { id: dishId } });
 
-    if (!dishDetails || dishDetails.quantity === 0) {
+    if (!dishDetails) {
       throw commonHelpers.customError('Dish not available', 404);
-    }
-
-    // check if quantity is available
-    if (quantity > dishDetails.quantity) {
-      throw commonHelpers.customError('Required quantity is not available , 406');
     }
 
     //find active cart or create one
@@ -32,19 +27,19 @@ const addItem = async (userId, payload) => {
       include: {
         model: models.Dish,
         as: 'dishes',
-        duplicating: false, //when no attributes are selected from associated table we may get duplicate records
+        duplicating: false,
         attributes: [],
-        through: { attributes: [] },
+        through: { attributes: [], where: { deleted_at: null } },
       },
       group: ['Cart.id', 'dishes.restaurant_id'],
       transaction: transactionContext,
     });
 
-    // if new cart is not created,
     if (!created) {
-      // check if dish exists in cart
       const dishInCart = await models.CartDish.findOne({ where: { cart_id: cart.id, dish_id: dishId } });
       if (dishInCart) {
+        console.log('DISH IN CART: ', dishInCart);
+
         dishInCart.quantity = quantity;
         await dishInCart.save({ transaction: transactionContext });
         return dishInCart;
@@ -52,9 +47,10 @@ const addItem = async (userId, payload) => {
 
       const cartRestaurant = cart.dataValues.restaurant_id;
       const dishRestaurant = dishDetails.restaurant_id;
+      console.log();
       if (cartRestaurant === dishRestaurant && parseInt(cart.dataValues.dishes_cnt) >= 5) {
         throw commonHelpers.customError('Five items can only be added in a cart', 400);
-      } else if (cartRestaurant !== dishRestaurant) {
+      } else if (cartRestaurant && cartRestaurant !== dishRestaurant) {
         throw commonHelpers.customError(
           'Adding dishes from different restaurant will replace the existing dishes in cart',
           409
