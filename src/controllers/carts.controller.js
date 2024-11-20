@@ -1,37 +1,43 @@
 const cartServices = require('../services/carts.service');
 const commonHelper = require('../helpers/common.helper');
 
-const addItem = async (req, res) => {
+const addItem = async (req, res, next) => {
   try {
     const { userId } = req.user;
     const payload = req.body;
     const updatedCart = await cartServices.addItem(userId, payload);
-    return commonHelper.customResponseHandler(res, 'Added dish to cart successfully', 201, updatedCart);
+    res.statusCode = 201;
+    res.data = updatedCart;
+    res.message = 'Added dish to cart successfully';
+    next();
   } catch (err) {
     console.log('Error in adding dish to cart: ', err);
     return commonHelper.customErrorHandler(res, err.message, err.statusCode);
   }
 };
 
-const removeItem = async (req, res) => {
+const removeItem = async (req, res, next) => {
   try {
     const cartId = req.params['cartId'];
     const dishId = req.params['dishId'];
     const { userId } = req.user;
     await cartServices.removeItem(userId, cartId, dishId);
-    return commonHelper.customResponseHandler(res, 'Removed dish from cart successfully', 204);
+    res.statusCode = 204;
+    res.message = 'Dish removed from cart';
+    next();
   } catch (err) {
     console.log('Error in removing dish from cart: ', err.message);
     return commonHelper.customErrorHandler(res, err.message, err.statusCode);
   }
 };
 
-const emptyCart = async (req, res) => {
+const emptyCart = async (req, res, next) => {
   try {
     const cartId = req.params['id'];
     const userId = req.user.userId;
     await cartServices.emptyCart(userId, cartId);
-    return commonHelper.customResponseHandler(res, 'Cart emptied successfully', 204);
+    res.statusCode = 204;
+    next();
   } catch (err) {
     console.log('Error in emptying cart: ', err.message);
     return commonHelper.customErrorHandler(res, err.message, err.statusCode);

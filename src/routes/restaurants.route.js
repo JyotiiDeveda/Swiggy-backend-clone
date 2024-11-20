@@ -5,6 +5,7 @@ const authMiddlewares = require('../middlewares/auth.middleware');
 const dishValidators = require('../validators/dishes.validator');
 const upload = require('../middlewares/multer.middleware');
 const ratingValidators = require('../validators/ratings.validator');
+const commonHelpers = require('../helpers/common.helper');
 
 // to create restaurant
 router.post(
@@ -12,19 +13,21 @@ router.post(
   authMiddlewares.authenticateToken,
   authMiddlewares.isAdmin,
   restaurantValidators.validateRestaurantSchema,
-  restaurantsController.create
+  restaurantsController.create,
+  commonHelpers.customResponseHandler
 );
 
-router.get('/', restaurantsController.getAll);
+router.get('/', restaurantsController.getAll, commonHelpers.customResponseHandler);
 
-router.get('/:id', restaurantsController.get);
+router.get('/:id', restaurantsController.get, commonHelpers.customResponseHandler);
 
 router.put(
   '/:id',
   authMiddlewares.authenticateToken,
   authMiddlewares.isAdmin,
   restaurantValidators.validateRestaurantSchema,
-  restaurantsController.update
+  restaurantsController.update,
+  commonHelpers.customResponseHandler
 );
 
 //to rate restaurant
@@ -33,7 +36,8 @@ router.post(
   authMiddlewares.authenticateToken,
   authMiddlewares.isAuthorized,
   ratingValidators.validateRatingScore,
-  restaurantsController.createRestaurantsRating
+  restaurantsController.createRestaurantsRating,
+  commonHelpers.customResponseHandler
 );
 
 // delete rating
@@ -41,14 +45,16 @@ router.delete(
   '/:restaurantId/ratings/:ratingId',
   authMiddlewares.authenticateToken,
   authMiddlewares.isAuthorized,
-  restaurantsController.deleteRating
+  restaurantsController.deleteRating,
+  commonHelpers.customResponseHandler
 );
 
 router.delete(
   '/:id',
   authMiddlewares.authenticateToken,
   authMiddlewares.isAdmin,
-  restaurantsController.remove
+  restaurantsController.remove,
+  commonHelpers.customResponseHandler
 );
 
 // to create a dish
@@ -57,7 +63,8 @@ router.post(
   authMiddlewares.authenticateToken,
   authMiddlewares.isAdmin,
   dishValidators.validateDishSchema,
-  restaurantsController.createRestaurantsDish
+  restaurantsController.createRestaurantsDish,
+  commonHelpers.customResponseHandler
 );
 
 //image upload
@@ -67,7 +74,8 @@ router.patch(
   authMiddlewares.isAdmin,
   upload.single('image'),
   restaurantValidators.validateImage,
-  restaurantsController.uploadImage
+  restaurantsController.uploadImage,
+  commonHelpers.customResponseHandler
 );
 
 module.exports = router;

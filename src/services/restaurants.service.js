@@ -89,7 +89,6 @@ const get = async restaurantId => {
 };
 
 const getAll = async queryOptions => {
-  console.log('Query options: ', queryOptions);
   const { city = '', name = '', category, orderBy = 1, page = 1, limit = 10 } = queryOptions;
   const startIndex = (page - 1) * limit;
   const endIndex = page * limit;
@@ -141,7 +140,7 @@ const getAll = async queryOptions => {
     ],
     group: ['Restaurant.id', 'dishes.id'],
     offset: startIndex,
-    order: [['avg_rating', order]],
+    order: [['avg_rating', `${order} NULLS LAST`]],
     limit: endIndex,
   });
 
