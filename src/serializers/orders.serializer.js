@@ -1,4 +1,4 @@
-const serializeOrder = (req, res, next) => {
+const serializeOrders = (req, res, next) => {
   let rows = res.data?.rows || res.data;
   const isSingleItem = !Array.isArray(rows);
 
@@ -25,5 +25,5 @@ const serializeOrder = (req, res, next) => {
 };
 
 module.exports = {
-  serializeOrder,
+  serializeOrders,
 };

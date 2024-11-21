@@ -1,4 +1,4 @@
-const serializeUser = (req, res, next) => {
+const serializeUsers = (req, res, next) => {
   let rows = res.data?.rows || res.data;
   let users = [];
 
@@ -34,5 +34,5 @@ const serializeUser = (req, res, next) => {
 };
 
 module.exports = {
-  serializeUser,
+  serializeUsers,
 };
