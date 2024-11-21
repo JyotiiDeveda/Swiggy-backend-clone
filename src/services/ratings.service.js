@@ -38,14 +38,14 @@ const createRestaurantsRating = async (restaurantId, value, userId) => {
     }
 
     //check if user has ordered something from the restaurant
-    const order = await models.Order.findOne(
-      { where: { restaurant_id: restaurantId } },
-      { include: { model: models.Cart, where: { user_id: userId } } }
-    );
+    // const order = await models.Order.findOne(
+    //   { where: { restaurant_id: restaurantId } },
+    //   { include: { model: models.Cart, where: { user_id: userId } } }
+    // );
 
-    if (!order) {
-      throw commonHelpers.customError("User has no orders from the restaurant.. can't rate", 403);
-    }
+    // if (!order) {
+    //   throw commonHelpers.customError("User has no orders from the restaurant.. can't rate", 403);
+    // }
 
     // Creating a rating
     const newRating = await models.Rating.create(payload, { transaction: transactionContext });
@@ -143,6 +143,7 @@ const deleteRestaurantRating = async (restaurantId, ratingId) => {
       throw commonHelpers.customError('No rating found for the restaurant', 404);
     }
     await transactionContext.commit();
+    return;
   } catch (err) {
     await transactionContext.rollback();
     console.log('Error in deleting rating', err.message);
@@ -168,6 +169,7 @@ const deleteDishRating = async (dishId, ratingId) => {
       throw commonHelpers.customError('No rating found for the dish', 404);
     }
     await transactionContext.commit();
+    return;
   } catch (err) {
     await transactionContext.rollback();
     console.log('Error in deleting rating', err.message);

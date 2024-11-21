@@ -92,6 +92,7 @@ const assignRole = async (currentUser, userId, roleId) => {
     }
     console.log('Assigned role successfully');
     await transactionContext.commit();
+    return;
   } catch (err) {
     await transactionContext.rollback();
     console.log('Error while adding delivery partner', err.message);
@@ -137,6 +138,7 @@ const removeAccount = async (currentUser, userId) => {
       throw commonHelpers.customError('No user found', 404);
     }
     await transactionContext.commit();
+    return;
   } catch (err) {
     await transactionContext.rollback();
     console.log('Error in deleting user', err.message);

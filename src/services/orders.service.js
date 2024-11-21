@@ -203,6 +203,7 @@ const deleteOrder = async (currentUser, userId, orderId) => {
       throw commonHelpers.customError('Associated cart not found', 404);
     }
     await transactionContext.commit();
+    return;
   } catch (err) {
     await transactionContext.rollback();
     console.log('Error in deleting dish', err.message);
