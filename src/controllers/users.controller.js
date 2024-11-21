@@ -15,7 +15,7 @@ const addAddress = async (req, res, next) => {
 
     next();
   } catch (err) {
-    console.log('Error in updating address: ', err.message);
+    console.log('Error in updating address: ', err);
     return commonHelper.customErrorHandler(res, err.message, 400);
   }
 };
@@ -33,7 +33,7 @@ const addDeliveryPartner = async (req, res, next) => {
 
     next();
   } catch (err) {
-    console.log('Error in adding delivery partner: ', err.message);
+    console.log('Error in adding delivery partner: ', err);
     return commonHelper.customErrorHandler(res, err.message, 400);
   }
 };
@@ -49,7 +49,7 @@ const removeAccount = async (req, res, next) => {
 
     next();
   } catch (err) {
-    console.log('Error in deleting user: ', err.message);
+    console.log('Error in deleting user: ', err);
     return commonHelper.customErrorHandler(res, err.message, 400);
   }
 };
@@ -67,7 +67,7 @@ const get = async (req, res, next) => {
 
     next();
   } catch (err) {
-    console.log('Error in getting the user details: ', err.message);
+    console.log('Error in getting the user details: ', err);
     return commonHelper.customErrorHandler(res, err.message, 400);
   }
 };
@@ -83,7 +83,7 @@ const getAll = async (req, res, next) => {
 
     next();
   } catch (err) {
-    console.log('Error in getting the user details: ', err.message);
+    console.log('Error in getting the user details: ', err);
     return commonHelper.customErrorHandler(res, err.message, 400);
   }
 };
@@ -100,7 +100,7 @@ const placeOrder = async (req, res, next) => {
 
     next();
   } catch (err) {
-    console.log('Error in placing order: ', err.message);
+    console.log('Error in placing order: ', err);
     return commonHelper.customErrorHandler(res, err.message, err.statusCode);
   }
 };
@@ -118,7 +118,7 @@ const getOrder = async (req, res, next) => {
 
     next();
   } catch (err) {
-    console.log('Error in getting order: ', err.message);
+    console.log('Error in getting order: ', err);
     return commonHelper.customErrorHandler(res, err.message, err.statusCode);
   }
 };
@@ -128,15 +128,15 @@ const getAllOrders = async (req, res, next) => {
     const { page = 1, limit = 10 } = req.query;
     const userId = req.params['id'];
     const currentUser = req.user;
-    const users = await orderServices.getAllOrders(currentUser, userId, page, limit);
+    const orders = await orderServices.getAllOrders(currentUser, userId, page, limit);
 
     res.statusCode = 200;
     res.message = "Fetched user's orders successfully";
-    res.data = users;
+    res.data = orders;
 
     next();
   } catch (err) {
-    console.log("Error in getting the user's order details: ", err.message);
+    console.log("Error in getting the user's order details: ", err);
     return commonHelper.customErrorHandler(res, err.message, err.statusCode);
   }
 };
@@ -152,7 +152,7 @@ const deleteOrder = async (req, res, next) => {
 
     next();
   } catch (err) {
-    console.log('Error in deleting order: ', err.message);
+    console.log('Error in deleting order: ', err);
     return commonHelper.customErrorHandler(res, err.message, err.statusCode);
   }
 };
@@ -170,7 +170,7 @@ const getPendingOrders = async (req, res, next) => {
 
     next();
   } catch (err) {
-    console.log('Error in getting the pending orders: ', err.message);
+    console.log('Error in getting the pending orders: ', err);
     return commonHelper.customErrorHandler(res, err.message, err.statusCode);
   }
 };

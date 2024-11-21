@@ -25,6 +25,7 @@ const assignOrder = async (req, res, next) => {
     const currentUser = req.user;
     // the userId(i.e delivery partner) which is supposed to be assigned an order
     const { userId } = req.body;
+
     const orders = await orderServices.assignOrder(currentUser, userId, orderId);
 
     res.statusCode = 200;

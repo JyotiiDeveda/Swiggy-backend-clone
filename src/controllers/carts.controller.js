@@ -7,7 +7,7 @@ const getCartDishes = async (req, res, next) => {
     const { userId } = req.user;
     const cartDishes = await cartServices.getCartDishes(cartId, userId);
 
-    res.statusCode = 201;
+    res.statusCode = 200;
     res.data = cartDishes;
     res.message = 'Fetched cart dishes successfully';
 

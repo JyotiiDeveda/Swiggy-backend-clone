@@ -31,7 +31,7 @@ const sendOtp = async (req, res, next) => {
 
     next();
   } catch (err) {
-    console.log(err);
+    console.log('Error in sending otp: ', err);
     return commonHelper.customErrorHandler(res, err.message, err.statusCode);
   }
 };
@@ -48,7 +48,7 @@ const login = async (req, res, next) => {
 
     next();
   } catch (err) {
-    console.log(err);
+    console.log('Error in login: ', err);
     return commonHelper.customErrorHandler(res, err.message, err.statusCode);
   }
 };
@@ -60,7 +60,7 @@ const logout = async (req, res, next) => {
     const response = await authServices.logout(token);
 
     res.statusCode = 200;
-    res.message = 'Logout Successfully';
+    res.message = 'Logout successful';
     res.data = response;
 
     return next();
