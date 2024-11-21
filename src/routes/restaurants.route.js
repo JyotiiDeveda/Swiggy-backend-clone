@@ -6,6 +6,7 @@ const dishValidators = require('../validators/dishes.validator');
 const upload = require('../middlewares/multer.middleware');
 const ratingValidators = require('../validators/ratings.validator');
 const commonHelpers = require('../helpers/common.helper');
+const dishSerializers = require('../serializers/dishes.serializer');
 
 // to create restaurant
 router.post(
@@ -57,16 +58,6 @@ router.delete(
   commonHelpers.customResponseHandler
 );
 
-// to create a dish
-router.post(
-  '/:id/dishes',
-  authMiddlewares.authenticateToken,
-  authMiddlewares.isAdmin,
-  dishValidators.validateDishSchema,
-  restaurantsController.createRestaurantsDish,
-  commonHelpers.customResponseHandler
-);
-
 //image upload
 router.patch(
   '/:id/images',
@@ -75,6 +66,62 @@ router.patch(
   upload.single('image'),
   restaurantValidators.validateImage,
   restaurantsController.uploadImage,
+  commonHelpers.customResponseHandler
+);
+
+// dishes routes
+
+// to create a dish
+router.post(
+  '/:id/dishes',
+  authMiddlewares.authenticateToken,
+  authMiddlewares.isAdmin,
+  dishValidators.validateDishSchema,
+  restaurantsController.createRestaurantsDish,
+  dishSerializers.serializeDishes,
+  commonHelpers.customResponseHandler
+);
+
+router.get(
+  '/:restaurantId/dishes/:dishId',
+  restaurantsController.getDish,
+  dishSerializers.serializeDishes,
+  commonHelpers.customResponseHandler
+);
+
+router.get(
+  '/:restaurantId/dishes',
+  restaurantsController.getAllDishes,
+  dishSerializers.serializeDishes,
+  commonHelpers.customResponseHandler
+);
+
+router.put(
+  '/:restaurantId/dishes/:dishId',
+  authMiddlewares.authenticateToken,
+  authMiddlewares.isAdmin,
+  dishValidators.validateDishSchema,
+  restaurantsController.updateDish,
+  dishSerializers.serializeDishes,
+  commonHelpers.customResponseHandler
+);
+
+router.delete(
+  '/:restaurantId/dishes/:dishId',
+  authMiddlewares.authenticateToken,
+  authMiddlewares.isAdmin,
+  restaurantsController.removeDish,
+  commonHelpers.customResponseHandler
+);
+
+router.patch(
+  '/:restaurantId/dishes/:dishId/images',
+  authMiddlewares.authenticateToken,
+  authMiddlewares.isAdmin,
+  upload.single('image'),
+  restaurantValidators.validateImage,
+  restaurantsController.uplaodDishImage,
+  dishSerializers.serializeDishes,
   commonHelpers.customResponseHandler
 );
 

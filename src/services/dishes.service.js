@@ -63,39 +63,36 @@ const create = async (restaurantId, data) => {
   }
 };
 
-const get = async dishId => {
+const get = async (restaurantId, dishId) => {
   // get a dish with its average rating and ratings count
   const dish = await models.Dish.findOne({
-    where: { id: dishId },
-    attributes: [
-      'id',
-      'name',
-      'description',
-      'image_url',
-      'type',
-      'price',
-      [
-        models.sequelize.fn('round', models.sequelize.fn('avg', models.sequelize.col('ratings.rating')), 2),
-        'avg_rating',
+    where: { id: dishId, restaurant_id: restaurantId },
+    attributes: {
+      include: [
+        [
+          models.sequelize.fn('round', models.sequelize.fn('avg', models.sequelize.col('ratings.rating')), 2),
+          'avg_rating',
+        ],
+        [models.sequelize.fn('count', models.sequelize.col('ratings.rating')), 'ratings_cnt'],
       ],
-      [models.sequelize.fn('count', models.sequelize.col('ratings.rating')), 'ratings_cnt'],
-    ],
-    include: {
-      model: models.Rating,
-      as: 'ratings',
-      attributes: [],
     },
+    include: [
+      {
+        model: models.Rating,
+        as: 'ratings',
+        attributes: [],
+      },
+    ],
     group: ['Dish.id'],
   });
 
   if (!dish) {
     throw commonHelpers.customError('No dish found', 404);
   }
-
   return dish;
 };
 
-const getAll = async queryOptions => {
+const getAll = async (restaurantId, queryOptions) => {
   // sortBy --- price or rating
   // orderBy --- ascending or descending
   const { name = '', category, sortBy = '', orderBy = 1, page = 1, limit = 10 } = queryOptions;
@@ -103,7 +100,7 @@ const getAll = async queryOptions => {
   const startIndex = (page - 1) * limit;
   const endIndex = page * limit;
 
-  let filter = {};
+  let filter = { restaurant_id: restaurantId };
 
   if (name) {
     filter = { name: { [Op.iLike]: `%${name}%` } };
@@ -159,7 +156,7 @@ const getAll = async queryOptions => {
   return dishes;
 };
 
-const update = async (dishId, payload) => {
+const update = async (restaurantId, dishId, payload) => {
   const transactionContext = await models.sequelize.transaction();
   try {
     const { name, description, category, price } = payload;
@@ -172,7 +169,7 @@ const update = async (dishId, payload) => {
         price,
       },
       {
-        where: { id: dishId },
+        where: { id: dishId, restaurant_id: restaurantId },
         transaction: transactionContext,
         returning: true,
       }
@@ -191,11 +188,11 @@ const update = async (dishId, payload) => {
   }
 };
 
-const remove = async dishId => {
+const remove = async (restaurantId, dishId) => {
   const transactionContext = await sequelize.transaction();
   try {
     const deletedCount = await models.Dish.destroy({
-      where: { id: dishId },
+      where: { id: dishId, restaurant_id: restaurantId },
       transaction: transactionContext,
     });
 
@@ -210,11 +207,11 @@ const remove = async dishId => {
   }
 };
 
-const uplaodImage = async (dishId, file) => {
+const uplaodImage = async (restaurantId, dishId, file) => {
   const transactionContext = await models.sequelize.transaction();
   try {
     // check if restaurant exists
-    const dishExists = await models.Dish.findOne({ where: { id: dishId } });
+    const dishExists = await models.Dish.findOne({ where: { id: dishId, restaurant_id: restaurantId } });
 
     if (!dishExists) {
       throw commonHelpers.customError('Dish not found', 404);

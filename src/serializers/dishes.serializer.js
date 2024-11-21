@@ -6,9 +6,6 @@ const serializeDishes = (req, res, next) => {
   }
   let dishes = [];
 
-  console.log('RESPONSE DATA: ', res.data);
-  console.log('RESPONSE DATA TYPE: ', typeof rows);
-
   for (const dish of rows) {
     const dishData = {
       id: dish?.id,
