@@ -1,36 +1,35 @@
 const serializeUser = (req, res, next) => {
-  let { rows } = res.data;
+  let rows = res.data?.rows || res.data;
   let users = [];
 
-  if (!rows) {
-    rows = Array.isArray(res.data) ? res.data : [res.data];
+  const isSingleItem = !Array.isArray(rows);
+
+  if (!Array.isArray(rows)) {
+    rows = [rows];
   }
-  console.log('RESPONSE DATA: ', res.data);
-  for (const user of rows) {
+
+  users = rows.map(user => {
     const userData = {
-      id: user.id,
-      firstName: user.first_name,
-      lastName: user.last_name,
-      email: user.email,
-      phone: user.phone,
-      address: user.address,
-      createdAt: user.created_at,
-      deletedAt: user.deleted_at,
-      updatedAt: user.updated_at,
+      id: user?.id,
+      firstName: user?.first_name,
+      lastName: user?.last_name,
+      email: user?.email,
+      phone: user?.phone,
+      address: user?.address,
+      createdAt: user?.created_at,
+      deletedAt: user?.deleted_at,
+      updatedAt: user?.updated_at,
     };
 
-    const userRoles = user?.roles;
-    const roles = [];
-    for (const role of userRoles) {
-      roles.push(role.name);
+    if (user?.roles) {
+      userData.roles = user.roles.map(role => role.name);
     }
 
-    console.log('ROLES: ', user.roles);
-    userData.roles = roles;
-    users.push(userData);
-  }
+    return userData;
+  });
 
-  res.data = { users };
+  res.data = isSingleItem ? { user: users[0] } : { users };
+
   next();
 };
 

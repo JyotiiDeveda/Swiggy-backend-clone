@@ -19,10 +19,12 @@ const getCartDishes = async (cartId, userId) => {
     },
   });
 
-  if (!cartDishes || cartDishes.length === 0) {
-    throw commonHelpers.customError('Cart dishes not found');
+  console.log('CART DISH: ', cartDishes);
+  if (!cartDishes) {
+    throw commonHelpers.customError('Cart dishes not found', 404);
+  } else if (cartDishes?.dishes.length === 0) {
+    throw commonHelpers.customError('Cart is empty', 400);
   }
-
   return cartDishes;
 };
 
@@ -30,7 +32,7 @@ const addItem = async (userId, payload) => {
   const transactionContext = await sequelize.transaction();
   try {
     const { dish_id: dishId, quantity } = payload;
-    // check if dish exists
+
     const dishDetails = await models.Dish.findOne({ where: { id: dishId } });
 
     if (!dishDetails) {

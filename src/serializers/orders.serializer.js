@@ -1,29 +1,25 @@
 const serializeOrder = (req, res, next) => {
-  let { rows } = res.data;
-  let orders = [];
+  let rows = res.data?.rows || res.data;
+  const isSingleItem = !Array.isArray(rows);
 
-  if (!rows) {
-    rows = Array.isArray(res.data) ? res.data : [res.data];
+  if (!Array.isArray(rows)) {
+    rows = [rows];
   }
 
-  for (const order of rows) {
-    const serializedOrder = {
-      id: order.id,
-      restaurant: order?.dataValues?.restaurant || order?.Restaurant?.name,
-      orderDate: order?.created_at,
-      deliveryCharges: order?.delivery_charges,
-      orderCharges: order?.order_charges,
-      gst: order?.gst,
-      totalAmount: order?.total_amount,
-      status: order?.status,
-      createdAt: order?.created_at,
-      updatedAt: order?.updated_at,
-    };
+  const orders = rows.map(order => ({
+    id: order.id,
+    restaurant: order?.dataValues?.restaurant || order?.Restaurant?.name,
+    orderDate: order?.created_at,
+    deliveryCharges: order?.delivery_charges,
+    orderCharges: order?.order_charges,
+    gst: order?.gst,
+    totalAmount: order?.total_amount,
+    status: order?.status,
+    createdAt: order?.created_at,
+    updatedAt: order?.updated_at,
+  }));
 
-    orders.push(serializedOrder);
-  }
-
-  res.data = { orders };
+  res.data = isSingleItem ? { order: orders[0] } : { orders };
 
   next();
 };
