@@ -1,34 +1,31 @@
-const serializeOrder = data => {
-  const serializedOrder = {
-    restaurant: data?.Restaurant?.name,
-    restaurantType: data?.Restaurant?.category,
-    orderDate: data.created_at,
-    deliveryCharges: data?.delivery_charges,
-    orderCharges: data.order_charges,
-    gst: data.gst,
-    totalAmount: data.total_amount,
-    status: data.status,
-  };
+const serializeOrder = (req, res, next) => {
+  let { rows } = res.data;
+  let orders = [];
 
-  const dishes = data?.Cart?.dishes;
+  if (!rows) {
+    rows = Array.isArray(res.data) ? res.data : [res.data];
+  }
 
-  const orderedDishes = [];
-
-  dishes.forEach(dish => {
-    const serializedDish = {
-      id: dish.id,
-      name: dish.name,
-      price: dish.price,
-      type: dish.type,
-      quantity: dish.CartDish.quantity,
+  for (const order of rows) {
+    const serializedOrder = {
+      id: order.id,
+      restaurant: order?.dataValues?.restaurant || order?.Restaurant?.name,
+      orderDate: order?.created_at,
+      deliveryCharges: order?.delivery_charges,
+      orderCharges: order?.order_charges,
+      gst: order?.gst,
+      totalAmount: order?.total_amount,
+      status: order?.status,
+      createdAt: order?.created_at,
+      updatedAt: order?.updated_at,
     };
-    orderedDishes.push(serializedDish);
-  });
 
-  serializedOrder.dishes = orderedDishes;
-  // console.log('Serialized order: ', serializedOrder);
+    orders.push(serializedOrder);
+  }
 
-  return serializedOrder;
+  res.data = { orders };
+
+  next();
 };
 
 module.exports = {
