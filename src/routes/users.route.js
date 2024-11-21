@@ -59,6 +59,7 @@ router.post(
   authMiddlewares.isAuthorized,
   orderValidators.validatePlaceOrderSchema,
   userControllers.placeOrder,
+  orderSerializers.serializeOrder,
   commonHelpers.customResponseHandler
 );
 
@@ -81,6 +82,7 @@ router.get(
   commonHelpers.customResponseHandler
 );
 
+// delete an unsettled order
 router.delete(
   '/:userId/orders/:orderId',
   authMiddlewares.authenticateToken,
@@ -95,6 +97,7 @@ router.get(
   authMiddlewares.authenticateToken,
   authMiddlewares.isAuthorizedDeliveryPartner,
   userControllers.getPendingOrders,
+  orderSerializers.serializeOrder,
   commonHelpers.customResponseHandler
 );
 
