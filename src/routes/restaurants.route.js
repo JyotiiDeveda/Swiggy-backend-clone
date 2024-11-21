@@ -7,6 +7,8 @@ const upload = require('../middlewares/multer.middleware');
 const ratingValidators = require('../validators/ratings.validator');
 const commonHelpers = require('../helpers/common.helper');
 const dishSerializers = require('../serializers/dishes.serializer');
+const restaurantSerializers = require('../serializers/restaurants.serializer');
+const ratingSerializers = require('../serializers/ratings.serializer');
 
 // to create restaurant
 router.post(
@@ -15,12 +17,23 @@ router.post(
   authMiddlewares.isAdmin,
   restaurantValidators.validateRestaurantSchema,
   restaurantsController.create,
+  restaurantSerializers.serializeRestaurants,
   commonHelpers.customResponseHandler
 );
 
-router.get('/', restaurantsController.getAll, commonHelpers.customResponseHandler);
+router.get(
+  '/',
+  restaurantsController.getAll,
+  restaurantSerializers.serializeRestaurants,
+  commonHelpers.customResponseHandler
+);
 
-router.get('/:id', restaurantsController.get, commonHelpers.customResponseHandler);
+router.get(
+  '/:id',
+  restaurantsController.get,
+  restaurantSerializers.serializeRestaurants,
+  commonHelpers.customResponseHandler
+);
 
 router.put(
   '/:id',
@@ -28,6 +41,7 @@ router.put(
   authMiddlewares.isAdmin,
   restaurantValidators.validateRestaurantSchema,
   restaurantsController.update,
+  restaurantSerializers.serializeRestaurants,
   commonHelpers.customResponseHandler
 );
 
@@ -38,6 +52,7 @@ router.post(
   authMiddlewares.isAuthorized,
   ratingValidators.validateRatingScore,
   restaurantsController.createRestaurantsRating,
+  ratingSerializers.serializeRatings,
   commonHelpers.customResponseHandler
 );
 
@@ -66,6 +81,7 @@ router.patch(
   upload.single('image'),
   restaurantValidators.validateImage,
   restaurantsController.uploadImage,
+  restaurantSerializers.serializeRestaurants,
   commonHelpers.customResponseHandler
 );
 

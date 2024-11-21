@@ -1,38 +1,16 @@
-const commonHelpers = require('../helpers/common.helper');
-const models = require('../models');
 const { sequelize } = require('../models');
 const { Op } = require('sequelize');
 const { uploadToS3 } = require('../helpers/image-upload.helper');
+const commonHelpers = require('../helpers/common.helper');
+const models = require('../models');
+const constants = require('../constants/constants');
 
 const create = async data => {
   const transactionContext = await sequelize.transaction();
   try {
     const { name, description, category, address } = data;
 
-    const lookUpName = name.toLowerCase();
-    const restaurantExists = await models.Restaurant.findOne({
-      where: {
-        name: sequelize.where(sequelize.fn('LOWER', sequelize.col('name')), lookUpName),
-        'address.pincode': { [Op.eq]: address.pincode },
-      },
-      paranoid: false,
-    });
-
-    // if restaurant exists actively
-    if (restaurantExists && restaurantExists.deleted_at === null) {
-      throw commonHelpers.customError('Restaurant already exists', 409);
-    } else if (restaurantExists?.deleted_at) {
-      const [restoredRestaurant] = await models.Restaurant.restore({
-        where: { id: restaurantExists.id },
-        returning: true,
-        transaction: transactionContext,
-      });
-      if (!restoredRestaurant) throw commonHelpers.customError('Restaurant name should be unique', 409);
-      await transactionContext.commit();
-      return restaurantExists;
-    }
-
-    // Creating a user
+    // Creating a restaurant
     const newRestaurant = await models.Restaurant.create(
       {
         name,
@@ -89,41 +67,36 @@ const get = async restaurantId => {
 };
 
 const getAll = async queryOptions => {
-  const { city = '', name = '', category, orderBy = 1, page = 1, limit = 10 } = queryOptions;
+  const { city, name, category, orderBy = 'asc', page = 1, limit = 10 } = queryOptions;
   const startIndex = (page - 1) * limit;
   const endIndex = page * limit;
 
   let filter = {};
 
-  if (city) {
-    filter = { 'address.city': { [Op.iLike]: city } };
-  } else if (name) {
-    filter = { name: { [Op.iLike]: `%${name}%` } };
-  } else if (category) {
-    filter = {
-      category: sequelize.where(sequelize.cast(sequelize.col('category'), 'varchar'), {
-        [Op.iLike]: category,
-      }),
-    };
-  }
+  if (city) filter['address.city'] = { [Op.iLike]: city };
 
-  const order = orderBy === '1' || orderBy === '0' ? 'ASC' : 'DESC';
+  if (name) filter.name = { [Op.iLike]: `%${name}%` };
+
+  if (category)
+    filter.category = sequelize.where(sequelize.cast(sequelize.col('category'), 'varchar'), {
+      [Op.iLike]: category,
+    });
+
+  const order = orderBy === 'asc' ? constants.SORT_ORDER.ASC : constants.SORT_ORDER.DESC;
+
+  console.log('FILTER: ', filter);
 
   const restaurants = await models.Restaurant.findAll({
     where: filter,
-    attributes: [
-      'id',
-      'name',
-      'description',
-      'category',
-      'image_url',
-      'address',
-      [
-        models.sequelize.fn('round', models.sequelize.fn('avg', models.sequelize.col('ratings.rating')), 2),
-        'avg_rating',
+    attributes: {
+      include: [
+        [
+          models.sequelize.fn('round', models.sequelize.fn('avg', models.sequelize.col('ratings.rating')), 2),
+          'avg_rating',
+        ],
+        [models.sequelize.fn('count', models.sequelize.col('ratings.rating')), 'ratings_cnt'],
       ],
-      [models.sequelize.fn('count', models.sequelize.col('ratings.rating')), 'ratings_cnt'],
-    ],
+    },
     include: [
       {
         model: models.Rating,
@@ -195,6 +168,7 @@ const remove = async restaurantId => {
       throw commonHelpers.customError('No restaurant found', 404);
     }
     await transactionContext.commit();
+    return;
   } catch (err) {
     await transactionContext.rollback();
     console.log('Error in deleting restaurant', err.message);
