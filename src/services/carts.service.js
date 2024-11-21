@@ -3,6 +3,25 @@ const constants = require('../constants/constants');
 const models = require('../models');
 const { sequelize } = require('../models');
 
+const getCartDishes = async (cartId, userId) => {
+  const cartDishes = await models.Cart.findOne({
+    where: {
+      id: cartId,
+      user_id: userId,
+    },
+    include: {
+      model: models.Dish,
+      as: 'dishes',
+    },
+  });
+
+  if (!cartDishes || cartDishes.length === 0) {
+    throw commonHelpers.customError('Cart dishes not found');
+  }
+
+  return cartDishes;
+};
+
 const addItem = async (userId, payload) => {
   const transactionContext = await sequelize.transaction();
   try {
@@ -93,6 +112,7 @@ const removeItem = async (userId, cartId, dishId) => {
       throw commonHelpers.customError('Dish not found in the cart', 404);
     }
     await transactionContext.commit();
+    return;
   } catch (err) {
     await transactionContext.rollback();
     console.log('Error in removing dish from cart', err.message);
@@ -120,6 +140,7 @@ const emptyCart = async (userId, cartId) => {
       throw commonHelpers.customError('No dishes found in the cart', 404);
     }
     await transactionContext.commit();
+    return;
   } catch (err) {
     await transactionContext.rollback();
     console.log('Error while emptying cart', err);
@@ -128,6 +149,7 @@ const emptyCart = async (userId, cartId) => {
 };
 
 module.exports = {
+  getCartDishes,
   addItem,
   removeItem,
   emptyCart,

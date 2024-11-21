@@ -4,7 +4,14 @@ const cartControllers = require('../controllers/carts.controller');
 const cartValidators = require('../validators/carts.validator');
 const commonHelpers = require('../helpers/common.helper');
 
-// add item to cart
+router.get(
+  '/:id',
+  authMiddlewares.authenticateToken,
+  authMiddlewares.isAuthorized,
+  cartControllers.getCartDishes,
+  commonHelpers.customResponseHandler
+);
+
 router.post(
   '/',
   authMiddlewares.authenticateToken,
