@@ -184,6 +184,7 @@ const getAll = async queryOptions => {
     },
     offset: startIndex,
     limit: endIndex,
+    paranoid: false,
   });
   if (!users || users.length === 0) {
     throw commonHelpers.customError('No users found', 404);

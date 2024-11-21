@@ -3,6 +3,8 @@ const userControllers = require('../controllers/users.controller');
 const authMiddlewares = require('../middlewares/auth.middleware');
 const orderValidators = require('../validators/orders.validator');
 const userValidators = require('../validators/users.validator');
+const userSerializers = require('../serializers/users.serializer');
+const orderSerializers = require('../serializers/orders.serializer');
 
 const commonHelpers = require('../helpers/common.helper');
 
@@ -37,6 +39,7 @@ router.get(
   authMiddlewares.authenticateToken,
   authMiddlewares.isAuthorized,
   userControllers.get,
+  userSerializers.serializeUser,
   commonHelpers.customResponseHandler
 );
 
@@ -45,6 +48,7 @@ router.get(
   authMiddlewares.authenticateToken,
   authMiddlewares.isAdmin,
   userControllers.getAll,
+  userSerializers.serializeUser,
   commonHelpers.customResponseHandler
 );
 
@@ -63,6 +67,7 @@ router.get(
   authMiddlewares.authenticateToken,
   authMiddlewares.isAuthorized,
   userControllers.getOrder,
+  orderSerializers.serializeOrder,
   commonHelpers.customResponseHandler
 );
 
@@ -72,6 +77,7 @@ router.get(
   authMiddlewares.authenticateToken,
   authMiddlewares.isAuthorized,
   userControllers.getAllOrders,
+  orderSerializers.serializeOrder,
   commonHelpers.customResponseHandler
 );
 
