@@ -11,7 +11,7 @@ router.get(
   authMiddlewares.authenticateToken,
   authMiddlewares.isAuthorizedDeliveryPartner,
   orderControllers.getAllUnassignedOrders,
-  orderSerializers.serializeOrder,
+  orderSerializers.serializeOrders,
   commonHelpers.customResponseHandler
 );
 
@@ -22,7 +22,7 @@ router.patch(
   authMiddlewares.isAuthorizedDeliveryPartner,
   orderValidators.validateDeliveryPartnerId,
   orderControllers.assignOrder,
-  orderSerializers.serializeOrder,
+  orderSerializers.serializeOrders,
   commonHelpers.customResponseHandler
 );
 
@@ -33,7 +33,7 @@ router.patch(
   authMiddlewares.isAuthorizedDeliveryPartner,
   orderValidators.validateOrderStatus,
   orderControllers.updateOrderStatus,
-  orderSerializers.serializeOrder,
+  orderSerializers.serializeOrders,
   commonHelpers.customResponseHandler
 );
 

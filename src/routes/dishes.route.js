@@ -3,7 +3,7 @@ const authMiddlewares = require('../middlewares/auth.middleware');
 const dishControllers = require('../controllers/dishes.controller');
 const ratingsValidator = require('../validators/ratings.validator');
 const commonHelpers = require('../helpers/common.helper');
-const dishSerializers = require('../serializers/dishes.serializer');
+const ratingSerializers = require('../serializers/ratings.serializer');
 
 // to rate a dish
 router.post(
@@ -12,7 +12,7 @@ router.post(
   authMiddlewares.isAdmin,
   ratingsValidator.validateRatingScore,
   dishControllers.createDishesRating,
-  dishSerializers.serializeDishes,
+  ratingSerializers.serializeRatings,
   commonHelpers.customResponseHandler
 );
 

@@ -22,7 +22,7 @@ router.put(
   '/:userId/roles/:roleId',
   authMiddlewares.authenticateToken,
   authMiddlewares.isAdmin,
-  userControllers.addDeliveryPartner,
+  userControllers.assignRole,
   commonHelpers.customResponseHandler
 );
 
@@ -39,7 +39,7 @@ router.get(
   authMiddlewares.authenticateToken,
   authMiddlewares.isAuthorized,
   userControllers.get,
-  userSerializers.serializeUser,
+  userSerializers.serializeUsers,
   commonHelpers.customResponseHandler
 );
 
@@ -48,7 +48,7 @@ router.get(
   authMiddlewares.authenticateToken,
   authMiddlewares.isAdmin,
   userControllers.getAll,
-  userSerializers.serializeUser,
+  userSerializers.serializeUsers,
   commonHelpers.customResponseHandler
 );
 
@@ -59,7 +59,7 @@ router.post(
   authMiddlewares.isAuthorized,
   orderValidators.validatePlaceOrderSchema,
   userControllers.placeOrder,
-  orderSerializers.serializeOrder,
+  orderSerializers.serializeOrders,
   commonHelpers.customResponseHandler
 );
 
@@ -68,7 +68,7 @@ router.get(
   authMiddlewares.authenticateToken,
   authMiddlewares.isAuthorized,
   userControllers.getOrder,
-  orderSerializers.serializeOrder,
+  orderSerializers.serializeOrders,
   commonHelpers.customResponseHandler
 );
 
@@ -78,7 +78,7 @@ router.get(
   authMiddlewares.authenticateToken,
   authMiddlewares.isAuthorized,
   userControllers.getAllOrders,
-  orderSerializers.serializeOrder,
+  orderSerializers.serializeOrders,
   commonHelpers.customResponseHandler
 );
 
@@ -97,7 +97,7 @@ router.get(
   authMiddlewares.authenticateToken,
   authMiddlewares.isAuthorizedDeliveryPartner,
   userControllers.getPendingOrders,
-  orderSerializers.serializeOrder,
+  orderSerializers.serializeOrders,
   commonHelpers.customResponseHandler
 );
 
