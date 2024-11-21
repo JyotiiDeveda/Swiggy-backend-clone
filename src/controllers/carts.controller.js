@@ -13,7 +13,7 @@ const getCartDishes = async (req, res, next) => {
 
     next();
   } catch (err) {
-    console.log('Error in adding dish to cart: ', err);
+    console.log('Error in getting cart dishes: ', err);
     return commonHelper.customErrorHandler(res, err.message, err.statusCode);
   }
 };
@@ -22,10 +22,9 @@ const addItem = async (req, res, next) => {
   try {
     const { userId } = req.user;
     const payload = req.body;
-    const updatedCart = await cartServices.addItem(userId, payload);
+    await cartServices.addItem(userId, payload);
 
     res.statusCode = 201;
-    res.data = updatedCart;
     res.message = 'Added dish to cart successfully';
 
     next();
