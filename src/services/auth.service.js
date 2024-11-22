@@ -1,9 +1,9 @@
+const { redisClient } = require('../config/redis');
+const { User, Role } = require('../models');
 const userServices = require('./users.service');
 const otpHelper = require('../helpers/otp.helper');
 const mailHelper = require('../helpers/mail.helper');
 const commonHelper = require('../helpers/common.helper');
-const { redisClient } = require('../config/redis');
-const models = require('../models');
 const jwt = require('jsonwebtoken');
 
 const generateToken = payload => {
@@ -37,7 +37,7 @@ const signup = async data => {
 };
 
 const sendOtp = async email => {
-  const userExists = await models.User.findOne({ where: { email } });
+  const userExists = await User.findOne({ where: { email } });
 
   if (!userExists) {
     throw commonHelper.customError('User does not exist.. Please signup', 404);
@@ -56,10 +56,10 @@ const sendOtp = async email => {
 
 const verifyOtp = async (email, otp) => {
   // get user along with its roles
-  const userDetails = await models.User.findOne({
+  const userDetails = await User.findOne({
     where: { email },
     include: {
-      model: models.Role,
+      model: Role,
       as: 'roles',
       attributes: ['name'],
       through: {
@@ -100,7 +100,7 @@ const verifyOtp = async (email, otp) => {
 };
 
 const logout = async () => {
-  return 'Logout Successfully';
+  return {};
 };
 
 module.exports = { signup, sendOtp, verifyOtp, logout, generateToken, verifyToken };

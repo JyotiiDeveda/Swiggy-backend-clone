@@ -1,14 +1,14 @@
 const commonHelpers = require('../helpers/common.helper');
 const constants = require('../constants/constants');
 const { Op } = require('sequelize');
-const models = require('../models');
+const { User, Role, UserRole } = require('../models');
 const { sequelize } = require('../models');
 
 const create = async data => {
   const transactionContext = await sequelize.transaction();
   try {
     const { first_name, last_name, email, phone, address } = data;
-    const userExists = await models.User.findOne({
+    const userExists = await User.findOne({
       where: { [Op.or]: [{ email }, { phone }] },
       paranoid: false,
     });
@@ -21,7 +21,7 @@ const create = async data => {
       );
     } else if (userExists?.deleted_at) {
       // if soft deleted user exists with same credentials, activate the user
-      const [restoredUser] = await models.User.restore({
+      const [restoredUser] = await User.restore({
         where: { email, phone },
         returning: true,
         transaction: transactionContext,
@@ -32,7 +32,7 @@ const create = async data => {
     }
 
     // Creating a user
-    const newUser = models.User.build({
+    const newUser = User.build({
       first_name,
       last_name,
       email,
@@ -43,10 +43,10 @@ const create = async data => {
     await newUser.save({ transaction: transactionContext });
 
     // a user can signup with customer role only
-    const roleDetails = await models.Role.findOne({ where: { name: constants.ROLES.CUSTOMER } });
+    const roleDetails = await Role.findOne({ where: { name: constants.ROLES.CUSTOMER } });
 
     // assign role to user
-    const userRole = await models.UserRole.findOrCreate({
+    const userRole = await UserRole.findOrCreate({
       where: {
         user_id: newUser.id,
         role_id: roleDetails.id,
@@ -72,7 +72,7 @@ const assignRole = async (currentUser, userId, roleId) => {
       throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
     }
     // a user can signup with customer role only
-    const roleDetails = await models.Role.findOne({ where: { id: roleId } });
+    const roleDetails = await Role.findOne({ where: { id: roleId } });
 
     if (!roleDetails) {
       throw commonHelpers.customError('Role does not exist', 404);
@@ -83,7 +83,7 @@ const assignRole = async (currentUser, userId, roleId) => {
       role_id: roleDetails.id,
     };
 
-    const userRole = await models.UserRole.findOrCreate({
+    const userRole = await UserRole.findOrCreate({
       where: usersRole,
       transaction: transactionContext,
     });
@@ -107,15 +107,17 @@ const addAddress = async (currentUser, userId, address) => {
       throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
     }
 
-    const [updatedCnt, updatedUser] = await models.User.update(
-      { address: address },
-      { where: { id: userId }, returning: true, transaction: transactionContext }
-    );
-    if (updatedCnt === 0) {
+    const user = await User.findByPk(userId);
+
+    if (!user) {
       throw commonHelpers.customError('No user found', 404);
     }
+
+    user.address = address;
+    await user.save({ transaction: transactionContext });
+
     await transactionContext.commit();
-    return updatedUser;
+    return user;
   } catch (err) {
     await transactionContext.rollback();
     console.log('Error while updating address', err.message);
@@ -129,14 +131,18 @@ const removeAccount = async (currentUser, userId) => {
     if (!currentUser?.userRoles.includes(constants.ROLES.ADMIN) && currentUser.userId !== userId) {
       throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
     }
-    const deletedCount = await models.User.destroy({
+
+    const user = await User.findByPk(userId);
+
+    if (!user) {
+      throw commonHelpers.customError('No user found', 404);
+    }
+
+    await User.destroy({
       where: { id: userId },
       transaction: transactionContext,
     });
 
-    if (deletedCount === 0) {
-      throw commonHelpers.customError('No user found', 404);
-    }
     await transactionContext.commit();
     return;
   } catch (err) {
@@ -150,9 +156,9 @@ const get = async (currentUser, userId) => {
   if (!currentUser?.userRoles.includes(constants.ROLES.ADMIN) && currentUser.userId !== userId) {
     throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
   }
-  const userDetails = await models.User.findOne({
+  const userDetails = await User.findOne({
     where: { id: userId },
-    include: { model: models.Role, as: 'roles', attributes: ['id', 'name'], through: { attributes: [] } },
+    include: { model: Role, as: 'roles', attributes: ['id', 'name'], through: { attributes: [] } },
   });
 
   if (!userDetails) {
@@ -176,9 +182,9 @@ const getAll = async queryOptions => {
     filter.name = constants.ROLES.CUSTOMER;
   }
 
-  const users = await models.User.findAll({
+  const users = await User.findAll({
     include: {
-      model: models.Role,
+      model: Role,
       as: 'roles',
       attributes: ['id', 'name'],
       where: filter,

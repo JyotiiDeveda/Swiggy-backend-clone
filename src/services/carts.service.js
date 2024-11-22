@@ -1,19 +1,19 @@
+const { sequelize } = require('../models');
+const { Cart, Dish, CartDish, Restaurant } = require('../models');
 const commonHelpers = require('../helpers/common.helper');
 const constants = require('../constants/constants');
-const models = require('../models');
-const { sequelize } = require('../models');
 
 const getCartDishes = async (cartId, userId) => {
-  const cartDishes = await models.Cart.findOne({
+  const cartDishes = await Cart.findOne({
     where: {
       id: cartId,
       user_id: userId,
     },
     include: {
-      model: models.Dish,
+      model: Dish,
       as: 'dishes',
       include: {
-        model: models.Restaurant,
+        model: Restaurant,
         attributes: ['id', 'name', 'category'],
       },
     },
@@ -33,14 +33,14 @@ const addItem = async (userId, payload) => {
   try {
     const { dish_id: dishId, quantity } = payload;
 
-    const dishDetails = await models.Dish.findOne({ where: { id: dishId } });
+    const dishDetails = await Dish.findOne({ where: { id: dishId } });
 
     if (!dishDetails) {
       throw commonHelpers.customError('Dish not available', 404);
     }
 
     //find active cart or create one
-    const [cart, created] = await models.Cart.findOrCreate({
+    const [cart, created] = await Cart.findOrCreate({
       where: { user_id: userId, status: constants.CART_STATUS.ACTIVE },
       attributes: {
         include: [
@@ -50,7 +50,7 @@ const addItem = async (userId, payload) => {
         exclude: ['created_at', 'updated_at', 'deleted_at'],
       },
       include: {
-        model: models.Dish,
+        model: Dish,
         as: 'dishes',
         duplicating: false,
         attributes: [],
@@ -62,7 +62,7 @@ const addItem = async (userId, payload) => {
 
     // if cart was existing already
     if (!created) {
-      const dishInCart = await models.CartDish.findOne({ where: { cart_id: cart.id, dish_id: dishId } });
+      const dishInCart = await CartDish.findOne({ where: { cart_id: cart.id, dish_id: dishId } });
 
       if (dishInCart) {
         dishInCart.quantity = quantity;
@@ -84,7 +84,7 @@ const addItem = async (userId, payload) => {
       }
     }
 
-    const cartDish = await models.CartDish.create(
+    const cartDish = await CartDish.create(
       {
         cart_id: cart.id,
         dish_id: dishDetails.id,
@@ -108,18 +108,17 @@ const addItem = async (userId, payload) => {
 const removeItem = async (userId, cartId, dishId) => {
   const transactionContext = await sequelize.transaction();
   try {
-    const deletedCount = await models.CartDish.destroy({
+    const cartDish = await CartDish.findOne({ where: { dish_id: dishId, cart_id: cartId } });
+
+    if (!cartDish) {
+      throw commonHelpers.customError('Dish not found in the cart', 404);
+    }
+
+    await CartDish.destroy({
       where: { cart_id: cartId, dish_id: dishId },
-      include: {
-        model: models.Cart,
-        where: { user_id: userId },
-      },
       transaction: transactionContext,
     });
 
-    if (deletedCount === 0) {
-      throw commonHelpers.customError('Dish not found in the cart', 404);
-    }
     await transactionContext.commit();
     return;
   } catch (err) {
@@ -132,7 +131,7 @@ const removeItem = async (userId, cartId, dishId) => {
 const emptyCart = async (userId, cartId) => {
   const transactionContext = await sequelize.transaction();
   try {
-    const activeCartExists = await models.Cart.findOne({
+    const activeCartExists = await Cart.findOne({
       where: { id: cartId, user_id: userId, status: constants.CART_STATUS.ACTIVE },
     });
 
@@ -140,7 +139,7 @@ const emptyCart = async (userId, cartId) => {
       throw commonHelpers.customError('No active cart exists', 404);
     }
 
-    const deletedCount = await models.CartDish.destroy({
+    const deletedCount = await CartDish.destroy({
       where: { cart_id: cartId },
       transaction: transactionContext,
     });

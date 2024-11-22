@@ -1,7 +1,7 @@
 const commonHelpers = require('../helpers/common.helper');
 const constants = require('../constants/constants');
 const paymentsHelper = require('../helpers/payments.helper');
-const models = require('../models');
+const { Payment, Order, Cart } = require('../models');
 const { sequelize } = require('../models');
 const mailHelper = require('../helpers/mail.helper');
 
@@ -12,13 +12,13 @@ const makePayment = async (currentUser, payload) => {
     const { orderId, type } = payload;
 
     // check if an unplaced order exists
-    const orderExists = await models.Order.findOne({
+    const orderExists = await Order.findOne({
       where: {
         id: orderId,
         status: constants.ORDER_STATUS.PREPARING,
       },
       include: {
-        model: models.Cart,
+        model: Cart,
         where: {
           user_id: userId,
         },
@@ -30,7 +30,7 @@ const makePayment = async (currentUser, payload) => {
     }
 
     // ensure payment is not done already
-    const payment = await models.Payment.findOne({
+    const payment = await Payment.findOne({
       where: { order_id: orderId, user_id: userId },
     });
 
@@ -43,7 +43,7 @@ const makePayment = async (currentUser, payload) => {
 
     if (!response) throw commonHelpers.customError('Payment failed', 400);
 
-    const newPayment = await models.Payment.create(
+    const newPayment = await Payment.create(
       {
         user_id: userId,
         order_id: orderId,
@@ -72,7 +72,7 @@ const getAllPayments = async (userId, page, limit) => {
   const startIndex = (page - 1) * limit;
   const endIndex = page * limit;
 
-  const payments = await models.Payment.findAll({
+  const payments = await Payment.findAll({
     where: { user_id: userId },
     offset: startIndex,
     limit: endIndex,
