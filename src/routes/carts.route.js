@@ -3,15 +3,19 @@ const authMiddlewares = require('../middlewares/auth.middleware');
 const cartControllers = require('../controllers/carts.controller');
 const cartValidators = require('../validators/carts.validator');
 const commonHelpers = require('../helpers/common.helper');
+const cartSerializers = require('../serializers/carts.serializer');
 
+// get cart dishes
 router.get(
   '/:id',
   authMiddlewares.authenticateToken,
   authMiddlewares.isAuthorized,
   cartControllers.getCartDishes,
+  cartSerializers.serializeCartDishes,
   commonHelpers.customResponseHandler
 );
 
+// add to cart
 router.post(
   '/',
   authMiddlewares.authenticateToken,
@@ -21,6 +25,7 @@ router.post(
   commonHelpers.customResponseHandler
 );
 
+// remove from cart
 router.delete(
   '/:cartId/dishes/:dishId',
   authMiddlewares.authenticateToken,
@@ -29,6 +34,7 @@ router.delete(
   commonHelpers.customResponseHandler
 );
 
+// empty cart
 router.delete(
   '/:id',
   authMiddlewares.authenticateToken,

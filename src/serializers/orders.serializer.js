@@ -1,36 +1,29 @@
-const serializeOrder = data => {
-  const serializedOrder = {
-    restaurant: data?.Restaurant?.name,
-    restaurantType: data?.Restaurant?.category,
-    orderDate: data.created_at,
-    deliveryCharges: data?.delivery_charges,
-    orderCharges: data.order_charges,
-    gst: data.gst,
-    totalAmount: data.total_amount,
-    status: data.status,
-  };
+const serializeOrders = (req, res, next) => {
+  let rows = res.data?.rows || res.data;
+  const isSingleItem = !Array.isArray(rows);
 
-  const dishes = data?.Cart?.dishes;
+  if (!Array.isArray(rows)) {
+    rows = [rows];
+  }
 
-  const orderedDishes = [];
+  const orders = rows.map(order => ({
+    id: order.id,
+    restaurant: order?.dataValues?.restaurant || order?.Restaurant?.name,
+    orderDate: order?.created_at,
+    deliveryCharges: order?.delivery_charges,
+    orderCharges: order?.order_charges,
+    gst: order?.gst,
+    totalAmount: order?.total_amount,
+    status: order?.status,
+    createdAt: order?.created_at,
+    updatedAt: order?.updated_at,
+  }));
 
-  dishes.forEach(dish => {
-    const serializedDish = {
-      id: dish.id,
-      name: dish.name,
-      price: dish.price,
-      type: dish.type,
-      quantity: dish.CartDish.quantity,
-    };
-    orderedDishes.push(serializedDish);
-  });
+  res.data = isSingleItem ? { order: orders[0] } : { orders };
 
-  serializedOrder.dishes = orderedDishes;
-  // console.log('Serialized order: ', serializedOrder);
-
-  return serializedOrder;
+  next();
 };
 
 module.exports = {
-  serializeOrder,
+  serializeOrders,
 };

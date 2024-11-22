@@ -45,6 +45,11 @@ const PAYMENT_TYPE = {
   CASH_ON_DELIVERY: 'cash-on-delivery',
 };
 
+const SORT_ORDER = {
+  ASC: 'ASC',
+  DESC: 'DESC',
+};
+
 module.exports = {
   ROLES,
   RESTAURANT_CATEGORY,
@@ -56,4 +61,5 @@ module.exports = {
   PAYMENT_STATUS,
   ENTITY_TYPE,
   PAYMENT_TYPE,
+  SORT_ORDER,
 };

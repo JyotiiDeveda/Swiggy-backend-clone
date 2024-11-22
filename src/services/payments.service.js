@@ -10,8 +10,8 @@ const makePayment = async (currentUser, payload) => {
   try {
     const { userId, email } = currentUser;
     const { orderId, type } = payload;
-    // check if an unplaced order exists
 
+    // check if an unplaced order exists
     const orderExists = await models.Order.findOne({
       where: {
         id: orderId,

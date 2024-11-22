@@ -6,6 +6,19 @@ const { redisClient } = require('../config/redis');
 const models = require('../models');
 const jwt = require('jsonwebtoken');
 
+const generateToken = payload => {
+  const token = jwt.sign(payload, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRY,
+  });
+
+  return token;
+};
+
+const verifyToken = token => {
+  const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+  return decodedToken;
+};
+
 const signup = async data => {
   const createdUser = await userServices.create(data);
   // console.log('Created user: ', createdUser);
@@ -36,9 +49,9 @@ const sendOtp = async email => {
   await redisClient.set(userExists?.id.toString(), otp.toString(), { EX: 300 });
 
   // send mail
-  await mailHelper.sendVerificationEmail(email, 'Login OTP', `Your one time password to login: ${otp}`);
+  // await mailHelper.sendVerificationEmail(email, 'Login OTP', `Your one time password to login: ${otp}`);
 
-  return otp;
+  return { otp };
 };
 
 const verifyOtp = async (email, otp) => {
@@ -69,14 +82,12 @@ const verifyOtp = async (email, otp) => {
   }
 
   const rolesObj = userDetails.roles;
-  // console.log('Users roles: ', rolesObj);
-
   const userRoles = [];
   rolesObj.forEach(role => userRoles.push(role.name));
-  // console.log(userRoles);
 
   //delete otp once verified
   await redisClient.del(key);
+
   const payload = {
     userId: userDetails.id,
     userRoles,
@@ -85,24 +96,11 @@ const verifyOtp = async (email, otp) => {
 
   const token = generateToken(payload);
 
-  return token;
+  return { token };
 };
 
 const logout = async () => {
-  return {};
-};
-
-const generateToken = payload => {
-  const token = jwt.sign(payload, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRY,
-  });
-
-  return token;
-};
-
-const verifyToken = token => {
-  const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
-  return decodedToken;
+  return 'Logout Successfully';
 };
 
 module.exports = { signup, sendOtp, verifyOtp, logout, generateToken, verifyToken };

@@ -3,6 +3,8 @@ const userControllers = require('../controllers/users.controller');
 const authMiddlewares = require('../middlewares/auth.middleware');
 const orderValidators = require('../validators/orders.validator');
 const userValidators = require('../validators/users.validator');
+const userSerializers = require('../serializers/users.serializer');
+const orderSerializers = require('../serializers/orders.serializer');
 
 const commonHelpers = require('../helpers/common.helper');
 
@@ -20,7 +22,7 @@ router.put(
   '/:userId/roles/:roleId',
   authMiddlewares.authenticateToken,
   authMiddlewares.isAdmin,
-  userControllers.addDeliveryPartner,
+  userControllers.assignRole,
   commonHelpers.customResponseHandler
 );
 
@@ -37,6 +39,7 @@ router.get(
   authMiddlewares.authenticateToken,
   authMiddlewares.isAuthorized,
   userControllers.get,
+  userSerializers.serializeUsers,
   commonHelpers.customResponseHandler
 );
 
@@ -45,6 +48,7 @@ router.get(
   authMiddlewares.authenticateToken,
   authMiddlewares.isAdmin,
   userControllers.getAll,
+  userSerializers.serializeUsers,
   commonHelpers.customResponseHandler
 );
 
@@ -55,6 +59,7 @@ router.post(
   authMiddlewares.isAuthorized,
   orderValidators.validatePlaceOrderSchema,
   userControllers.placeOrder,
+  orderSerializers.serializeOrders,
   commonHelpers.customResponseHandler
 );
 
@@ -63,6 +68,7 @@ router.get(
   authMiddlewares.authenticateToken,
   authMiddlewares.isAuthorized,
   userControllers.getOrder,
+  orderSerializers.serializeOrders,
   commonHelpers.customResponseHandler
 );
 
@@ -72,9 +78,11 @@ router.get(
   authMiddlewares.authenticateToken,
   authMiddlewares.isAuthorized,
   userControllers.getAllOrders,
+  orderSerializers.serializeOrders,
   commonHelpers.customResponseHandler
 );
 
+// delete an unsettled order
 router.delete(
   '/:userId/orders/:orderId',
   authMiddlewares.authenticateToken,
@@ -89,6 +97,7 @@ router.get(
   authMiddlewares.authenticateToken,
   authMiddlewares.isAuthorizedDeliveryPartner,
   userControllers.getPendingOrders,
+  orderSerializers.serializeOrders,
   commonHelpers.customResponseHandler
 );
 

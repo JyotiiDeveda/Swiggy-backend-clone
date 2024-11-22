@@ -6,6 +6,9 @@ const dishValidators = require('../validators/dishes.validator');
 const upload = require('../middlewares/multer.middleware');
 const ratingValidators = require('../validators/ratings.validator');
 const commonHelpers = require('../helpers/common.helper');
+const dishSerializers = require('../serializers/dishes.serializer');
+const restaurantSerializers = require('../serializers/restaurants.serializer');
+const ratingSerializers = require('../serializers/ratings.serializer');
 
 // to create restaurant
 router.post(
@@ -14,12 +17,23 @@ router.post(
   authMiddlewares.isAdmin,
   restaurantValidators.validateRestaurantSchema,
   restaurantsController.create,
+  restaurantSerializers.serializeRestaurants,
   commonHelpers.customResponseHandler
 );
 
-router.get('/', restaurantsController.getAll, commonHelpers.customResponseHandler);
+router.get(
+  '/',
+  restaurantsController.getAll,
+  restaurantSerializers.serializeRestaurants,
+  commonHelpers.customResponseHandler
+);
 
-router.get('/:id', restaurantsController.get, commonHelpers.customResponseHandler);
+router.get(
+  '/:id',
+  restaurantsController.get,
+  restaurantSerializers.serializeRestaurants,
+  commonHelpers.customResponseHandler
+);
 
 router.put(
   '/:id',
@@ -27,6 +41,7 @@ router.put(
   authMiddlewares.isAdmin,
   restaurantValidators.validateRestaurantSchema,
   restaurantsController.update,
+  restaurantSerializers.serializeRestaurants,
   commonHelpers.customResponseHandler
 );
 
@@ -37,6 +52,7 @@ router.post(
   authMiddlewares.isAuthorized,
   ratingValidators.validateRatingScore,
   restaurantsController.createRestaurantsRating,
+  ratingSerializers.serializeRatings,
   commonHelpers.customResponseHandler
 );
 
@@ -57,16 +73,6 @@ router.delete(
   commonHelpers.customResponseHandler
 );
 
-// to create a dish
-router.post(
-  '/:id/dishes',
-  authMiddlewares.authenticateToken,
-  authMiddlewares.isAdmin,
-  dishValidators.validateDishSchema,
-  restaurantsController.createRestaurantsDish,
-  commonHelpers.customResponseHandler
-);
-
 //image upload
 router.patch(
   '/:id/images',
@@ -75,6 +81,63 @@ router.patch(
   upload.single('image'),
   restaurantValidators.validateImage,
   restaurantsController.uploadImage,
+  restaurantSerializers.serializeRestaurants,
+  commonHelpers.customResponseHandler
+);
+
+// dishes routes
+
+// to create a dish
+router.post(
+  '/:id/dishes',
+  authMiddlewares.authenticateToken,
+  authMiddlewares.isAdmin,
+  dishValidators.validateDishSchema,
+  restaurantsController.createRestaurantsDish,
+  dishSerializers.serializeDishes,
+  commonHelpers.customResponseHandler
+);
+
+router.get(
+  '/:restaurantId/dishes/:dishId',
+  restaurantsController.getDish,
+  dishSerializers.serializeDishes,
+  commonHelpers.customResponseHandler
+);
+
+router.get(
+  '/:restaurantId/dishes',
+  restaurantsController.getAllDishes,
+  dishSerializers.serializeDishes,
+  commonHelpers.customResponseHandler
+);
+
+router.put(
+  '/:restaurantId/dishes/:dishId',
+  authMiddlewares.authenticateToken,
+  authMiddlewares.isAdmin,
+  dishValidators.validateDishSchema,
+  restaurantsController.updateDish,
+  dishSerializers.serializeDishes,
+  commonHelpers.customResponseHandler
+);
+
+router.delete(
+  '/:restaurantId/dishes/:dishId',
+  authMiddlewares.authenticateToken,
+  authMiddlewares.isAdmin,
+  restaurantsController.removeDish,
+  commonHelpers.customResponseHandler
+);
+
+router.patch(
+  '/:restaurantId/dishes/:dishId/images',
+  authMiddlewares.authenticateToken,
+  authMiddlewares.isAdmin,
+  upload.single('image'),
+  restaurantValidators.validateImage,
+  restaurantsController.uplaodDishImage,
+  dishSerializers.serializeDishes,
   commonHelpers.customResponseHandler
 );
 

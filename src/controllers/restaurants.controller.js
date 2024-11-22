@@ -148,6 +148,92 @@ const uploadImage = async (req, res, next) => {
   }
 };
 
+// dishes controllers
+const getDish = async (req, res, next) => {
+  try {
+    const restaurantId = req.params['restaurantId'];
+    const dishId = req.params['dishId'];
+    const dishDetails = await dishServices.get(restaurantId, dishId);
+
+    res.statusCode = 200;
+    res.message = 'Fetched dish successfully';
+    res.data = dishDetails;
+
+    next();
+  } catch (err) {
+    console.log('Error in getting dish: ', err);
+    return commonHelper.customErrorHandler(res, err.message, err.statusCode);
+  }
+};
+
+const getAllDishes = async (req, res, next) => {
+  try {
+    const restaurantId = req.params['restaurantId'];
+    const queyOptions = req.query;
+    const dishes = await dishServices.getAll(restaurantId, queyOptions);
+
+    res.statusCode = 200;
+    res.message = 'Fetched dishes data successfully';
+    res.data = dishes;
+
+    next();
+  } catch (err) {
+    console.log('Error in getting all dishes: ', err);
+    return commonHelper.customErrorHandler(res, err.message, err.statusCode);
+  }
+};
+
+const updateDish = async (req, res, next) => {
+  try {
+    const payload = req.body;
+    const restaurantId = req.params['restaurantId'];
+    const dishId = req.params['dishId'];
+    const updatedDish = await dishServices.update(restaurantId, dishId, payload);
+
+    res.statusCode = 200;
+    res.message = 'Dish updated successfully';
+    res.data = updatedDish;
+
+    next();
+  } catch (err) {
+    console.log('Error in updating dish: ', err);
+    return commonHelper.customErrorHandler(res, err.message, err.statusCode);
+  }
+};
+
+const removeDish = async (req, res, next) => {
+  try {
+    const restaurantId = req.params['restaurantId'];
+    const dishId = req.params['dishId'];
+    await dishServices.remove(restaurantId, dishId);
+
+    res.statusCode = 204;
+
+    next();
+  } catch (err) {
+    console.log('Error in deleting dish: ', err);
+    return commonHelper.customErrorHandler(res, err.message, err.statusCode);
+  }
+};
+
+const uplaodDishImage = async (req, res, next) => {
+  try {
+    const restaurantId = req.params['restaurantId'];
+    const dishId = req.params['dishId'];
+
+    const updatedDish = await dishServices.uplaodImage(restaurantId, dishId, req.file);
+
+    res.statusCode = 200;
+    res.message = 'Image uploaded successfully';
+    res.data = updatedDish;
+
+    next();
+  } catch (err) {
+    console.log('Error in uploading image for dish: ', err);
+    return commonHelper.customErrorHandler(res, err.message, err.statusCode);
+  }
+};
+
 module.exports = {
   create,
   get,
@@ -158,4 +244,9 @@ module.exports = {
   deleteRating,
   createRestaurantsDish,
   uploadImage,
+  getDish,
+  getAllDishes,
+  updateDish,
+  removeDish,
+  uplaodDishImage,
 };

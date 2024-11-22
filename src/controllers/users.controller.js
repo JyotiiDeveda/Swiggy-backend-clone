@@ -20,7 +20,7 @@ const addAddress = async (req, res, next) => {
   }
 };
 
-const addDeliveryPartner = async (req, res, next) => {
+const assignRole = async (req, res, next) => {
   try {
     const userId = req.params['userId'];
     const roleId = req.params['roleId'];
@@ -29,11 +29,11 @@ const addDeliveryPartner = async (req, res, next) => {
     await userServices.assignRole(currentUser, userId, roleId);
 
     res.statusCode = 201;
-    res.message = 'Added delivery partner successfully';
+    res.message = 'Assigned role successfully';
 
     next();
   } catch (err) {
-    console.log('Error in adding delivery partner: ', err);
+    console.log('Error in assigning role: ', err);
     return commonHelper.customErrorHandler(res, err.message, 400);
   }
 };
@@ -177,7 +177,7 @@ const getPendingOrders = async (req, res, next) => {
 
 module.exports = {
   addAddress,
-  addDeliveryPartner,
+  assignRole,
   removeAccount,
   get,
   getAll,

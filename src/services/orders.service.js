@@ -2,7 +2,6 @@ const commonHelpers = require('../helpers/common.helper');
 const models = require('../models');
 const { sequelize } = require('../models');
 const constants = require('../constants/constants');
-const orderSerializer = require('../serializers/orders.serializer');
 const mailHelper = require('../helpers/mail.helper');
 
 const placeOrder = async (currentUser, userId, payload) => {
@@ -82,6 +81,7 @@ const placeOrder = async (currentUser, userId, payload) => {
       { transaction: transactionContext }
     );
 
+    console.log('Order: ', order);
     if (!order || !order.id) {
       throw commonHelpers.customError('Failed to place error', 400);
     }
@@ -133,9 +133,7 @@ const getOrder = async (currentUser, userId, orderId) => {
 
   if (!order) throw commonHelpers.customError('No order found', 404);
 
-  const serialzedOrder = orderSerializer.serializeOrder(order);
-
-  return serialzedOrder;
+  return order;
 };
 
 const getAllOrders = async (currentUser, userId, page, limit) => {
@@ -148,16 +146,10 @@ const getAllOrders = async (currentUser, userId, page, limit) => {
   const endIndex = page * limit;
 
   const orders = await models.Order.findAll({
-    attributes: [
-      'id',
-      [sequelize.col('Order.created_at'), 'orderDate'],
-      [sequelize.col('Restaurant.name'), constants.ENTITY_TYPE.RESTAURANT],
-      'delivery_charges',
-      'order_charges',
-      'gst',
-      'total_amount',
-      'status',
-    ],
+    attributes: {
+      include: [[sequelize.col('Restaurant.name'), constants.ENTITY_TYPE.RESTAURANT]],
+      exclude: ['created_at', 'deleted_at', 'updated_at'],
+    },
 
     include: [
       {
@@ -211,6 +203,7 @@ const deleteOrder = async (currentUser, userId, orderId) => {
       throw commonHelpers.customError('Associated cart not found', 404);
     }
     await transactionContext.commit();
+    return;
   } catch (err) {
     await transactionContext.rollback();
     console.log('Error in deleting dish', err.message);
@@ -224,6 +217,9 @@ const getAllUnassignedOrders = async (page, limit) => {
 
   const orders = await models.Order.findAll({
     where: { status: constants.ORDER_STATUS.PREPARING },
+    include: {
+      model: models.Restaurant,
+    },
     offset: startIndex,
     limit: endIndex,
   });

@@ -12,13 +12,19 @@ const getCartDishes = async (cartId, userId) => {
     include: {
       model: models.Dish,
       as: 'dishes',
+      include: {
+        model: models.Restaurant,
+        attributes: ['id', 'name', 'category'],
+      },
     },
   });
 
-  if (!cartDishes || cartDishes.length === 0) {
-    throw commonHelpers.customError('Cart dishes not found');
+  console.log('CART DISH: ', cartDishes);
+  if (!cartDishes) {
+    throw commonHelpers.customError('Cart dishes not found', 404);
+  } else if (cartDishes?.dishes.length === 0) {
+    throw commonHelpers.customError('Cart is empty', 400);
   }
-
   return cartDishes;
 };
 
@@ -26,7 +32,7 @@ const addItem = async (userId, payload) => {
   const transactionContext = await sequelize.transaction();
   try {
     const { dish_id: dishId, quantity } = payload;
-    // check if dish exists
+
     const dishDetails = await models.Dish.findOne({ where: { id: dishId } });
 
     if (!dishDetails) {
@@ -54,26 +60,27 @@ const addItem = async (userId, payload) => {
       transaction: transactionContext,
     });
 
+    // if cart was existing already
     if (!created) {
       const dishInCart = await models.CartDish.findOne({ where: { cart_id: cart.id, dish_id: dishId } });
-      if (dishInCart) {
-        console.log('DISH IN CART: ', dishInCart);
 
+      if (dishInCart) {
         dishInCart.quantity = quantity;
         await dishInCart.save({ transaction: transactionContext });
         return dishInCart;
       }
 
-      const cartRestaurant = cart.dataValues.restaurant_id;
-      const dishRestaurant = dishDetails.restaurant_id;
-      console.log();
-      if (cartRestaurant === dishRestaurant && parseInt(cart.dataValues.dishes_cnt) >= 5) {
-        throw commonHelpers.customError('Five items can only be added in a cart', 400);
-      } else if (cartRestaurant && cartRestaurant !== dishRestaurant) {
+      const cartRestaurantId = cart.dataValues.restaurant_id;
+      const dishRestaurantId = dishDetails.restaurant_id;
+
+      // think
+      if (cartRestaurantId && cartRestaurantId !== dishRestaurantId) {
         throw commonHelpers.customError(
           'Adding dishes from different restaurant will replace the existing dishes in cart',
           409
         );
+      } else if (cartRestaurantId === dishRestaurantId && parseInt(cart.dataValues.dishes_cnt) >= 5) {
+        throw commonHelpers.customError('Five items can only be added in a cart', 400);
       }
     }
 
@@ -87,8 +94,10 @@ const addItem = async (userId, payload) => {
       { transaction: transactionContext }
     );
 
+    if (!cartDish) throw commonHelpers.customError('Failed to add dish', 400);
+
     await transactionContext.commit();
-    return cartDish;
+    return;
   } catch (err) {
     await transactionContext.rollback();
     console.log('Error in adding dish to cart', err);
