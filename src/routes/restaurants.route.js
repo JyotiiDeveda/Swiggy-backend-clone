@@ -9,6 +9,7 @@ const commonHelpers = require('../helpers/common.helper');
 const dishSerializers = require('../serializers/dishes.serializer');
 const restaurantSerializers = require('../serializers/restaurants.serializer');
 const ratingSerializers = require('../serializers/ratings.serializer');
+const commonValidators = require('../validators/common.validator');
 
 // to create restaurant
 router.post(
@@ -23,6 +24,7 @@ router.post(
 
 router.get(
   '/',
+  commonValidators.validateQueryParams,
   restaurantsController.getAll,
   restaurantSerializers.serializeRestaurants,
   commonHelpers.customResponseHandler
@@ -40,6 +42,7 @@ router.put(
   authMiddlewares.authenticateToken,
   authMiddlewares.isAdmin,
   restaurantValidators.validateRestaurantSchema,
+  commonValidators.validateQueryParams,
   restaurantsController.update,
   restaurantSerializers.serializeRestaurants,
   commonHelpers.customResponseHandler
@@ -107,6 +110,7 @@ router.get(
 
 router.get(
   '/:restaurantId/dishes',
+  commonValidators.validateQueryParams,
   restaurantsController.getAllDishes,
   dishSerializers.serializeDishes,
   commonHelpers.customResponseHandler

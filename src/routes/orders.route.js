@@ -4,12 +4,14 @@ const orderControllers = require('../controllers/orders.controller');
 const orderValidators = require('../validators/orders.validator');
 const commonHelpers = require('../helpers/common.helper');
 const orderSerializers = require('../serializers/orders.serializer');
+const commonvalidators = require('../validators/common.validator');
 
 // get all unassigned orders
 router.get(
   '/',
   authMiddlewares.authenticateToken,
   authMiddlewares.isAuthorizedDeliveryPartner,
+  commonvalidators.validateQueryParams,
   orderControllers.getAllUnassignedOrders,
   orderSerializers.serializeOrders,
   commonHelpers.customResponseHandler

@@ -1,5 +1,5 @@
 const commonHelpers = require('../helpers/common.helper');
-const models = require('../models');
+const { User, Order, Cart, Dish, Restaurant } = require('../models');
 const { sequelize } = require('../models');
 const constants = require('../constants/constants');
 const mailHelper = require('../helpers/mail.helper');
@@ -15,7 +15,7 @@ const placeOrder = async (currentUser, userId, payload) => {
     const { cart_id: cartId, restaurant_id: restaurantId } = payload;
 
     // check if order is already placed
-    const orderDetails = await models.Order.findOne({
+    const orderDetails = await Order.findOne({
       where: { cart_id: cartId, restaurant_id: restaurantId },
     });
 
@@ -23,10 +23,10 @@ const placeOrder = async (currentUser, userId, payload) => {
       throw commonHelpers.customError('Order already placed', 409);
     }
 
-    const cartDishDetails = await models.Cart.findOne({
+    const cartDishDetails = await Cart.findOne({
       where: { id: cartId, user_id: userId, status: constants.CART_STATUS.ACTIVE },
       include: {
-        model: models.Dish,
+        model: Dish,
         as: 'dishes',
         attributes: ['restaurant_id', 'id', 'price'],
         through: {
@@ -69,7 +69,7 @@ const placeOrder = async (currentUser, userId, payload) => {
       `Order charges: ${orderCharges} deliver charges: ${deliveryCharges} gst: ${gst} total cost: ${totalCost}`
     );
 
-    const order = await models.Order.create(
+    const order = await Order.create(
       {
         restaurant_id: restaurantId,
         cart_id: cartId,
@@ -108,16 +108,16 @@ const getOrder = async (currentUser, userId, orderId) => {
     throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
   }
 
-  const order = await models.Order.findOne({
+  const order = await Order.findOne({
     where: { id: orderId },
     include: [
       {
-        model: models.Cart,
+        model: Cart,
         where: {
           user_id: userId,
         },
         include: {
-          model: models.Dish,
+          model: Dish,
           as: 'dishes',
           attributes: {
             exclude: ['created_at', 'updated_at', 'deleted_at'],
@@ -125,7 +125,7 @@ const getOrder = async (currentUser, userId, orderId) => {
         },
       },
       {
-        model: models.Restaurant,
+        model: Restaurant,
         attributes: ['id', 'name', 'category'],
       },
     ],
@@ -145,7 +145,7 @@ const getAllOrders = async (currentUser, userId, page, limit) => {
   const startIndex = (page - 1) * limit;
   const endIndex = page * limit;
 
-  const orders = await models.Order.findAll({
+  const orders = await Order.findAll({
     attributes: {
       include: [[sequelize.col('Restaurant.name'), constants.ENTITY_TYPE.RESTAURANT]],
       exclude: ['created_at', 'deleted_at', 'updated_at'],
@@ -153,12 +153,12 @@ const getAllOrders = async (currentUser, userId, page, limit) => {
 
     include: [
       {
-        model: models.Restaurant,
+        model: Restaurant,
         attributes: [],
         duplicating: false,
       },
       {
-        model: models.Cart,
+        model: Cart,
         where: { user_id: userId },
         attributes: [],
         duplicating: false,
@@ -181,27 +181,33 @@ const deleteOrder = async (currentUser, userId, orderId) => {
       throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
     }
 
+    const order = await Order.findOne({ id: orderId, status: constants.ORDER_STATUS.PREPARING });
+
+    if (!order) {
+      throw commonHelpers.customError('No order found', 404);
+    }
+
     // the order which has not been delivered or cancelled can only be deleted
-    const deletedOrder = await models.Order.destroy({
-      where: { id: orderId, status: constants.ORDER_STATUS.PREPARING },
+    await Order.destroy({
+      where: { id: orderId },
       returning: true,
       transaction: transactionContext,
     });
 
-    if (!deletedOrder || deletedOrder?.length === 0) {
-      throw commonHelpers.customError('No order found', 404);
+    const associatedCartId = order[0].cart_id;
+
+    // delete associated cart
+    const cart = await Cart.findByPk(associatedCartId);
+
+    if (!cart) {
+      throw commonHelpers.customError('Associated cart not found', 404);
     }
 
-    const associatedCartId = deletedOrder[0].cart_id;
-    // delete associated cart
-    const deletedCart = await models.Cart.destroy({
+    await Cart.destroy({
       where: { id: associatedCartId },
       transaction: transactionContext,
     });
 
-    if (deletedCart === 0) {
-      throw commonHelpers.customError('Associated cart not found', 404);
-    }
     await transactionContext.commit();
     return;
   } catch (err) {
@@ -215,10 +221,10 @@ const getAllUnassignedOrders = async (page, limit) => {
   const startIndex = (page - 1) * limit;
   const endIndex = page * limit;
 
-  const orders = await models.Order.findAll({
+  const orders = await Order.findAll({
     where: { status: constants.ORDER_STATUS.PREPARING },
     include: {
-      model: models.Restaurant,
+      model: Restaurant,
     },
     offset: startIndex,
     limit: endIndex,
@@ -237,32 +243,31 @@ const assignOrder = async (currentUser, userId, orderId) => {
       throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
     }
 
-    const [updatedOrderCnt, updatedOrder] = await models.Order.update(
-      {
-        delivery_partner_id: userId,
-      },
-      {
-        where: { id: orderId, status: constants.ORDER_STATUS.PREPARING },
-        returning: true,
-        transaction: transactionContext,
-      }
-    );
+    console.log('ORDER ID: ', orderId);
+    const order = await Order.findOne({ where: { id: orderId, status: constants.ORDER_STATUS.PREPARING } });
 
-    if (updatedOrderCnt === 0) {
+    if (!order) {
       throw commonHelpers.customError('No order found', 404);
     }
 
-    const deliveryPartner = await models.User.findOne({ where: { id: userId } });
+    const deliveryPartner = await User.findOne({ where: { id: userId } });
 
+    if (!deliveryPartner) {
+      throw commonHelpers.customError('Delivery partner not found', 404);
+    }
+
+    order.delivery_partner_id = userId;
+    await order.save({ transaction: transactionContext });
+    console.log('Updated asssign');
     const mailOptions = {
-      orderId: updatedOrder[0].id,
-      assignedAt: updatedOrder[0].updated_at,
+      orderId: order.id,
+      assignedAt: order.updated_at,
       deliveryPartner: `${deliveryPartner.first_name} ${deliveryPartner.last_name}`,
     };
 
     await mailHelper.sendOrderAssignedMail(currentUser.email, mailOptions);
     await transactionContext.commit();
-    return updatedOrder;
+    return order;
   } catch (err) {
     await transactionContext.rollback();
     console.log('Error in assigning order', err.message);
@@ -278,7 +283,7 @@ const getPendingOrders = async (currentUser, userId, page, limit) => {
   const startIndex = (page - 1) * limit;
   const endIndex = page * limit;
 
-  const orders = await models.Order.findAll({
+  const orders = await Order.findAll({
     where: { delivery_partner_id: userId, status: constants.ORDER_STATUS.PREPARING },
     offset: startIndex,
     limit: endIndex,
@@ -292,29 +297,24 @@ const getPendingOrders = async (currentUser, userId, page, limit) => {
 const updateOrderStatus = async (deliveryPartner, orderId, status) => {
   const transactionContext = await sequelize.transaction();
   try {
-    if (!status) {
-      throw commonHelpers.customError('Status required', 422);
-    }
-
     const filter = { id: orderId };
 
     // if delivery partner is not admin he can update the status of orders assigned to them only
     if (!deliveryPartner.userRoles.includes(constants.ROLES.ADMIN))
       filter.delivery_partner_id = deliveryPartner.userId;
 
-    const [updatedOrderCnt, updatedOrder] = await models.Order.update(
-      {
-        status: status,
-      },
-      { where: filter, returning: true, transaction: transactionContext }
-    );
+    const order = await Order.findOne({ id: orderId, status: constants.ORDER_STATUS.PREPARING });
 
-    if (updatedOrderCnt === 0) {
+    if (!order) {
       throw commonHelpers.customError('No order found', 404);
     }
-    await mailHelper.sendOrderStatusUpdateMail(deliveryPartner.email, updatedOrder[0]);
+
+    order.status = status;
+    await order.save({ transaction: transactionContext });
+
+    await mailHelper.sendOrderStatusUpdateMail(deliveryPartner.email, order);
     await transactionContext.commit();
-    return updatedOrder;
+    return order;
   } catch (err) {
     await transactionContext.rollback();
     console.log('Error in updating order status', err.message);
