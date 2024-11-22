@@ -1,0 +1,158 @@
+openapi: 3.0.1
+info:
+  title: Dishes API
+  version: 1.0.0
+  description: API for managing dishes and their ratings.
+tags:
+  - name: Dishes
+    description: Endpoints related to dishes and their ratings.
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+paths:
+  /dishes/{id}/ratings:
+    post:
+      tags:
+        - Dishes
+      summary: Rate a dish
+      description: Allows an authenticated and authorized user to rate a dish.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID of the dish to be rated.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                rating:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                  description: The rating score for the dish.
+                  example: 4
+      responses:
+        201:
+          description: Dish rated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Dish rated successfully
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        example: 1
+                      rating:
+                        type: integer
+                        example: 4
+        400:
+          description: Invalid input.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Invalid rating score
+        403:
+          description: Forbidden. User has not ordered the dish.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: User has not ordered the dish yet, can't rate
+        409:
+          description: Conflict. User has already rated the dish.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: User has already rated the dish
+        404:
+          description: Dish not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Dish does not exist
+        401:
+          description: Unauthorized. Token is missing or invalid.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Unauthorized
+
+  /dishes/{dishId}/ratings/{ratingId}:
+    delete:
+      tags:
+        - Dishes
+      summary: Delete a dish rating
+      description: Allows an authenticated user to delete a specific rating for a dish.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: dishId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID of the dish whose rating is to be deleted.
+        - name: ratingId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID of the rating to be deleted.
+      responses:
+        204:
+          description: Rating deleted successfully. No content is returned.
+        404:
+          description: Dish or rating not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: No rating found for the dish
+        401:
+          description: Unauthorized. Token is missing or invalid.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Unauthorized

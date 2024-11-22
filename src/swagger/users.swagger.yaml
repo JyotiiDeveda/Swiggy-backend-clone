@@ -1,0 +1,312 @@
+openapi: 3.0.3
+info:
+  title: User and Order Management API
+  version: 1.0.0
+  description: API for managing users, roles, and orders.
+
+servers:
+  - url: http://localhost:3000/api/v1
+
+paths:
+  /users/{id}:
+    patch:
+      summary: Add an address for the user
+      tags:
+        - Users
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: string
+      requestBody:
+        description: User address details
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                address:
+                  type: string
+                  example: '123 Street, City, Country'
+      responses:
+        '200':
+          description: Address updated successfully
+        '400':
+          description: Bad request
+        '403':
+          description: Unauthorized
+        '404':
+          description: User not found
+
+    delete:
+      summary: Remove user account
+      tags:
+        - Users
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Account removed successfully
+        '403':
+          description: Unauthorized
+        '404':
+          description: User not found
+
+    get:
+      summary: Fetch user details
+      tags:
+        - Users
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Fetched user details successfully
+        '403':
+          description: Unauthorized
+        '404':
+          description: User not found
+
+  /users:
+    get:
+      summary: Fetch all users
+      tags:
+        - Users
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: role
+          in: query
+          description: Filter users by role
+          schema:
+            type: string
+            enum: [admin, delivery-partner, customer]
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            example: 1
+        - name: limit
+          in: query
+          description: Number of users per page
+          schema:
+            type: integer
+            example: 10
+      responses:
+        '200':
+          description: Fetched all users successfully
+        '404':
+          description: No users found
+
+  /users/{userId}/roles/{roleId}:
+    put:
+      summary: Assign role to a user
+      tags:
+        - Roles
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: string
+        - name: roleId
+          in: path
+          required: true
+          description: Role ID
+          schema:
+            type: string
+      responses:
+        '201':
+          description: Role assigned successfully
+        '403':
+          description: Unauthorized
+        '404':
+          description: Role or User not found
+
+  /users/{id}/orders:
+    post:
+      summary: Place an order
+      tags:
+        - Orders
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: string
+      requestBody:
+        description: Order details
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      itemId:
+                        type: string
+                        example: 'item123'
+                      quantity:
+                        type: integer
+                        example: 2
+                totalPrice:
+                  type: number
+                  example: 299.99
+      responses:
+        '200':
+          description: Order placed successfully
+        '400':
+          description: Invalid order data
+        '403':
+          description: Unauthorized
+
+    get:
+      summary: Fetch all orders of a user
+      tags:
+        - Orders
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            example: 1
+        - name: limit
+          in: query
+          description: Number of orders per page
+          schema:
+            type: integer
+            example: 10
+      responses:
+        '200':
+          description: Fetched all orders successfully
+        '403':
+          description: Unauthorized
+        '404':
+          description: No orders found
+
+  /users/{userId}/orders/{orderId}:
+    get:
+      summary: Fetch a specific order of a user
+      tags:
+        - Orders
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: string
+        - name: orderId
+          in: path
+          required: true
+          description: Order ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Order fetched successfully
+        '403':
+          description: Unauthorized
+        '404':
+          description: Order not found
+
+    delete:
+      summary: Delete an unsettled order
+      tags:
+        - Orders
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: string
+        - name: orderId
+          in: path
+          required: true
+          description: Order ID
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Order deleted successfully
+        '403':
+          description: Unauthorized
+        '404':
+          description: Order not found
+
+  /users/{id}/pending-orders:
+    get:
+      summary: Get all pending orders for a delivery partner
+      tags:
+        - Orders
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Delivery Partner ID
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            example: 1
+        - name: limit
+          in: query
+          description: Number of orders per page
+          schema:
+            type: integer
+            example: 10
+      responses:
+        '200':
+          description: Fetched pending orders successfully
+        '403':
+          description: Unauthorized
+        '404':
+          description: No pending orders found

@@ -1,0 +1,93 @@
+openapi: 3.0.3
+info:
+  title: Orders API
+  description: API documentation for managing orders and delivery operations.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000/api
+    description: Local server
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Order:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        status:
+          type: string
+          enum: [PREPARING, ASSIGNED, COMPLETED]
+          example: PREPARING
+        delivery_partner_id:
+          type: integer
+          nullable: true
+          example: 123
+        createdAt:
+          type: string
+          format: date-time
+          example: '2024-01-01T00:00:00Z'
+        updatedAt:
+          type: string
+          format: date-time
+          example: '2024-01-01T00:00:00Z'
+      required:
+        - id
+        - status
+    AssignOrderRequest:
+      type: object
+      properties:
+        userId:
+          type: integer
+          example: 123
+      required:
+        - userId
+    UpdateOrderStatusRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [PREPARING, ASSIGNED, COMPLETED]
+          example: COMPLETED
+      required:
+        - status
+
+paths:
+  /orders:
+    get:
+      tags:
+        - Orders
+      summary: Get all unassigned orders
+      description: Retrieve a list of orders that are not yet assigned to a delivery partner.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+            example: 1
+          description: Page number for pagination.
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+            example: 10
+          description: Number of records per page.
+      responses:
+        '200':
+          description: Successfully fetched unassigned orders.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: str
