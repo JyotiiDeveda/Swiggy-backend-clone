@@ -6,9 +6,11 @@ const makePayment = async (req, res, next) => {
     const currentUser = req.user;
     const payload = req.body;
     const payment = await paymentServices.makePayment(currentUser, payload);
+
     res.statusCode = 201;
     res.data = payment;
     res.message = 'Payment successfull';
+
     next();
   } catch (err) {
     console.log('Error in making payment: ', err);
@@ -21,6 +23,7 @@ const getAll = async (req, res, next) => {
     const { userId } = req.user;
     const { page, limit } = req.query;
     const allPayments = await paymentServices.getAllPayments(userId, page, limit);
+
     res.statusCode = 200;
     res.data = allPayments;
     res.message = 'Fetched all payments successfully';

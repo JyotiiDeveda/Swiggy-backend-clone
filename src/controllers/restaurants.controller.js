@@ -77,7 +77,7 @@ const remove = async (req, res, next) => {
 
     next();
   } catch (err) {
-    console.log('Error in deleting restaurant: ', err.message);
+    console.log('Error in deleting restaurant: ', err);
     return commonHelper.customErrorHandler(res, err.message, err.statusCode);
   }
 };
@@ -110,7 +110,7 @@ const deleteRating = async (req, res, next) => {
 
     next();
   } catch (err) {
-    console.log('Error in deleting rating: ', err.message);
+    console.log('Error in deleting rating: ', err);
     return commonHelper.customErrorHandler(res, err.message, 400);
   }
 };

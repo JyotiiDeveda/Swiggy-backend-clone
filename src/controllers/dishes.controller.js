@@ -8,7 +8,6 @@ const createDishesRating = async (req, res, next) => {
     const dishId = req.params['id'];
     const userId = req.user.userId;
     const newRating = await ratingServices.createDishesRating(dishId, rating, userId);
-    console.log('New rating: ', newRating);
 
     res.statusCode = 201;
     res.message = 'Dish rated successfully';
@@ -30,7 +29,7 @@ const deleteRating = async (req, res, next) => {
     res.statusCode = 204;
     next();
   } catch (err) {
-    console.log('Error in deleting rating: ', err.message);
+    console.log('Error in deleting rating: ', err);
     return commonHelper.customErrorHandler(res, err.message, 400);
   }
 };
@@ -90,9 +89,10 @@ const remove = async (req, res, next) => {
     await dishServices.remove(dishId);
 
     res.statusCode = 204;
+
     next();
   } catch (err) {
-    console.log('Error in deleting dish: ', err.message);
+    console.log('Error in deleting dish: ', err);
     return commonHelper.customErrorHandler(res, err.message, err.statusCode);
   }
 };
@@ -100,7 +100,6 @@ const remove = async (req, res, next) => {
 const uplaodImage = async (req, res, next) => {
   try {
     const dishId = req.params['id'];
-
     const updatedDish = await dishServices.uplaodImage(dishId, req.file);
 
     res.statusCode = 200;
