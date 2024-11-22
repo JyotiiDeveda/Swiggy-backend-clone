@@ -67,7 +67,7 @@ const get = async restaurantId => {
 };
 
 const getAll = async queryOptions => {
-  const { city, name, category, orderBy = 'asc', page = 1, limit = 10 } = queryOptions;
+  const { city, name, category, orderBy = constants.SORT_ORDER.ASC, page = 1, limit = 10 } = queryOptions;
   const startIndex = (page - 1) * limit;
   const endIndex = page * limit;
 
@@ -111,7 +111,6 @@ const getAll = async queryOptions => {
     order: [['avg_rating', `${order} NULLS LAST`]],
     limit: endIndex,
   });
-  console.log('RESTAURANTS: ', restaurants);
 
   // console.log('Restaurant service: ', restaurants);
   if (!restaurants || restaurants.length === 0) {

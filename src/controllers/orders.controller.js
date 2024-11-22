@@ -21,6 +21,7 @@ const getAllUnassignedOrders = async (req, res, next) => {
 const assignOrder = async (req, res, next) => {
   try {
     const orderId = req.params['id'];
+
     // delivery partner can assign order to themselves
     const currentUser = req.user;
     // the userId(i.e delivery partner) which is supposed to be assigned an order
