@@ -1,0 +1,129 @@
+openapi: 3.0.3
+info:
+  title: Payments API
+  description: API documentation for handling payments.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000/api
+    description: Local server
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Payment:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        user_id:
+          type: integer
+          example: 123
+        order_id:
+          type: integer
+          example: 456
+        total_amount:
+          type: number
+          format: float
+          example: 99.99
+        type:
+          type: string
+          example: 'credit_card'
+        status:
+          type: string
+          enum: [SUCCESSFUL, FAILED]
+          example: 'SUCCESSFUL'
+        createdAt:
+          type: string
+          format: date-time
+          example: '2024-01-01T00:00:00Z'
+        updatedAt:
+          type: string
+          format: date-time
+          example: '2024-01-01T00:00:00Z'
+
+paths:
+  /payments:
+    post:
+      tags:
+        - Payments
+      summary: Make a payment
+      description: Initiates a payment for a given order.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                orderId:
+                  type: integer
+                  example: 456
+                type:
+                  type: string
+                  example: 'credit_card'
+              required:
+                - orderId
+                - type
+      responses:
+        '201':
+          description: Payment successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Payment successful
+                  data:
+        '400':
+          description: Bad Request - Invalid input or payment failed
+        '404':
+          description: Not Found - Order not found
+        '409':
+          description: Conflict - Payment already made
+    get:
+      tags:
+        - Payments
+      summary: Get all payments
+      description: Fetches all payments for the authenticated user.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+            example: 1
+          description: Page number for pagination
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+            example: 10
+          description: Number of records per page
+      responses:
+        '200':
+          description: Fetched all payments successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Fetched all payments successfully
+                  data:
+                    type: array
+                    items:
+        '404':
+          description: Not Found - No payments found for the user

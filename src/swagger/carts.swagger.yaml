@@ -1,0 +1,153 @@
+openapi: 3.0.0
+info:
+  title: Cart API
+  version: 1.0.0
+  description: API for managing user carts.
+servers:
+  - url: http://localhost:3000/api
+    description: Development server
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+  schemas:
+    CartDish:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The cart ID.
+        dishes:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                description: Dish ID.
+              name:
+                type: string
+                description: Dish name.
+              price:
+                type: number
+                description: Dish price.
+              quantity:
+                type: integer
+                description: Quantity of the dish in the cart.
+              restaurant:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: Restaurant ID.
+                  name:
+                    type: string
+                    description: Restaurant name.
+                  category:
+                    type: string
+                    description: Restaurant category.
+    AddItem:
+      type: object
+      properties:
+        dish_id:
+          type: string
+          description: ID of the dish to add to the cart.
+        quantity:
+          type: integer
+          description: Quantity of the dish to add.
+
+paths:
+  /carts/{id}:
+    get:
+      tags:
+        - Carts
+      summary: Get all dishes in a cart
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID of the cart.
+      responses:
+        200:
+          description: Fetched cart dishes successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CartDish'
+        404:
+          description: Cart not found.
+        400:
+          description: Cart is empty.
+
+    delete:
+      tags:
+        - Carts
+      summary: Empty the cart
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID of the cart to empty.
+      responses:
+        204:
+          description: Cart emptied successfully.
+        404:
+          description: No active cart found.
+
+  /carts:
+    post:
+      tags:
+        - Carts
+      summary: Add a dish to the cart
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddItem'
+      responses:
+        201:
+          dsescription: Dish added to the cart successfully.
+        404:
+          description: Dish not found.
+        409:
+          description: Conflict when adding a dish (e.g., from a different restaurant).
+        400:
+          description: Validation error or other failure.
+
+  /carts/{cartId}/dishes/{dishId}:
+    delete:
+      tags:
+        - Carts
+      summary: Remove a dish from the cart
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: cartId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID of the cart.
+        - name: dishId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID of the dish to remove.
+      responses:
+        204:
+          description: Dish removed successfully.
+        404:
+          description: Dish not found in the cart.

@@ -1,0 +1,58 @@
+openapi: 3.0.0
+info:
+  title: Swiggy Clone API
+  description: API documentation for the Swiggy Clone application.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000/api
+    description: Local development server
+tags:
+  - name: Auth
+    description: Authentication and authorization routes
+  - name: Users
+    description: User-related operations
+  - name: Restaurants
+    description: Restaurant management and browsing
+  - name: Dishes
+    description: Dish-related operations
+  - name: Carts
+    description: Cart management operations
+  - name: Orders
+    description: Order management and status tracking
+  - name: Payments
+    description: Payment processing and transactions
+paths:
+  $ref:
+    - ./auth.swagger.yaml
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  security:
+    - BearerAuth: []
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the user.
+        first_name:
+          type: string
+          description: First name of the user.
+        last_name:
+          type: string
+          description: Last name of the user.
+        email:
+          type: string
+          description: Email address of the user.
+        phone:
+          type: string
+          description: Phone number of the user.
+        address:
+          type: string
+          description: Address of the user.

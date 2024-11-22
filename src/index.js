@@ -2,6 +2,10 @@ const express = require('express');
 const app = express();
 const { sequelize } = require('./models');
 const { registerRoutes } = require('./routes');
+const swaggerDocument = require('./swagger/swagger.js');
+const swaggerUi = require('swagger-ui-express');
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use(express.json());
 registerRoutes(app);
