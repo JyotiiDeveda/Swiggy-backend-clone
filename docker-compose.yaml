@@ -1,0 +1,36 @@
+version: '3.1'
+services:
+  app:
+    build:
+      context: .
+    container_name: swiggy-backend
+    ports:
+      - '3000:3000'
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    image: postgres
+    container_name: swiggy-postgres-db
+    restart: always
+    environment:
+      - POSTGRES_USER=pgsql
+      - POSTGRES_PASSWORD=12345678
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+    volumes:
+      - './data:/var/lib/postgresql/data'
+      - './dumps:/dumps'
+    ports:
+      - '5432:5432'
+
+  redis:
+    image: redis:alpine
+    container_name: swiggy-redis-cache
+    restart: always
+    ports:
+      - '6379:6379'
