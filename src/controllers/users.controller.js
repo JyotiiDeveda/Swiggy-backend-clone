@@ -2,6 +2,22 @@ const userServices = require('../services/users.service');
 const commonHelper = require('../helpers/common.helper');
 const orderServices = require('../services/orders.service');
 
+const create = async (req, res, next) => {
+  try {
+    const payload = req.body;
+    const updatedUser = await userServices.create(payload);
+
+    res.statusCode = 200;
+    res.message = 'User created successfully';
+    res.data = updatedUser;
+
+    next();
+  } catch (err) {
+    console.log('Error in creating user: ', err);
+    return commonHelper.customErrorHandler(res, err.message, err.statusCode);
+  }
+};
+
 const updateProfile = async (req, res, next) => {
   try {
     const userId = req.params['id'];
@@ -14,7 +30,7 @@ const updateProfile = async (req, res, next) => {
 
     next();
   } catch (err) {
-    console.log('Error in updating address: ', err);
+    console.log('Error in updating user profile: ', err);
     return commonHelper.customErrorHandler(res, err.message, err.statusCode);
   }
 };
@@ -193,6 +209,7 @@ const getPendingOrders = async (req, res, next) => {
 };
 
 module.exports = {
+  create,
   updateProfile,
   addAddress,
   assignRole,

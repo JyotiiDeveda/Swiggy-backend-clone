@@ -7,7 +7,7 @@ const { sequelize } = require('../models');
 const create = async data => {
   const transactionContext = await sequelize.transaction();
   try {
-    const { first_name, last_name, email, phone, address } = data;
+    const { first_name, last_name, email, phone, address, role = constants.ROLES.CUSTOMER } = data;
     const userExists = await User.findOne({
       where: { [Op.or]: [{ email }, { phone }] },
       paranoid: false,
@@ -31,6 +31,7 @@ const create = async data => {
       return restoredUser;
     }
 
+    console.log('ADDRESS: ', address);
     // Creating a user
     const newUser = User.build({
       first_name,
@@ -43,7 +44,7 @@ const create = async data => {
     await newUser.save({ transaction: transactionContext });
 
     // a user can signup with customer role only
-    const roleDetails = await Role.findOne({ where: { name: constants.ROLES.CUSTOMER } });
+    const roleDetails = await Role.findOne({ where: { name: role } });
 
     // assign role to user
     const userRole = await UserRole.findOrCreate({

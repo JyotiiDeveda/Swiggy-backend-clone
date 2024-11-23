@@ -8,7 +8,15 @@ const orderSerializers = require('../serializers/orders.serializer');
 const commonHelpers = require('../helpers/common.helper');
 
 // for admin to create user
-// router.post();
+router.post(
+  '/',
+  authMiddlewares.authenticateToken,
+  authMiddlewares.isAdmin,
+  userValidators.validateUser,
+  userControllers.create,
+  userSerializers.serializeUsers,
+  commonHelpers.customResponseHandler
+);
 
 router.put(
   '/:id',

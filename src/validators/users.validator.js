@@ -1,9 +1,11 @@
 const Joi = require('joi');
 const commonHelper = require('../helpers/common.helper');
 const validateHelper = require('../helpers/validate.helper');
+const constants = require('../constants/constants');
 
 const validateUser = (req, res, next) => {
   try {
+    const isAdmin = req.user?.userRoles?.includes(constants.ROLES.ADMIN);
     const schema = Joi.object({
       first_name: Joi.string().required().min(3),
       last_name: Joi.string().required().min(3),
@@ -15,6 +17,11 @@ const validateUser = (req, res, next) => {
         }),
       phone: Joi.string().required().min(10).max(15),
       address: Joi.string().min(5),
+      ...(isAdmin && {
+        role: Joi.string()
+          .valid(...Object.values(constants.ROLES))
+          .required(),
+      }),
     });
 
     const validateResponse = validateHelper.validateSchemas(schema, req.body);
@@ -32,6 +39,7 @@ const validateUser = (req, res, next) => {
     return commonHelper.customErrorHandler(res, err.message, 400);
   }
 };
+
 const validateUserAddress = (req, res, next) => {
   try {
     const schema = Joi.object({

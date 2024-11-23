@@ -2,7 +2,7 @@ const validateSchemas = (schema, payload) => {
   const { error, value } = schema.validate(payload);
 
   if (error) {
-    console.log('error: ', typeof error);
+    console.log('Validation error: ', error);
     const errMsg =
       error.details
         .map(detail => detail.message)

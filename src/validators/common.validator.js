@@ -37,6 +37,37 @@ const validateQueryParams = (req, res, next) => {
   }
 };
 
+const validateId = (req, res, next) => {
+  try {
+    const id = [...Object.keys(req.body)][0];
+    console.log('IDD: ', id);
+    const schema = Joi.object({
+      [id]: Joi.string()
+        .guid({
+          version: 'uuidv4',
+        })
+        .required(),
+    });
+
+    const payload = req.body;
+    console.log('req body: ', payload);
+    const validateResponse = validateHelper.validateSchemas(schema, payload);
+    const isValid = validateResponse[0];
+    const value = validateResponse[1];
+
+    if (!isValid) {
+      return commonHelper.customErrorHandler(res, value, 422);
+    }
+
+    req.body = value;
+
+    return next();
+  } catch (err) {
+    console.log('Error validating input fields: ', err);
+    return commonHelper.customErrorHandler(res, err.message, 400);
+  }
+};
 module.exports = {
   validateQueryParams,
+  validateId,
 };
