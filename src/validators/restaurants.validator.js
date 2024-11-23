@@ -1,5 +1,6 @@
 const Joi = require('joi');
 const commonHelper = require('../helpers/common.helper');
+const validateHelper = require('../helpers/validate.helper');
 const constants = require('../constants/constants');
 
 const validateRestaurantSchema = (req, res, next) => {
@@ -13,21 +14,17 @@ const validateRestaurantSchema = (req, res, next) => {
       address: Joi.object(),
     });
 
-    const { error, value } = schema.validate(req.body);
-    // console.log("Value in validate: ", value);
+    const validateResponse = validateHelper.validateSchemas(schema, req.body);
+    const isValid = validateResponse[0];
+    const value = validateResponse[1];
 
-    if (error) {
-      const errMsg =
-        error.details
-          .map(detail => detail.message)
-          .join(', ')
-          .replaceAll(`"`, '') || 'Restaurant data validation failed';
-
-      return commonHelper.customErrorHandler(res, errMsg, 422);
+    if (!isValid) {
+      return commonHelper.customErrorHandler(res, value, 422);
     }
 
     req.body = value;
-    next();
+
+    return next();
   } catch (err) {
     console.log('Error validating input fields: ', err);
     return commonHelper.customErrorHandler(res, err.message, 400);
@@ -41,19 +38,17 @@ const validateImage = (req, res, next) => {
     });
 
     const imageUrl = req.file.buffer;
-    const { error, value } = schema.validate({ image: imageUrl });
+    const validateResponse = validateHelper.validateSchemas(schema, { image: imageUrl });
+    const isValid = validateResponse[0];
+    const value = validateResponse[1];
 
-    if (error) {
-      const errMsg =
-        error.details
-          .map(detail => detail.message)
-          .join(', ')
-          .replaceAll(`"`, '') || 'Image validation failed';
-
-      return commonHelper.customErrorHandler(res, errMsg, 422);
+    if (!isValid) {
+      return commonHelper.customErrorHandler(res, value, 422);
     }
+
     req.body = value;
-    next();
+
+    return next();
   } catch (err) {
     console.log('Error validating input fields: ', err);
     return commonHelper.customErrorHandler(res, err.message, 400);

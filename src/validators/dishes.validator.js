@@ -1,5 +1,6 @@
 const Joi = require('joi');
 const commonHelper = require('../helpers/common.helper');
+const validateHelper = require('../helpers/validate.helper');
 const constants = require('../constants/constants');
 
 const validateDishSchema = (req, res, next) => {
@@ -13,22 +14,16 @@ const validateDishSchema = (req, res, next) => {
       price: Joi.number().precision(2).options({ convert: false }).required(),
     });
 
-    const { error, value } = schema.validate(req.body);
-    // console.log("Value in validate: ", value);
+    const validateResponse = validateHelper.validateSchemas(schema, req.body);
+    const isValid = validateResponse[0];
+    const value = validateResponse[1];
 
-    if (error) {
-      console.log('error: ', typeof error);
-      const errMsg =
-        error.details
-          .map(detail => detail.message)
-          .join(', ')
-          .replaceAll(`"`, '') || 'Dish data validation failed';
-
-      return commonHelper.customErrorHandler(res, errMsg, 422);
+    if (!isValid) {
+      return commonHelper.customErrorHandler(res, value, 422);
     }
 
     req.body = value;
-    next();
+    return next();
   } catch (err) {
     console.log('Error validating dish input fields: ', err);
     return commonHelper.customErrorHandler(res, err.message, 400);
