@@ -15,6 +15,7 @@ const generateToken = payload => {
 };
 
 const verifyToken = token => {
+  console.log('JWT SECRET: ', process.env.JWT_SECRET);
   const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
   return decodedToken;
 };
@@ -24,6 +25,7 @@ const signup = async data => {
   // console.log('Created user: ', createdUser);
 
   const otp = otpHelper.generateOTP();
+  console.log('OTP: ', otp);
 
   await redisClient.set(createdUser.id.toString(), otp.toString(), { EX: 300 });
 
@@ -33,7 +35,7 @@ const signup = async data => {
     `Your one time password to login : ${otp}`
   );
 
-  return createdUser;
+  return;
 };
 
 const sendOtp = async email => {
@@ -49,9 +51,10 @@ const sendOtp = async email => {
   await redisClient.set(userExists?.id.toString(), otp.toString(), { EX: 300 });
 
   // send mail
-  // await mailHelper.sendVerificationEmail(email, 'Login OTP', `Your one time password to login: ${otp}`);
+  await mailHelper.sendVerificationEmail(email, 'Login OTP', `Your one time password to login: ${otp}`);
+  console.log('OTP: ', otp);
 
-  return { otp };
+  return;
 };
 
 const verifyOtp = async (email, otp) => {
