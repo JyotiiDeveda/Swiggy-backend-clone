@@ -25,7 +25,6 @@ const signup = async data => {
   // console.log('Created user: ', createdUser);
 
   const otp = otpHelper.generateOTP();
-  console.log('OTP: ', otp);
 
   await redisClient.set(createdUser.id.toString(), otp.toString(), { EX: 300 });
 
@@ -42,7 +41,7 @@ const sendOtp = async email => {
   const userExists = await User.findOne({ where: { email } });
 
   if (!userExists) {
-    throw commonHelper.customError('User does not exist.. Please signup', 404);
+    throw commonHelper.customError('User does not exist, Please signup', 404);
   }
 
   // generate otp

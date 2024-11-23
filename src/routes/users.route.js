@@ -5,8 +5,20 @@ const orderValidators = require('../validators/orders.validator');
 const userValidators = require('../validators/users.validator');
 const userSerializers = require('../serializers/users.serializer');
 const orderSerializers = require('../serializers/orders.serializer');
-
 const commonHelpers = require('../helpers/common.helper');
+
+// for admin to create user
+// router.post();
+
+router.put(
+  '/:id',
+  authMiddlewares.authenticateToken,
+  authMiddlewares.isAuthorized,
+  userValidators.validateUser,
+  userControllers.updateProfile,
+  userSerializers.serializeUsers,
+  commonHelpers.customResponseHandler
+);
 
 router.patch(
   '/:id',
@@ -14,6 +26,7 @@ router.patch(
   authMiddlewares.isAuthorized,
   userValidators.validateUserAddress,
   userControllers.addAddress,
+  userSerializers.serializeUsers,
   commonHelpers.customResponseHandler
 );
 
