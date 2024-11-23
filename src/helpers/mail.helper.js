@@ -12,7 +12,6 @@ const mailSender = async (email, title, body) => {
     },
   });
 
-  console.log('EMAIL IN MAIL SENDER: ', email);
   // console.log('Created transporter: ');
   const mailOptions = {
     from: process.env.EMAIL || 'Jyoti Deveda',
