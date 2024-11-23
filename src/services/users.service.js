@@ -31,19 +31,15 @@ const create = async data => {
       return restoredUser;
     }
 
-    console.log('ADDRESS: ', address);
     // Creating a user
-    const newUser = User.build({
+    const newUser = await User.create({
       first_name,
       last_name,
       email,
       phone,
+      address,
     });
 
-    newUser.address = address ? address : null;
-    await newUser.save({ transaction: transactionContext });
-
-    // a user can signup with customer role only
     const roleDetails = await Role.findOne({ where: { name: role } });
 
     // assign role to user
@@ -176,10 +172,7 @@ const removeAccount = async (currentUser, userId) => {
   }
 };
 
-const get = async (currentUser, userId) => {
-  if (!currentUser?.userRoles.includes(constants.ROLES.ADMIN) && currentUser.userId !== userId) {
-    throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
-  }
+const get = async userId => {
   const userDetails = await User.findOne({
     where: { id: userId },
     include: { model: Role, as: 'roles', attributes: ['id', 'name'], through: { attributes: [] } },

@@ -7,7 +7,7 @@ const create = async (req, res, next) => {
     const payload = req.body;
     const updatedUser = await userServices.create(payload);
 
-    res.statusCode = 200;
+    res.statusCode = 201;
     res.message = 'User created successfully';
     res.data = updatedUser;
 
@@ -56,8 +56,8 @@ const addAddress = async (req, res, next) => {
 const assignRole = async (req, res, next) => {
   try {
     const userId = req.params['userId'];
-    const roleId = req.params['roleId'];
     const currentUser = req.user;
+    const { roleId } = req.body;
 
     await userServices.assignRole(currentUser, userId, roleId);
 
@@ -89,16 +89,15 @@ const removeAccount = async (req, res, next) => {
 
 const get = async (req, res, next) => {
   try {
-    const userId = req.params['id'];
-    const currentUser = req.user;
+    let userId = req.params?.id ? req.params.id : req.user.userId;
 
-    const userDetails = await userServices.get(currentUser, userId);
+    const userDetails = await userServices.get(userId);
 
     res.statusCode = 200;
     res.message = 'Fetched user details successfully';
     res.data = userDetails;
 
-    next();
+    return next();
   } catch (err) {
     console.log('Error in getting the user details: ', err);
     return commonHelper.customErrorHandler(res, err.message, err.statusCode);

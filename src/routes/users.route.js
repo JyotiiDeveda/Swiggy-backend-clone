@@ -2,6 +2,7 @@ const router = require('express').Router();
 const userControllers = require('../controllers/users.controller');
 const authMiddlewares = require('../middlewares/auth.middleware');
 const orderValidators = require('../validators/orders.validator');
+const commonValidators = require('../validators/common.validator');
 const userValidators = require('../validators/users.validator');
 const userSerializers = require('../serializers/users.serializer');
 const orderSerializers = require('../serializers/orders.serializer');
@@ -40,9 +41,10 @@ router.patch(
 
 // create delivery partner by assigning delvery partner role to customer
 router.put(
-  '/:userId/roles/:roleId',
+  '/:userId/assign-role',
   authMiddlewares.authenticateToken,
   authMiddlewares.isAdmin,
+  commonValidators.validateId,
   userControllers.assignRole,
   commonHelpers.customResponseHandler
 );
@@ -56,9 +58,17 @@ router.delete(
 );
 
 router.get(
+  '/me',
+  authMiddlewares.authenticateToken,
+  userControllers.get,
+  userSerializers.serializeUsers,
+  commonHelpers.customResponseHandler
+);
+
+router.get(
   '/:id',
   authMiddlewares.authenticateToken,
-  authMiddlewares.isAuthorized,
+  authMiddlewares.isAdmin,
   userControllers.get,
   userSerializers.serializeUsers,
   commonHelpers.customResponseHandler
