@@ -2,6 +2,8 @@ const serializeUsers = (req, res, next) => {
   let rows = res.data?.rows || res.data;
   let users = [];
 
+  const response = { pagination: res.data?.pagination };
+
   const isSingleItem = !Array.isArray(rows);
 
   if (!Array.isArray(rows)) {
@@ -28,7 +30,8 @@ const serializeUsers = (req, res, next) => {
     return userData;
   });
 
-  res.data = isSingleItem ? { user: users[0] } : { users };
+  isSingleItem ? (response.user = users[0]) : (response.users = users);
+  res.data = response;
 
   next();
 };

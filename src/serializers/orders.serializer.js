@@ -15,9 +15,25 @@ const serializeOrders = (req, res, next) => {
     gst: order?.gst,
     totalAmount: order?.total_amount,
     status: order?.status,
+    deliveryPartnerId: order?.delivery_partner_id,
     createdAt: order?.created_at,
     updatedAt: order?.updated_at,
   }));
+
+  const orderedDishes = rows[0]?.Cart?.dishes;
+
+  if (isSingleItem && orderedDishes) {
+    const dishes = orderedDishes.map(dish => {
+      return {
+        id: dish?.id,
+        name: dish?.name,
+        price: dish?.price,
+        quantity: dish?.CartDish?.quantity,
+        dishCost: dish?.price * dish?.CartDish?.quantity,
+      };
+    });
+    orders[0].dishes = dishes;
+  }
 
   res.data = isSingleItem ? { order: orders[0] } : { orders };
 

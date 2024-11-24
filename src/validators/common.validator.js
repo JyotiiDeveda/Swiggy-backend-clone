@@ -20,7 +20,7 @@ const validateQueryParams = (req, res, next) => {
         .optional(),
     });
 
-    const validateResponse = validateHelper.validateSchemas(schema, req.body);
+    const validateResponse = validateHelper.validateSchemas(schema, req.query);
     const isValid = validateResponse[0];
     const value = validateResponse[1];
 
@@ -67,6 +67,7 @@ const validateId = (req, res, next) => {
     return commonHelper.customErrorHandler(res, err.message, 400);
   }
 };
+
 module.exports = {
   validateQueryParams,
   validateId,
