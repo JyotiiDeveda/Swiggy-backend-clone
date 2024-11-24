@@ -78,7 +78,7 @@ router.delete(
 
 //image upload
 router.patch(
-  '/:id/images',
+  '/:id',
   authMiddlewares.authenticateToken,
   authMiddlewares.isAdmin,
   upload.single('image'),
@@ -135,7 +135,7 @@ router.delete(
 );
 
 router.patch(
-  '/:restaurantId/dishes/:dishId/images',
+  '/:restaurantId/dishes/:dishId',
   authMiddlewares.authenticateToken,
   authMiddlewares.isAdmin,
   upload.single('image'),
