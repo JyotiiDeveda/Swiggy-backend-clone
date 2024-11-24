@@ -102,7 +102,8 @@ const verifyOtp = async (email, otp) => {
 };
 
 const logout = async () => {
-  return {};
+  console.log('Logout successful');
+  return;
 };
 
 module.exports = { signup, sendOtp, verifyOtp, logout, generateToken, verifyToken };

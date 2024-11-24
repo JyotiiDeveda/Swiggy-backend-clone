@@ -53,11 +53,10 @@ const logout = async (req, res, next) => {
   try {
     // logout logic
     const token = req.user;
-    const response = await authServices.logout(token);
+    await authServices.logout(token);
 
     res.statusCode = 200;
     res.message = 'Logout successful';
-    res.data = response;
 
     return next();
   } catch (err) {

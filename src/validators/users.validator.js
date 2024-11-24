@@ -7,8 +7,8 @@ const validateUser = (req, res, next) => {
   try {
     const isAdmin = req.user?.userRoles?.includes(constants.ROLES.ADMIN);
     const schema = Joi.object({
-      first_name: Joi.string().required().min(3),
-      last_name: Joi.string().required().min(3),
+      firstName: Joi.string().required().min(3),
+      lastName: Joi.string().required().min(3),
       email: Joi.string()
         .required()
         .email({
