@@ -5,7 +5,7 @@ const validateHelper = require('../helpers/validate.helper');
 const validateCartItemSchema = (req, res, next) => {
   try {
     const schema = Joi.object({
-      dish_id: Joi.string()
+      dishId: Joi.string()
         .guid({
           version: 'uuidv4',
         })
