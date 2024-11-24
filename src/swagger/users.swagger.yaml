@@ -1,12 +1,3 @@
-openapi: 3.0.3
-info:
-  title: User and Order Management API
-  version: 1.0.0
-  description: API for managing users, roles, and orders.
-
-servers:
-  - url: http://localhost:3000/api/v1
-
 paths:
   /users/{id}:
     patch:
@@ -117,7 +108,7 @@ paths:
         '404':
           description: No users found
 
-  /users/{userId}/roles/{roleId}:
+  /users/{userId}/assign-role:
     put:
       summary: Assign role to a user
       tags:
@@ -131,12 +122,18 @@ paths:
           description: User ID
           schema:
             type: string
-        - name: roleId
-          in: path
-          required: true
-          description: Role ID
-          schema:
-            type: string
+      requestBody:
+        description: User role details
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                roleId:
+                  type: string
+                  required: true
+                  example: '123'
       responses:
         '201':
           description: Role assigned successfully
@@ -167,20 +164,10 @@ paths:
             schema:
               type: object
               properties:
-                items:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      itemId:
-                        type: string
-                        example: 'item123'
-                      quantity:
-                        type: integer
-                        example: 2
-                totalPrice:
-                  type: number
-                  example: 299.99
+                cartId:
+                  type: string
+                  description: Cart ID
+                  required: true
       responses:
         '200':
           description: Order placed successfully

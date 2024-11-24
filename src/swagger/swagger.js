@@ -17,6 +17,8 @@ const paymentsSwagger = YAML.load(path.join(__dirname, './payments.swagger.yaml'
 
 const ordersSwagger = YAML.load(path.join(__dirname, './orders.swagger.yaml'));
 
+const rolesSwagger = YAML.load(path.join(__dirname, './roles.swagger.yaml'));
+
 const mergedSwagger = {
   ...swaggerDocument,
   paths: {
@@ -28,6 +30,7 @@ const mergedSwagger = {
     ...restaurantsSwagger.paths,
     ...paymentsSwagger.paths,
     ...ordersSwagger.paths,
+    ...rolesSwagger.paths,
   },
   components: {
     ...swaggerDocument.components,
@@ -38,6 +41,7 @@ const mergedSwagger = {
     ...restaurantsSwagger.components,
     ...paymentsSwagger.components,
     ...ordersSwagger.components,
+    ...rolesSwagger.components,
   },
 };
 

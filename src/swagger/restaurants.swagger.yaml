@@ -1,78 +1,11 @@
-openapi: 3.0.0
-info:
-  title: Restaurant Management API
-  version: 1.0.0
-  description: API for managing restaurants, dishes, and ratings.
-servers:
-  - url: http://localhost:3000/api
-    description: Local server
-
-components:
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-  schemas:
-    Restaurant:
-      type: object
-      properties:
-        id:
-          type: string
-        name:
-          type: string
-        description:
-          type: string
-        category:
-          type: string
-        address:
-          type: object
-          properties:
-            city:
-              type: string
-    Dish:
-      type: object
-      properties:
-        id:
-          type: string
-        name:
-          type: string
-        description:
-          type: string
-        type:
-          type: string
-        price:
-          type: number
-    Rating:
-      type: object
-      properties:
-        id:
-          type: string
-        score:
-          type: number
-        comment:
-          type: string
-    Error:
-      type: object
-      properties:
-        message:
-          type: string
-        statusCode:
-          type: integer
-
-security:
-  - bearerAuth: []
-
 paths:
-  /restaurants:
-    paths:
   /restaurants:
     post:
       tags:
         - Restaurants
       summary: Create a new restaurant
       security:
-        - bearerAuth: []
+        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -82,71 +15,28 @@ paths:
               properties:
                 name:
                   type: string
-                  description: Restaurant name
-                  example: "The Gourmet Kitchen"
                 description:
                   type: string
-                  description: A description for the restaurant
-                  example: "A cozy place offering a variety of international cuisines."
                 category:
                   type: string
-                  description: Restaurant type
                   enum:
                     - veg
                     - non-veg
                     - both
-                  example: "veg"
                 address:
                   type: object
-                  description: Address of the restaurant
                   properties:
                     city:
                       type: string
-                      description: City where the restaurant is located
-                      example: "Metropolis"
                     state:
                       type: string
-                      description: State where the restaurant is located
-                      example: "California"
                     pincode:
                       type: string
-                      description: Postal code of the restaurant's location
-                      example: "90210"
-              required:
-                - name
-                - description
-                - category
-                - address
       responses:
         '201':
           description: Restaurant created successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    type: integer
-                    description: Unique identifier of the created restaurant
-                    example: 1
-                  name:
-                    type: string
-                    description: Name of the restaurant
-                    example: "The Gourmet Kitchen"
-                  description:
-                    type: string
-                    description: Description of the restaurant
-                    example: "A cozy place offering a variety of international cuisines."
         '400':
           description: Bad Request
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Invalid input data"
 
     get:
       tags:
@@ -157,41 +47,15 @@ paths:
           in: query
           schema:
             type: string
+            example: 'Metropolis'
           description: Filter by city
-          example: "Metropolis"
       responses:
         '200':
           description: List of restaurants fetched successfully
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    id:
-                      type: integer
-                      description: Unique identifier of the restaurant
-                      example: 1
-                    name:
-                      type: string
-                      description: Name of the restaurant
-                      example: "The Gourmet Kitchen"
-                    description:
-                      type: string
-                      description: Description of the restaurant
-                      example: "A cozy place offering a variety of international cuisines."
+
         '404':
           description: No restaurants found
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "No restaurants found in the specified city"
-
+          
   /restaurants/{id}:
     get:
       tags:
@@ -203,7 +67,7 @@ paths:
           required: true
           schema:
             type: string
-          description: Restaurant ID
+            example: '123'
       responses:
         '200':
           description: Restaurant details
@@ -212,20 +76,23 @@ paths:
               schema:
         '404':
           description: Restaurant not found
+          content:
+            application/json:
+              schema:
+
     put:
       tags:
         - Restaurants
-      security:
-        - bearerAuth: []
       summary: Update a restaurant
+      security:
+        - BearerAuth: []
       parameters:
         - name: id
           in: path
           required: true
           schema:
             type: string
-          description: Restaurant ID
-            example: "123"
+            example: '123'
       requestBody:
         required: true
         content:
@@ -235,174 +102,62 @@ paths:
               properties:
                 name:
                   type: string
-                  description: Updated name of the restaurant
-                  example: "The Gourmet Kitchen Updated"
                 description:
                   type: string
-                  description: Updated description of the restaurant
-                  example: "A revamped cozy place with international cuisines."
                 category:
                   type: string
-                  description: Updated restaurant type
                   enum:
                     - veg
                     - non-veg
                     - both
-                  example: "veg"
                 address:
                   type: object
-                  description: Updated address of the restaurant
                   properties:
                     city:
                       type: string
-                      description: City of the restaurant
-                      example: "Gotham"
                     state:
                       type: string
-                      description: State of the restaurant
-                      example: "New York"
                     pincode:
                       type: string
-                      description: Postal code of the restaurant's location
-                      example: "10001"
-              required:
-                - name
-                - description
+
       responses:
         '200':
           description: Restaurant updated successfully
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    description: Unique identifier of the restaurant
-                    example: "123"
-                  name:
-                    type: string
-                    description: Updated name of the restaurant
-                    example: "The Gourmet Kitchen Updated"
-                  description:
-                    type: string
-                    description: Updated description of the restaurant
-                    example: "A revamped cozy place with international cuisines."
         '404':
           description: Restaurant not found
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    description: Error message
-                    example: "Restaurant not found"
 
     delete:
       tags:
         - Restaurants
       summary: Delete a restaurant
       security:
-        - bearerAuth: []
+        - BearerAuth: []
       parameters:
         - name: id
           in: path
           required: true
           schema:
             type: string
-          description: Restaurant ID
+            example: '123'
       responses:
         '204':
-          description: Restaurant deleted
+          description: Restaurant deleted successfully
+        '404':
+          description: Restaurant not found
+          content:
+            application/json:
+              schema:
 
   /restaurants/{id}/dishes:
-    post:
-      tags:
-        - Restaurants
-      security:
-        - bearerAuth: []
-      summary: Add a dish to a restaurant
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: Restaurant ID
-          example: "123"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                  description: Name of the dish
-                  example: "Spaghetti Carbonara"
-                description:
-                  type: string
-                  description: Description of the dish
-                  example: "Classic Italian pasta dish with creamy sauce."
-                price:
-                  type: number
-                  format: float
-                  description: Price of the dish
-                  example: 12.99
-                category:
-                  type: string
-                  description: Category of the dish
-                  example: "Main Course"
-              required:
-                - name
-                - price
-      responses:
-        '201':
-          description: Dish created successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    description: Unique identifier of the dish
-                    example: "987"
-                  name:
-                    type: string
-                    description: Name of the dish
-                    example: "Spaghetti Carbonara"
-                  description:
-                    type: string
-                    description: Description of the dish
-                    example: "Classic Italian pasta dish with creamy sauce."
-                  price:
-                    type: number
-                    format: float
-                    description: Price of the dish
-                    example: 12.99
-                  category:
-                    type: string
-                    description: Category of the dish
-                    example: "Main Course"
-        '400':
-          description: Invalid request
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    description: Error message
-                    example: "Invalid input data."
-
     get:
       tags:
-        - Restaurants
+        - Dishes
       summary: Fetch all dishes for a restaurant
       parameters:
         - name: id
@@ -410,7 +165,7 @@ paths:
           required: true
           schema:
             type: string
-          description: Restaurant ID
+            example: '123'
       responses:
         '200':
           description: List of dishes
@@ -419,45 +174,67 @@ paths:
               schema:
                 type: array
                 items:
-
-  /restaurants/{restaurantId}/dishes/{dishId}:
-    get:
-      tags:
-        - Restaurants
-      summary: Get a specific dish
-      parameters:
-        - name: restaurantId
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: dishId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Dish details
+        '404':
+          description: No dishes found
           content:
             application/json:
               schema:
 
-  /restaurants/{restaurantId}/ratings:
     post:
       tags:
-        - Restaurants
+        - Dishes
+      summary: Add a dish to a restaurant
       security:
-        - bearerAuth: []
-      summary: Add a rating for a restaurant
+        - BearerAuth: []
       parameters:
-        - name: restaurantId
+        - name: id
           in: path
           required: true
           schema:
             type: string
-          description: ID of the restaurant for which the rating is being added
-          example: "123"
+            example: '123'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                category:
+                  type: string
+                price:
+                  type: number
+                  format: float
+      responses:
+        '201':
+          description: Dish added successfully
+          content:
+            application/json:
+              schema:
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+
+  /restaurants/{id}/ratings:
+    post:
+      tags:
+        - Ratings
+      summary: Rate a restaurant
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            example: '123'
       requestBody:
         required: true
         content:
@@ -468,65 +245,179 @@ paths:
                 rating:
                   type: number
                   format: float
-                  description: Rating value (e.g., 1 to 5)
-                  example: 4.5
-                comment:
-                  type: string
-                  description: Optional comment accompanying the rating
-                  example: "Great food and quick service!"
+                  minimum: 1
+                  maximum: 5
               required:
                 - rating
       responses:
         '201':
-          description: Rating added successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Rating added successfully."
+          description: Restaurant rated successfully
         '400':
-          description: Invalid input
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Invalid rating value."
+          description: Invalid request
         '404':
           description: Restaurant not found
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Restaurant not found."
-
 
   /restaurants/{restaurantId}/ratings/{ratingId}:
     delete:
       tags:
-        - Restaurants
+        - Ratings
       summary: Delete a restaurant rating
       security:
-        - bearerAuth: []
+        - BearerAuth: []
       parameters:
         - name: restaurantId
           in: path
           required: true
           schema:
             type: string
+            example: '123'
         - name: ratingId
           in: path
           required: true
           schema:
             type: string
+            example: '456'
       responses:
         '204':
-          description: Rating deleted
+          description: Rating deleted successfully
+        '404':
+          description: Rating not found
+
+  /restaurants/{id}:
+    patch:
+      tags:
+        - Images
+      summary: Upload a restaurant image
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            example: '123'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+              required:
+                - image
+      responses:
+        '200':
+          description: Image uploaded successfully
+        '404':
+          description: Restaurant not found
+
+  /restaurants/{restaurantId}/dishes/{dishId}:
+    get:
+      tags:
+        - Dishes
+      summary: Get a dish by ID
+      parameters:
+        - name: restaurantId
+          in: path
+          required: true
+          schema:
+            type: string
+            example: '123'
+        - name: dishId
+          in: path
+          required: true
+          schema:
+            type: string
+            example: '456'
+      responses:
+        '200':
+          description: Dish details fetched successfully
+        '404':
+          description: Dish not found
+
+    put:
+      tags:
+        - Dishes
+      summary: Update a dish
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: restaurantId
+          in: path
+          required: true
+          schema:
+            type: string
+            example: '123'
+        - name: dishId
+          in: path
+          required: true
+          schema:
+            type: string
+            example: '456'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                category:
+                  type: string
+                price:
+                  type: number
+                  format: float
+              required:
+                - name
+                - category
+                - price
+      responses:
+        '200':
+          description: Dish updated successfully
+        '404':
+          description: Dish not found
+
+  /restaurants/{restaurantId}/dishes/{dishId}:
+    patch:
+      tags:
+        - Images
+      summary: Upload an image for a dish
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: restaurantId
+          in: path
+          required: true
+          schema:
+            type: string
+            example: '123'
+        - name: dishId
+          in: path
+          required: true
+          schema:
+            type: string
+            example: '456'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+              required:
+                - image
+      responses:
+        '200':
+          description: Image uploaded successfully
+        '404':
+          description: Dish not found
