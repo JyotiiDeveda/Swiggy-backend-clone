@@ -204,7 +204,7 @@ const uplaodImage = async (restaurantId, dishId, file) => {
       throw commonHelpers.customError('Dish not found', 404);
     }
 
-    const imageUrl = await uploadToS3(file);
+    const imageUrl = await uploadToS3(file, dishExists.id);
 
     dishExists.image_url = imageUrl;
     await dishExists.save({ transaction: transactionContext });

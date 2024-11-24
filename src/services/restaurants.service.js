@@ -68,6 +68,7 @@ const get = async restaurantId => {
 
 const getAll = async queryOptions => {
   const { city, name, category, orderBy = constants.SORT_ORDER.ASC, page = 1, limit = 10 } = queryOptions;
+
   const startIndex = (page - 1) * limit;
   const endIndex = page * limit;
 
@@ -84,7 +85,7 @@ const getAll = async queryOptions => {
 
   const order = orderBy === 'asc' ? constants.SORT_ORDER.ASC : constants.SORT_ORDER.DESC;
 
-  const restaurants = await Restaurant.findAll({
+  const restaurants = await Restaurant.findAndCountAll({
     where: filter,
     attributes: {
       include: [
@@ -107,16 +108,27 @@ const getAll = async queryOptions => {
       },
     ],
     group: ['Restaurant.id', 'dishes.id'],
-    offset: startIndex,
     order: [['avg_rating', `${order} NULLS LAST`]],
+    offset: startIndex,
     limit: endIndex,
   });
 
-  // console.log('Restaurant service: ', restaurants);
-  if (!restaurants || restaurants.length === 0) {
+  const totalRestaurants = restaurants?.count.length;
+  if (!restaurants || totalRestaurants === 0) {
     throw commonHelpers.customError('No restaurants found', 404);
   }
-  return restaurants;
+
+  const response = {
+    rows: restaurants.rows,
+    pagination: {
+      totalRecords: totalRestaurants,
+      currentPage: parseInt(page),
+      recordsPerPage: parseInt(limit),
+      noOfPages: Math.ceil(totalRestaurants / limit),
+    },
+  };
+
+  return response;
 };
 
 const update = async (restaurantId, payload) => {
@@ -179,7 +191,7 @@ const uploadImage = async (restaurantId, file) => {
       throw commonHelpers.customError('Restaurant not found', 404);
     }
 
-    const imageUrl = await uploadToS3(file);
+    const imageUrl = await uploadToS3(file, restaurantExists.id);
 
     restaurantExists.image_url = imageUrl;
     await restaurantExists.save({ transaction: transactionContext });

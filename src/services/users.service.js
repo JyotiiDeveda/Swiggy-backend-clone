@@ -7,7 +7,7 @@ const { sequelize } = require('../models');
 const create = async data => {
   const transactionContext = await sequelize.transaction();
   try {
-    const { first_name, last_name, email, phone, address, role = constants.ROLES.CUSTOMER } = data;
+    const { firstName, lastName, email, phone, address, role = constants.ROLES.CUSTOMER } = data;
     const userExists = await User.findOne({
       where: { [Op.or]: [{ email }, { phone }] },
       paranoid: false,
@@ -33,8 +33,8 @@ const create = async data => {
 
     // Creating a user
     const newUser = await User.create({
-      first_name,
-      last_name,
+      first_name: firstName,
+      last_name: lastName,
       email,
       phone,
       address,
@@ -110,7 +110,6 @@ const updateProfile = async (currentUser, userId, payload) => {
     }
 
     await userDetails.update(payload, { transaction: transactionContext });
-    console.log('Updated User: ', userDetails);
 
     return userDetails;
   } catch (err) {
@@ -199,7 +198,7 @@ const getAll = async queryOptions => {
     filter.name = constants.ROLES.CUSTOMER;
   }
 
-  const users = await User.findAll({
+  const users = await User.findAndCountAll({
     include: {
       model: Role,
       as: 'roles',
@@ -211,10 +210,23 @@ const getAll = async queryOptions => {
     limit: endIndex,
     paranoid: false,
   });
-  if (!users || users.length === 0) {
+
+  console.log('USERS: ', users);
+  if (!users || users.rows.length === 0) {
     throw commonHelpers.customError('No users found', 404);
   }
-  return users;
+
+  const response = {
+    rows: users.rows,
+    pagination: {
+      totalRecords: users.count,
+      currentPage: parseInt(page),
+      recordsPerPage: parseInt(limit),
+      noOfPages: Math.ceil(users.count / limit),
+    },
+  };
+
+  return response;
 };
 
 module.exports = { create, assignRole, updateProfile, addAddress, removeAccount, get, getAll };

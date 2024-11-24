@@ -12,11 +12,15 @@ const placeOrder = async (currentUser, userId, payload) => {
       throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
     }
 
-    const { cartId, restaurantId } = payload;
+    const { cartId } = payload;
 
     // check if order is already placed
     const orderDetails = await Order.findOne({
-      where: { cart_id: cartId, restaurant_id: restaurantId },
+      where: { cart_id: cartId },
+      include: {
+        model: User,
+        where: { user_id: userId },
+      },
     });
 
     if (orderDetails) {
@@ -49,11 +53,6 @@ const placeOrder = async (currentUser, userId, payload) => {
 
     const cartsRestaurantId = dishes[0].restaurant_id;
 
-    // check if given restaurant id belongs to cart
-    if (restaurantId !== cartsRestaurantId) {
-      throw commonHelpers.customError('Restaurant does not belong to given cart', 422);
-    }
-
     // calculate order charges, delivery charges, total_amt
     let orderCharges = 0;
     dishes.forEach(async dish => {
@@ -62,7 +61,7 @@ const placeOrder = async (currentUser, userId, payload) => {
 
     const deliveryCharges = constants.DELIVERY_CHARGES;
 
-    const gst = (orderCharges * constants.GST_RATE) / 100;
+    const gst = orderCharges * (constants.GST_RATE / 100);
 
     const totalCost = orderCharges + deliveryCharges + gst;
     console.log(
@@ -71,7 +70,7 @@ const placeOrder = async (currentUser, userId, payload) => {
 
     const order = await Order.create(
       {
-        restaurant_id: restaurantId,
+        restaurant_id: cartsRestaurantId,
         cart_id: cartId,
         delivery_charges: deliveryCharges.toFixed(2),
         gst: gst.toFixed(2),
@@ -81,7 +80,6 @@ const placeOrder = async (currentUser, userId, payload) => {
       { transaction: transactionContext }
     );
 
-    console.log('Order: ', order);
     if (!order || !order.id) {
       throw commonHelpers.customError('Failed to place error', 400);
     }
@@ -181,7 +179,14 @@ const deleteOrder = async (currentUser, userId, orderId) => {
       throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
     }
 
-    const order = await Order.findOne({ id: orderId, status: constants.ORDER_STATUS.PREPARING });
+    // an undelivered order can only be deleted
+    const order = await Order.findOne({
+      where: {
+        id: orderId,
+        status: constants.ORDER_STATUS.PREPARING,
+      },
+      include: { model: Cart, where: { user_id: userId } },
+    });
 
     if (!order) {
       throw commonHelpers.customError('No order found', 404);
@@ -190,11 +195,10 @@ const deleteOrder = async (currentUser, userId, orderId) => {
     // the order which has not been delivered or cancelled can only be deleted
     await Order.destroy({
       where: { id: orderId },
-      returning: true,
       transaction: transactionContext,
     });
 
-    const associatedCartId = order[0].cart_id;
+    const associatedCartId = order.cart_id;
 
     // delete associated cart
     const cart = await Cart.findByPk(associatedCartId);
@@ -258,7 +262,7 @@ const assignOrder = async (currentUser, userId, orderId) => {
 
     order.delivery_partner_id = userId;
     await order.save({ transaction: transactionContext });
-    console.log('Updated asssign');
+
     const mailOptions = {
       orderId: order.id,
       assignedAt: order.updated_at,
@@ -267,6 +271,7 @@ const assignOrder = async (currentUser, userId, orderId) => {
 
     await mailHelper.sendOrderAssignedMail(currentUser.email, mailOptions);
     await transactionContext.commit();
+
     return order;
   } catch (err) {
     await transactionContext.rollback();
@@ -288,9 +293,11 @@ const getPendingOrders = async (currentUser, userId, page, limit) => {
     offset: startIndex,
     limit: endIndex,
   });
+
   if (!orders || orders.length === 0) {
     throw commonHelpers.customError('No pending orders found', 404);
   }
+
   return orders;
 };
 
@@ -314,6 +321,7 @@ const updateOrderStatus = async (deliveryPartner, orderId, status) => {
 
     await mailHelper.sendOrderStatusUpdateMail(deliveryPartner.email, order);
     await transactionContext.commit();
+
     return order;
   } catch (err) {
     await transactionContext.rollback();

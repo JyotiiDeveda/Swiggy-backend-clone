@@ -131,8 +131,7 @@ const deleteRestaurantRating = async (restaurantId, ratingId) => {
   const transactionContext = await sequelize.transaction();
   try {
     const rating = await Rating.findOne({
-      id: ratingId,
-      restaurant_id: restaurantId,
+      where: { id: ratingId, restaurant_id: restaurantId },
     });
 
     if (!rating) {
@@ -157,8 +156,7 @@ const deleteDishRating = async (dishId, ratingId) => {
   const transactionContext = await sequelize.transaction();
   try {
     const rating = await Rating.findOne({
-      id: ratingId,
-      dish_id: dishId,
+      where: { id: ratingId, dish_id: dishId },
     });
 
     if (!rating) {
