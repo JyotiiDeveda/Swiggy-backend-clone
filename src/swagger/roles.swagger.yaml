@@ -1,0 +1,93 @@
+paths:
+  /roles:
+    post:
+      tags:
+        - Roles
+      summary: Create a new role
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                role:
+                  type: string
+                  description: Name of the role to create
+                  example: 'Customer'
+              required:
+                - role
+      responses:
+        '201':
+          description: Role successfully created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Role created successfully'
+                  data:
+                    type: object
+                    description: Details of the created role
+        '403':
+          description: Unauthorized access to create a role
+        '500':
+          description: Internal server error
+
+    get:
+      tags:
+        - Roles
+      summary: Retrieve all roles
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Successfully retrieved roles
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Fetched roles successfully'
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          example: '1'
+                        role:
+                          type: string
+                          example: 'Admin'
+        '403':
+          description: Unauthorized access to retrieve roles
+
+  /roles/{id}:
+    delete:
+      tags:
+        - Roles
+      summary: Delete a role
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the role to delete
+          schema:
+            type: string
+            example: '12345'
+      responses:
+        '204':
+          description: Role successfully deleted
+        '403':
+          description: Unauthorized access to delete the role
+        '404':
+          description: Role not found

@@ -12,10 +12,10 @@ paths:
             schema:
               type: object
               properties:
-                first_name:
+                firstName:
                   type: string
                   description: First name of the user.
-                last_name:
+                lastName:
                   type: string
                   description: Last name of the user.
                 email:

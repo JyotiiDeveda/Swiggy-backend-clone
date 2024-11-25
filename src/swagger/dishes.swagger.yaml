@@ -1,22 +1,8 @@
-openapi: 3.0.1
-info:
-  title: Dishes API
-  version: 1.0.0
-  description: API for managing dishes and their ratings.
-tags:
-  - name: Dishes
-    description: Endpoints related to dishes and their ratings.
-components:
-  securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
 paths:
   /dishes/{id}/ratings:
     post:
       tags:
-        - Dishes
+        - Ratings
       summary: Rate a dish
       description: Allows an authenticated and authorized user to rate a dish.
       security:
@@ -115,7 +101,7 @@ paths:
   /dishes/{dishId}/ratings/{ratingId}:
     delete:
       tags:
-        - Dishes
+        - Ratings
       summary: Delete a dish rating
       description: Allows an authenticated user to delete a specific rating for a dish.
       security:

@@ -1,62 +1,3 @@
-openapi: 3.0.0
-info:
-  title: Cart API
-  version: 1.0.0
-  description: API for managing user carts.
-servers:
-  - url: http://localhost:3000/api
-    description: Development server
-components:
-  securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
-  schemas:
-    CartDish:
-      type: object
-      properties:
-        id:
-          type: string
-          description: The cart ID.
-        dishes:
-          type: array
-          items:
-            type: object
-            properties:
-              id:
-                type: string
-                description: Dish ID.
-              name:
-                type: string
-                description: Dish name.
-              price:
-                type: number
-                description: Dish price.
-              quantity:
-                type: integer
-                description: Quantity of the dish in the cart.
-              restaurant:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    description: Restaurant ID.
-                  name:
-                    type: string
-                    description: Restaurant name.
-                  category:
-                    type: string
-                    description: Restaurant category.
-    AddItem:
-      type: object
-      properties:
-        dish_id:
-          type: string
-          description: ID of the dish to add to the cart.
-        quantity:
-          type: integer
-          description: Quantity of the dish to add.
-
 paths:
   /carts/{id}:
     get:
@@ -77,8 +18,6 @@ paths:
           description: Fetched cart dishes successfully.
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/CartDish'
         404:
           description: Cart not found.
         400:
@@ -115,15 +54,22 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AddItem'
+              type: object
+              properties:
+                dishId:
+                  type: string
+                  description: ID of the dish to add to the cart.
+                quantity:
+                  type: integer
+                  description: Quantity of the dish to add.
       responses:
-        201:
+        '201':
           dsescription: Dish added to the cart successfully.
-        404:
+        '404':
           description: Dish not found.
-        409:
+        '409':
           description: Conflict when adding a dish (e.g., from a different restaurant).
-        400:
+        '400':
           description: Validation error or other failure.
 
   /carts/{cartId}/dishes/{dishId}:

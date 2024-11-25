@@ -24,6 +24,7 @@ tags:
 paths:
   $ref:
     - ./auth.swagger.yaml
+    - ./restaurants.swagger.yaml
 components:
   securitySchemes:
     BearerAuth:
@@ -33,26 +34,3 @@ components:
 
   security:
     - BearerAuth: []
-
-  schemas:
-    User:
-      type: object
-      properties:
-        id:
-          type: string
-          description: Unique identifier for the user.
-        first_name:
-          type: string
-          description: First name of the user.
-        last_name:
-          type: string
-          description: Last name of the user.
-        email:
-          type: string
-          description: Email address of the user.
-        phone:
-          type: string
-          description: Phone number of the user.
-        address:
-          type: string
-          description: Address of the user.
