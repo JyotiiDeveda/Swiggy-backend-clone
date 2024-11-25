@@ -52,7 +52,7 @@ router.post(
   '/:id/ratings',
   authMiddlewares.authenticateToken,
   authMiddlewares.isAuthorized,
-  ratingValidators.validateRatingScore,
+  ratingValidators.validateRatingSchema,
   restaurantsController.createRestaurantsRating,
   ratingSerializers.serializeRatings,
   commonHelpers.customResponseHandler

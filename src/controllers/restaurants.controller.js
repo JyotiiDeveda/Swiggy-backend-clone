@@ -2,6 +2,7 @@ const restaurantServices = require('../services/restaurants.service');
 const ratingServices = require('../services/ratings.service');
 const commonHelper = require('../helpers/common.helper');
 const dishServices = require('../services/dishes.service');
+const constants = require('../constants/constants');
 
 const create = async (req, res, next) => {
   try {
@@ -104,7 +105,7 @@ const deleteRating = async (req, res, next) => {
   try {
     const restaurantId = req.params['restaurantId'];
     const ratingId = req.params['ratingId'];
-    await ratingServices.deleteRestaurantRating(restaurantId, ratingId);
+    await ratingServices.deleteRating(ratingId, constants.ENTITY_TYPE.RESTAURANT, restaurantId, ratingId);
 
     res.statusCode = 204;
 
