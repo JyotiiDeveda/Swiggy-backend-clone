@@ -48,6 +48,15 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.JSONB,
         allowNull: false,
       },
+      city_id: {
+        type: DataTypes.UUID,
+        references: {
+          model: 'city',
+          key: 'id',
+        },
+        allowNull: false,
+        onDelete: 'CASCADE',
+      },
     },
     {
       sequelize,
