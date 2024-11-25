@@ -36,7 +36,7 @@ const get = async restaurantId => {
     throw commonHelpers.customError('Restaurant id not found', 422);
   }
 
-  const restaurant = await Restaurant.findOne({
+  const options = {
     where: { id: restaurantId },
     attributes: {
       include: [
@@ -57,7 +57,8 @@ const get = async restaurantId => {
       },
     ],
     group: ['Restaurant.id', 'dishes.id'],
-  });
+  };
+  const restaurant = await Restaurant.findOne(options);
 
   if (!restaurant) {
     throw commonHelpers.customError('No restaurant found', 404);
@@ -76,8 +77,7 @@ const getAll = async queryOptions => {
     limit = 10,
   } = queryOptions;
 
-  const startIndex = (page - 1) * limit;
-  const endIndex = page * limit;
+  const offset = (page - 1) * limit;
 
   let filter = {};
 
@@ -90,7 +90,11 @@ const getAll = async queryOptions => {
       [Op.iLike]: category,
     });
 
-  const restaurants = await Restaurant.findAndCountAll({
+  // console.log(
+  //   `city: ${city} name: ${name} category: ${category} orderBy: ${orderBy} page: ${page} limit: ${limit}`
+  // );
+
+  const options = {
     where: filter,
     attributes: {
       include: [
@@ -105,31 +109,34 @@ const getAll = async queryOptions => {
         attributes: [],
         duplicating: false,
       },
-      {
-        model: Dish,
-        as: 'dishes',
-        attributes: ['name', 'image_url', 'description', 'type', 'price'],
-        duplicating: false,
-      },
     ],
-    group: ['Restaurant.id', 'dishes.id'],
+    group: ['Restaurant.id'],
     order: [[constants.SORT_BY.AVERAGE_RATING, `${orderBy} NULLS LAST`]],
-    offset: startIndex,
-    limit: endIndex,
-  });
+  };
 
-  const totalRestaurants = restaurants?.count.length;
-  if (!restaurants || totalRestaurants === 0) {
-    throw commonHelpers.customError('No restaurants found', 404);
+  let restaurantsData;
+  await Promise.all([
+    Restaurant.count(options),
+    Restaurant.findAll({ ...options, offset: offset, limit }),
+  ]).then(values => {
+    restaurantsData = values;
+  });
+  console.log('Restaurant: ', restaurantsData);
+
+  const restaurantsCount = restaurantsData[0]?.length;
+  const restaurants = restaurantsData[1];
+
+  if (!restaurantsCount || restaurantsCount === 0) {
+    commonHelpers.customError('Restaurants not found', 404);
   }
 
   const response = {
-    rows: restaurants.rows,
+    rows: restaurants,
     pagination: {
-      totalRecords: totalRestaurants,
+      totalRecords: restaurantsCount,
       currentPage: parseInt(page),
       recordsPerPage: parseInt(limit),
-      noOfPages: Math.ceil(totalRestaurants / limit),
+      noOfPages: Math.ceil(restaurantsCount / limit),
     },
   };
 
