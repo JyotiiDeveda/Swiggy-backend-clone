@@ -18,14 +18,6 @@ const create = async (restaurantId, data) => {
       throw commonHelpers.customError('Restaurant does not exist', 404);
     }
 
-    const dishType = category.toLowerCase();
-    if (
-      dishType === constants.DISH_CATEGORY.NON_VEG &&
-      restaurantExists.category === constants.RESTAURANT_CATEGORY.VEG
-    ) {
-      throw commonHelpers.customError('A non-vegeterian dish cannot be added to vegeterian restaurant', 422);
-    }
-
     const lookUpName = name.toLowerCase();
     const dishExists = await Dish.findOne({
       where: {
@@ -36,6 +28,14 @@ const create = async (restaurantId, data) => {
 
     if (dishExists) {
       throw commonHelpers.customError('Dish already exists', 409);
+    }
+
+    const dishType = category.toLowerCase();
+    if (
+      dishType === constants.DISH_CATEGORY.NON_VEG &&
+      restaurantExists.category === constants.RESTAURANT_CATEGORY.VEG
+    ) {
+      throw commonHelpers.customError('A non-vegetarian dish cannot be added to vegetarian restaurant', 422);
     }
 
     // Creating a dish
@@ -65,7 +65,7 @@ const get = async (restaurantId, dishId) => {
     where: { id: dishId, restaurant_id: restaurantId },
     attributes: {
       include: [
-        [sequelize.fn('round', sequelize.fn('avg', sequelize.col('ratings.rating')), 2), 'avg_rating'],
+        [sequelize.fn('round', sequelize.fn('avg', sequelize.col('ratings.rating')), 2), 'averageRating'],
         [sequelize.fn('count', sequelize.col('ratings.rating')), 'ratings_cnt'],
       ],
     },
@@ -89,7 +89,14 @@ const get = async (restaurantId, dishId) => {
 const getAll = async (restaurantId, queryOptions) => {
   // sortBy --- price or rating
   // orderBy --- ascending or descending
-  const { name, category, sortBy, orderBy = constants.SORT_ORDER.ASC, page = 1, limit = 10 } = queryOptions;
+  const {
+    name = '',
+    category = constants.DISH_CATEGORY.VEG,
+    sortBy = constants.SORT_BY.PRICE,
+    orderBy = constants.SORT_ORDER.ASC,
+    page = 1,
+    limit = 10,
+  } = queryOptions;
 
   const startIndex = (page - 1) * limit;
   const endIndex = page * limit;
@@ -102,15 +109,12 @@ const getAll = async (restaurantId, queryOptions) => {
       [Op.iLike]: category,
     });
 
-  const order = orderBy === 'asc' ? constants.SORT_ORDER.ASC : constants.SORT_ORDER.DESC;
-  const sort = sortBy === 'price' ? 'price' : 'avg_rating';
-
   const dishes = await Dish.findAll({
     where: filter,
     attributes: {
       include: [
-        [sequelize.fn('round', sequelize.fn('avg', sequelize.col('ratings.rating')), 2), 'avg_rating'],
-        [sequelize.fn('count', sequelize.col('ratings.rating')), 'ratings_cnt'],
+        [sequelize.fn('round', sequelize.fn('avg', sequelize.col('ratings.rating')), 2), 'averageRating'],
+        [sequelize.fn('count', sequelize.col('ratings.rating')), 'ratingsCount'],
       ],
     },
     include: [
@@ -128,7 +132,7 @@ const getAll = async (restaurantId, queryOptions) => {
     ],
     group: ['Dish.id', 'Restaurant.id'],
     offset: startIndex,
-    order: [[sort, `${order} NULLS LAST`]],
+    order: [[sortBy, `${orderBy} NULLS LAST`]],
     limit: endIndex,
   });
 

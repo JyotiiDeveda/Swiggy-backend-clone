@@ -40,7 +40,7 @@ const get = async restaurantId => {
     where: { id: restaurantId },
     attributes: {
       include: [
-        [sequelize.fn('round', sequelize.fn('avg', sequelize.col('ratings.rating')), 2), 'avg_rating'],
+        [sequelize.fn('round', sequelize.fn('avg', sequelize.col('ratings.rating')), 2), 'averageRating'],
         [sequelize.fn('count', sequelize.col('ratings.rating')), 'ratings_cnt'],
       ],
     },
@@ -67,7 +67,14 @@ const get = async restaurantId => {
 };
 
 const getAll = async queryOptions => {
-  const { city, name, category, orderBy = constants.SORT_ORDER.ASC, page = 1, limit = 10 } = queryOptions;
+  const {
+    city = '',
+    name = '',
+    category = constants.RESTAURANT_CATEGORY.VEG,
+    orderBy = constants.SORT_ORDER.ASC,
+    page = 1,
+    limit = 10,
+  } = queryOptions;
 
   const startIndex = (page - 1) * limit;
   const endIndex = page * limit;
@@ -83,13 +90,11 @@ const getAll = async queryOptions => {
       [Op.iLike]: category,
     });
 
-  const order = orderBy === 'asc' ? constants.SORT_ORDER.ASC : constants.SORT_ORDER.DESC;
-
   const restaurants = await Restaurant.findAndCountAll({
     where: filter,
     attributes: {
       include: [
-        [sequelize.fn('round', sequelize.fn('avg', sequelize.col('ratings.rating')), 2), 'avg_rating'],
+        [sequelize.fn('round', sequelize.fn('avg', sequelize.col('ratings.rating')), 2), 'averageRating'],
         [sequelize.fn('count', sequelize.col('ratings.rating')), 'ratings_cnt'],
       ],
     },
@@ -108,7 +113,7 @@ const getAll = async queryOptions => {
       },
     ],
     group: ['Restaurant.id', 'dishes.id'],
-    order: [['avg_rating', `${order} NULLS LAST`]],
+    order: [[constants.SORT_BY.AVERAGE_RATING, `${orderBy} NULLS LAST`]],
     offset: startIndex,
     limit: endIndex,
   });

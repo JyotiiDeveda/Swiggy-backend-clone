@@ -212,7 +212,7 @@ const getAll = async queryOptions => {
   });
 
   console.log('USERS: ', users);
-  if (!users || users.rows.length === 0) {
+  if (!users || users?.rows?.length === 0) {
     throw commonHelpers.customError('No users found', 404);
   }
 
