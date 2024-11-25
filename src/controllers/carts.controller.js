@@ -22,10 +22,11 @@ const addItem = async (req, res, next) => {
   try {
     const { userId } = req.user;
     const payload = req.body;
-    await cartServices.addItem(userId, payload);
+    const cartDish = await cartServices.addItem(userId, payload);
 
     res.statusCode = 201;
     res.message = 'Added dish to cart successfully';
+    res.data = cartDish;
 
     next();
   } catch (err) {

@@ -5,14 +5,11 @@ const signup = async (req, res, next) => {
   try {
     const payload = req.body;
 
-    const user = await authServices.signup(payload);
-    if (!user) {
-      throw commonHelper.customError('Failed to create user', 400);
-    }
+    await authServices.signup(payload);
 
     res.statusCode = 201;
-    res.data = user;
-    res.message = 'User created successfully';
+    res.message = 'User registered successfully';
+
     next();
   } catch (err) {
     console.log('Error in signup', err);
@@ -23,11 +20,10 @@ const signup = async (req, res, next) => {
 const sendOtp = async (req, res, next) => {
   try {
     const { email } = req.body;
-    const otp = await authServices.sendOtp(email);
+    await authServices.sendOtp(email);
 
     res.statusCode = 200;
     res.message = 'Otp sent Successfully';
-    res.data = otp;
 
     next();
   } catch (err) {
@@ -57,11 +53,10 @@ const logout = async (req, res, next) => {
   try {
     // logout logic
     const token = req.user;
-    const response = await authServices.logout(token);
+    await authServices.logout(token);
 
     res.statusCode = 200;
     res.message = 'Logout successful';
-    res.data = response;
 
     return next();
   } catch (err) {

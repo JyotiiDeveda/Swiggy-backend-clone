@@ -4,10 +4,20 @@ const commonHelpers = require('../helpers/common.helper');
 const constants = require('../constants/constants');
 
 const getCartDishes = async (cartId, userId) => {
-  const cartDishes = await Cart.findOne({
+  const cart = await Cart.findOne({
     where: {
       id: cartId,
       user_id: userId,
+    },
+  });
+
+  if (!cart) {
+    throw commonHelpers.customError('No cart found for the user', 404);
+  }
+
+  const cartDishes = await Cart.findOne({
+    where: {
+      id: cart.id,
     },
     include: {
       model: Dish,
@@ -19,7 +29,6 @@ const getCartDishes = async (cartId, userId) => {
     },
   });
 
-  console.log('CART DISH: ', cartDishes);
   if (!cartDishes) {
     throw commonHelpers.customError('Cart dishes not found', 404);
   } else if (cartDishes?.dishes.length === 0) {
@@ -31,7 +40,7 @@ const getCartDishes = async (cartId, userId) => {
 const addItem = async (userId, payload) => {
   const transactionContext = await sequelize.transaction();
   try {
-    const { dish_id: dishId, quantity } = payload;
+    const { dishId, quantity } = payload;
 
     const dishDetails = await Dish.findOne({ where: { id: dishId } });
 
@@ -73,7 +82,6 @@ const addItem = async (userId, payload) => {
       const cartRestaurantId = cart.dataValues.restaurant_id;
       const dishRestaurantId = dishDetails.restaurant_id;
 
-      // think
       if (cartRestaurantId && cartRestaurantId !== dishRestaurantId) {
         throw commonHelpers.customError(
           'Adding dishes from different restaurant will replace the existing dishes in cart',
@@ -97,7 +105,7 @@ const addItem = async (userId, payload) => {
     if (!cartDish) throw commonHelpers.customError('Failed to add dish', 400);
 
     await transactionContext.commit();
-    return;
+    return cartDish;
   } catch (err) {
     await transactionContext.rollback();
     console.log('Error in adding dish to cart', err);

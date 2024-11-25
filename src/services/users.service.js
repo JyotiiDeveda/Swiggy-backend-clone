@@ -7,7 +7,7 @@ const { sequelize } = require('../models');
 const create = async data => {
   const transactionContext = await sequelize.transaction();
   try {
-    const { first_name, last_name, email, phone, address } = data;
+    const { first_name, last_name, email, phone, address, role = constants.ROLES.CUSTOMER } = data;
     const userExists = await User.findOne({
       where: { [Op.or]: [{ email }, { phone }] },
       paranoid: false,
@@ -32,18 +32,15 @@ const create = async data => {
     }
 
     // Creating a user
-    const newUser = User.build({
+    const newUser = await User.create({
       first_name,
       last_name,
       email,
       phone,
+      address,
     });
 
-    newUser.address = address ? address : null;
-    await newUser.save({ transaction: transactionContext });
-
-    // a user can signup with customer role only
-    const roleDetails = await Role.findOne({ where: { name: constants.ROLES.CUSTOMER } });
+    const roleDetails = await Role.findOne({ where: { name: role } });
 
     // assign role to user
     const userRole = await UserRole.findOrCreate({
@@ -100,6 +97,29 @@ const assignRole = async (currentUser, userId, roleId) => {
   }
 };
 
+const updateProfile = async (currentUser, userId, payload) => {
+  const transactionContext = await sequelize.transaction();
+  try {
+    if (!currentUser?.userRoles.includes(constants.ROLES.ADMIN) && currentUser.userId !== userId) {
+      throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
+    }
+
+    const userDetails = await User.findByPk(userId);
+    if (!userDetails) {
+      throw commonHelpers.customError('User not found', 404);
+    }
+
+    await userDetails.update(payload, { transaction: transactionContext });
+    console.log('Updated User: ', userDetails);
+
+    return userDetails;
+  } catch (err) {
+    await transactionContext.rollback();
+    console.log('Error in updating profile', err.message);
+    throw commonHelpers.customError(err.message, err.statusCode);
+  }
+};
+
 const addAddress = async (currentUser, userId, address) => {
   const transactionContext = await sequelize.transaction();
   try {
@@ -152,10 +172,7 @@ const removeAccount = async (currentUser, userId) => {
   }
 };
 
-const get = async (currentUser, userId) => {
-  if (!currentUser?.userRoles.includes(constants.ROLES.ADMIN) && currentUser.userId !== userId) {
-    throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
-  }
+const get = async userId => {
   const userDetails = await User.findOne({
     where: { id: userId },
     include: { model: Role, as: 'roles', attributes: ['id', 'name'], through: { attributes: [] } },
@@ -200,4 +217,4 @@ const getAll = async queryOptions => {
   return users;
 };
 
-module.exports = { create, assignRole, addAddress, removeAccount, get, getAll };
+module.exports = { create, assignRole, updateProfile, addAddress, removeAccount, get, getAll };

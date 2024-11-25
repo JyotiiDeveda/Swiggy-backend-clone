@@ -1,5 +1,6 @@
 const Joi = require('joi');
 const commonHelper = require('../helpers/common.helper');
+const validateHelper = require('../helpers/validate.helper');
 const constants = require('../constants/constants');
 
 const validateQueryParams = (req, res, next) => {
@@ -19,27 +20,54 @@ const validateQueryParams = (req, res, next) => {
         .optional(),
     });
 
-    const { error, value } = schema.validate(req.query);
+    const validateResponse = validateHelper.validateSchemas(schema, req.body);
+    const isValid = validateResponse[0];
+    const value = validateResponse[1];
 
-    if (error) {
-      console.log('error: ', error);
-      const errMsg =
-        error.details
-          .map(detail => detail.message)
-          .join(', ')
-          .replaceAll(`"`, '') || 'Query schema data validation failed';
-
-      return commonHelper.customErrorHandler(res, errMsg, 422);
+    if (!isValid) {
+      return commonHelper.customErrorHandler(res, value, 422);
     }
 
-    req.query = value; // Update query object with validated values
-    next();
+    req.query = value;
+
+    return next();
   } catch (err) {
     console.log('Error validating dish input fields: ', err);
     return commonHelper.customErrorHandler(res, err.message, 400);
   }
 };
 
+const validateId = (req, res, next) => {
+  try {
+    const id = [...Object.keys(req.body)][0];
+    console.log('IDD: ', id);
+    const schema = Joi.object({
+      [id]: Joi.string()
+        .guid({
+          version: 'uuidv4',
+        })
+        .required(),
+    });
+
+    const payload = req.body;
+    console.log('req body: ', payload);
+    const validateResponse = validateHelper.validateSchemas(schema, payload);
+    const isValid = validateResponse[0];
+    const value = validateResponse[1];
+
+    if (!isValid) {
+      return commonHelper.customErrorHandler(res, value, 422);
+    }
+
+    req.body = value;
+
+    return next();
+  } catch (err) {
+    console.log('Error validating input fields: ', err);
+    return commonHelper.customErrorHandler(res, err.message, 400);
+  }
+};
 module.exports = {
   validateQueryParams,
+  validateId,
 };

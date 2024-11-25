@@ -15,6 +15,7 @@ const generateToken = payload => {
 };
 
 const verifyToken = token => {
+  console.log('JWT SECRET: ', process.env.JWT_SECRET);
   const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
   return decodedToken;
 };
@@ -33,14 +34,14 @@ const signup = async data => {
     `Your one time password to login : ${otp}`
   );
 
-  return createdUser;
+  return;
 };
 
 const sendOtp = async email => {
   const userExists = await User.findOne({ where: { email } });
 
   if (!userExists) {
-    throw commonHelper.customError('User does not exist.. Please signup', 404);
+    throw commonHelper.customError('User does not exist, Please signup', 404);
   }
 
   // generate otp
@@ -49,9 +50,10 @@ const sendOtp = async email => {
   await redisClient.set(userExists?.id.toString(), otp.toString(), { EX: 300 });
 
   // send mail
-  // await mailHelper.sendVerificationEmail(email, 'Login OTP', `Your one time password to login: ${otp}`);
+  await mailHelper.sendVerificationEmail(email, 'Login OTP', `Your one time password to login: ${otp}`);
+  console.log('OTP: ', otp);
 
-  return { otp };
+  return;
 };
 
 const verifyOtp = async (email, otp) => {
@@ -100,7 +102,8 @@ const verifyOtp = async (email, otp) => {
 };
 
 const logout = async () => {
-  return {};
+  console.log('Logout successful');
+  return;
 };
 
 module.exports = { signup, sendOtp, verifyOtp, logout, generateToken, verifyToken };

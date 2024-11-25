@@ -12,7 +12,7 @@ const placeOrder = async (currentUser, userId, payload) => {
       throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
     }
 
-    const { cart_id: cartId, restaurant_id: restaurantId } = payload;
+    const { cartId, restaurantId } = payload;
 
     // check if order is already placed
     const orderDetails = await Order.findOne({

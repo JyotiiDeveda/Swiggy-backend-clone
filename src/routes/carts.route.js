@@ -22,6 +22,7 @@ router.post(
   authMiddlewares.isAuthorized,
   cartValidators.validateCartItemSchema,
   cartControllers.addItem,
+  cartSerializers.serializeCart,
   commonHelpers.customResponseHandler
 );
 

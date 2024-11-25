@@ -2,6 +2,39 @@ const userServices = require('../services/users.service');
 const commonHelper = require('../helpers/common.helper');
 const orderServices = require('../services/orders.service');
 
+const create = async (req, res, next) => {
+  try {
+    const payload = req.body;
+    const updatedUser = await userServices.create(payload);
+
+    res.statusCode = 201;
+    res.message = 'User created successfully';
+    res.data = updatedUser;
+
+    next();
+  } catch (err) {
+    console.log('Error in creating user: ', err);
+    return commonHelper.customErrorHandler(res, err.message, err.statusCode);
+  }
+};
+
+const updateProfile = async (req, res, next) => {
+  try {
+    const userId = req.params['id'];
+    const payload = req.body;
+    const updatedUser = await userServices.updateProfile(req.user, userId, payload);
+
+    res.statusCode = 200;
+    res.message = 'User profile updated successfully';
+    res.data = updatedUser;
+
+    next();
+  } catch (err) {
+    console.log('Error in updating user profile: ', err);
+    return commonHelper.customErrorHandler(res, err.message, err.statusCode);
+  }
+};
+
 const addAddress = async (req, res, next) => {
   try {
     const { address } = req.body;
@@ -16,15 +49,15 @@ const addAddress = async (req, res, next) => {
     next();
   } catch (err) {
     console.log('Error in updating address: ', err);
-    return commonHelper.customErrorHandler(res, err.message, 400);
+    return commonHelper.customErrorHandler(res, err.message, err.statusCode);
   }
 };
 
 const assignRole = async (req, res, next) => {
   try {
     const userId = req.params['userId'];
-    const roleId = req.params['roleId'];
     const currentUser = req.user;
+    const { roleId } = req.body;
 
     await userServices.assignRole(currentUser, userId, roleId);
 
@@ -34,7 +67,7 @@ const assignRole = async (req, res, next) => {
     next();
   } catch (err) {
     console.log('Error in assigning role: ', err);
-    return commonHelper.customErrorHandler(res, err.message, 400);
+    return commonHelper.customErrorHandler(res, err.message, err.statusCode);
   }
 };
 
@@ -50,25 +83,24 @@ const removeAccount = async (req, res, next) => {
     next();
   } catch (err) {
     console.log('Error in deleting user: ', err);
-    return commonHelper.customErrorHandler(res, err.message, 400);
+    return commonHelper.customErrorHandler(res, err.message, err.statusCode);
   }
 };
 
 const get = async (req, res, next) => {
   try {
-    const userId = req.params['id'];
-    const currentUser = req.user;
+    let userId = req.params?.id ? req.params.id : req.user.userId;
 
-    const userDetails = await userServices.get(currentUser, userId);
+    const userDetails = await userServices.get(userId);
 
     res.statusCode = 200;
     res.message = 'Fetched user details successfully';
     res.data = userDetails;
 
-    next();
+    return next();
   } catch (err) {
     console.log('Error in getting the user details: ', err);
-    return commonHelper.customErrorHandler(res, err.message, 400);
+    return commonHelper.customErrorHandler(res, err.message, err.statusCode);
   }
 };
 
@@ -84,7 +116,7 @@ const getAll = async (req, res, next) => {
     next();
   } catch (err) {
     console.log('Error in getting the user details: ', err);
-    return commonHelper.customErrorHandler(res, err.message, 400);
+    return commonHelper.customErrorHandler(res, err.message, err.statusCode);
   }
 };
 
@@ -176,6 +208,8 @@ const getPendingOrders = async (req, res, next) => {
 };
 
 module.exports = {
+  create,
+  updateProfile,
   addAddress,
   assignRole,
   removeAccount,

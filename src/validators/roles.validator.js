@@ -1,17 +1,17 @@
 const Joi = require('joi');
 const commonHelper = require('../helpers/common.helper');
 const validateHelper = require('../helpers/validate.helper');
-const constants = require('../constants/constants');
 
-const validateDishSchema = (req, res, next) => {
+const validateRole = (req, res, next) => {
   try {
     const schema = Joi.object({
-      name: Joi.string().required().min(3),
-      description: Joi.string().required().min(10),
-      category: Joi.string()
+      role: Joi.string()
+        .pattern(/^(?:[A-Z][a-z]*)(?: [A-Z][a-z]*)*$/, 'capitalized words')
         .required()
-        .valid(...Object.values(constants.DISH_CATEGORY)),
-      price: Joi.number().precision(2).options({ convert: false }).required(),
+        .messages({
+          'string.empty': 'Role name is required.',
+          'string.pattern.name': 'Role name must have the first letter of each word capitalized.',
+        }),
     });
 
     const validateResponse = validateHelper.validateSchemas(schema, req.body);
@@ -23,13 +23,12 @@ const validateDishSchema = (req, res, next) => {
     }
 
     req.body = value;
+
     return next();
   } catch (err) {
-    console.log('Error validating dish input fields: ', err);
+    console.log('Error validating input fields: ', err);
     return commonHelper.customErrorHandler(res, err.message, 400);
   }
 };
 
-module.exports = {
-  validateDishSchema,
-};
+module.exports = { validateRole };

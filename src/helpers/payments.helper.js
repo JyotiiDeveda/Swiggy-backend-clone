@@ -1,5 +1,5 @@
-const pay = total_amount => {
-  return `Payment for amount ${total_amount} is successful`;
+const pay = totalAmount => {
+  return `Payment for amount ${totalAmount} is successful`;
 };
 
 module.exports = { pay };

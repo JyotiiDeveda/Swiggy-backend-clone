@@ -4,14 +4,14 @@ const orderControllers = require('../controllers/orders.controller');
 const orderValidators = require('../validators/orders.validator');
 const commonHelpers = require('../helpers/common.helper');
 const orderSerializers = require('../serializers/orders.serializer');
-const commonvalidators = require('../validators/common.validator');
+const commonValidators = require('../validators/common.validator');
 
 // get all unassigned orders
 router.get(
   '/',
   authMiddlewares.authenticateToken,
   authMiddlewares.isAuthorizedDeliveryPartner,
-  commonvalidators.validateQueryParams,
+  commonValidators.validateQueryParams,
   orderControllers.getAllUnassignedOrders,
   orderSerializers.serializeOrders,
   commonHelpers.customResponseHandler
@@ -22,7 +22,7 @@ router.patch(
   '/:id/assign-order',
   authMiddlewares.authenticateToken,
   authMiddlewares.isAuthorizedDeliveryPartner,
-  orderValidators.validateDeliveryPartnerId,
+  commonValidators.validateId,
   orderControllers.assignOrder,
   orderSerializers.serializeOrders,
   commonHelpers.customResponseHandler
