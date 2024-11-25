@@ -50,6 +50,11 @@ const SORT_ORDER = {
   DESC: 'DESC',
 };
 
+const SORT_BY = {
+  PRICE: 'price',
+  AVERAGE_RATING: 'averageRating',
+};
+
 module.exports = {
   ROLES,
   RESTAURANT_CATEGORY,
@@ -62,4 +67,5 @@ module.exports = {
   ENTITY_TYPE,
   PAYMENT_TYPE,
   SORT_ORDER,
+  SORT_BY,
 };
