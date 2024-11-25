@@ -13,7 +13,7 @@ const serializeRestaurants = (req, res, next) => {
     name: restaurant.name,
     description: restaurant?.description,
     totalAmount: restaurant?.total_amount,
-    averageRating: restaurant?.dataValues?.avg_rating,
+    averageRating: restaurant?.dataValues?.averageRating,
     ratingsCount: restaurant?.dataValues?.ratings_cnt,
     category: restaurant?.category,
     address: restaurant?.address,

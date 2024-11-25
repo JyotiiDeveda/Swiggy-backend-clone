@@ -9,7 +9,9 @@ const validateQueryParams = (req, res, next) => {
       page: Joi.number().positive().max(100).default(1),
       limit: Joi.number().positive().min(1).max(100).default(10),
       city: Joi.string().optional(),
-      sortBy: Joi.string().valid('price', 'avg_rating').optional(),
+      sortBy: Joi.string()
+        .valid(...Object.values(constants.SORT_BY))
+        .optional(),
       role: Joi.string().valid('admin', 'delivery-partner', 'customer').optional(),
       orderBy: Joi.string()
         .valid(...Object.values(constants.SORT_ORDER))

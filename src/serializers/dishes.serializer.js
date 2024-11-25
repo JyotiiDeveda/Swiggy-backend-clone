@@ -13,8 +13,8 @@ const serializeDishes = (req, res, next) => {
     imageUrl: dish?.image_url,
     type: dish?.type,
     price: dish?.price,
-    averageRating: dish?.dataValues?.avg_rating,
-    ratingsCount: dish?.dataValues?.ratings_cnt,
+    averageRating: dish?.dataValues?.averageRating,
+    ratingsCount: dish?.dataValues?.ratingsCount,
     createdAt: dish?.created_at,
     updatedAt: dish?.updated_at,
   }));
