@@ -9,7 +9,9 @@ const validateQueryParams = (req, res, next) => {
       page: Joi.number().positive().max(100).default(1),
       limit: Joi.number().positive().min(1).max(100).default(10),
       city: Joi.string().optional(),
-      sortBy: Joi.string().valid('price', 'avg_rating').optional(),
+      sortBy: Joi.string()
+        .valid(...Object.values(constants.SORT_BY))
+        .optional(),
       role: Joi.string().valid('admin', 'delivery-partner', 'customer').optional(),
       orderBy: Joi.string()
         .valid(...Object.values(constants.SORT_ORDER))
@@ -68,7 +70,45 @@ const validateId = (req, res, next) => {
   }
 };
 
+const validateImageUploadSchema = (req, res, next) => {
+  try {
+    const schema = Joi.object({
+      image: Joi.binary().required(),
+      entityType: Joi.string()
+        .required()
+        .valid(...Object.values(constants.ENTITY_TYPE)),
+      entityId: Joi.string()
+        .guid({
+          version: 'uuidv4',
+        })
+        .required(),
+    });
+
+    const payload = {
+      image: req.file.buffer,
+      entityType: req.body?.entityType,
+      entityId: req.body?.entityId,
+    };
+
+    const validateResponse = validateHelper.validateSchemas(schema, payload);
+    const isValid = validateResponse[0];
+    const value = validateResponse[1];
+
+    if (!isValid) {
+      return commonHelper.customErrorHandler(res, value, 422);
+    }
+
+    req.body = value;
+
+    return next();
+  } catch (err) {
+    console.log('Error validating input fields: ', err);
+    return commonHelper.customErrorHandler(res, err.message, 400);
+  }
+};
+
 module.exports = {
   validateQueryParams,
   validateId,
+  validateImageUploadSchema,
 };

@@ -2,6 +2,7 @@ const restaurantServices = require('../services/restaurants.service');
 const ratingServices = require('../services/ratings.service');
 const commonHelper = require('../helpers/common.helper');
 const dishServices = require('../services/dishes.service');
+const constants = require('../constants/constants');
 
 const create = async (req, res, next) => {
   try {
@@ -104,7 +105,7 @@ const deleteRating = async (req, res, next) => {
   try {
     const restaurantId = req.params['restaurantId'];
     const ratingId = req.params['ratingId'];
-    await ratingServices.deleteRestaurantRating(restaurantId, ratingId);
+    await ratingServices.deleteRating(ratingId, constants.ENTITY_TYPE.RESTAURANT, restaurantId, ratingId);
 
     res.statusCode = 204;
 
@@ -128,22 +129,6 @@ const createRestaurantsDish = async (req, res, next) => {
     next();
   } catch (err) {
     console.log('Error in creating dish: ', err);
-    return commonHelper.customErrorHandler(res, err.message, err.statusCode);
-  }
-};
-
-const uploadImage = async (req, res, next) => {
-  try {
-    const restaurantId = req.params['id'];
-    const updatedRestaurant = await restaurantServices.uploadImage(restaurantId, req.file);
-
-    res.statusCode = 200;
-    res.message = 'Image uploaded successfully';
-    res.data = updatedRestaurant;
-
-    next();
-  } catch (err) {
-    console.log('Error in uploading image for restaurant: ', err);
     return commonHelper.customErrorHandler(res, err.message, err.statusCode);
   }
 };
@@ -216,24 +201,6 @@ const removeDish = async (req, res, next) => {
   }
 };
 
-const uplaodDishImage = async (req, res, next) => {
-  try {
-    const restaurantId = req.params['restaurantId'];
-    const dishId = req.params['dishId'];
-
-    const updatedDish = await dishServices.uplaodImage(restaurantId, dishId, req.file);
-
-    res.statusCode = 200;
-    res.message = 'Image uploaded successfully';
-    res.data = updatedDish;
-
-    next();
-  } catch (err) {
-    console.log('Error in uploading image for dish: ', err);
-    return commonHelper.customErrorHandler(res, err.message, err.statusCode);
-  }
-};
-
 module.exports = {
   create,
   get,
@@ -243,10 +210,8 @@ module.exports = {
   createRestaurantsRating,
   deleteRating,
   createRestaurantsDish,
-  uploadImage,
   getDish,
   getAllDishes,
   updateDish,
   removeDish,
-  uplaodDishImage,
 };

@@ -2,9 +2,11 @@ const serializeOrders = (req, res, next) => {
   let rows = res.data?.rows || res.data;
   const isSingleItem = !Array.isArray(rows);
 
-  if (!Array.isArray(rows)) {
+  if (isSingleItem) {
     rows = [rows];
   }
+
+  const response = { pagination: res.data?.pagination };
 
   const orders = rows.map(order => ({
     id: order.id,
@@ -35,7 +37,9 @@ const serializeOrders = (req, res, next) => {
     orders[0].dishes = dishes;
   }
 
-  res.data = isSingleItem ? { order: orders[0] } : { orders };
+  isSingleItem ? (response.order = orders[0]) : (response.orders = orders);
+
+  res.data = response;
 
   next();
 };

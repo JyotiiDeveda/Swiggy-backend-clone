@@ -2,7 +2,7 @@ const Joi = require('joi');
 const commonHelper = require('../helpers/common.helper');
 const validateHelper = require('../helpers/validate.helper');
 
-const validateRatingScore = (req, res, next) => {
+const validateRatingSchema = (req, res, next) => {
   try {
     const schema = Joi.object({
       rating: Joi.number().required().min(1).max(5),
@@ -26,5 +26,5 @@ const validateRatingScore = (req, res, next) => {
 };
 
 module.exports = {
-  validateRatingScore,
+  validateRatingSchema,
 };

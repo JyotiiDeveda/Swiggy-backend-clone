@@ -4,18 +4,10 @@ const { Op } = require('sequelize');
 const commonHelpers = require('../helpers/common.helper');
 const constants = require('../constants/constants');
 
-const createRestaurantsRating = async (restaurantId, value, userId) => {
+const createRestaurantsRating = async (restaurantId, rating, userId) => {
   const transactionContext = await sequelize.transaction();
 
   try {
-    // console.log(`${entityType} ${restaurantId} ${value} ${userId}`);
-    let payload = {
-      user_id: userId,
-      restaurant_id: restaurantId,
-      entity_type: constants.ENTITY_TYPE.RESTAURANT,
-      rating: value,
-    };
-
     //check if restaurant exists
     const restaurantExists = await Restaurant.findOne({ where: { id: restaurantId } });
 
@@ -29,7 +21,7 @@ const createRestaurantsRating = async (restaurantId, value, userId) => {
         [Op.and]: [
           { user_id: userId },
           { entity_type: constants.ENTITY_TYPE.RESTAURANT },
-          { restaurant_id: restaurantId },
+          { entity_id: restaurantId },
         ],
       },
     });
@@ -45,12 +37,19 @@ const createRestaurantsRating = async (restaurantId, value, userId) => {
     );
 
     if (!order) {
-      throw commonHelpers.customError("User has no orders from the restaurant.. can't rate", 403);
+      throw commonHelpers.customError("User has no orders from the restaurant, can't rate", 403);
     }
 
-    // Creating a rating
-    const newRating = await Rating.create(payload, { transaction: transactionContext });
+    let options = {
+      user_id: userId,
+      entity_id: restaurantId,
+      entity_type: constants.ENTITY_TYPE.RESTAURANT,
+      rating,
+    };
+
+    const newRating = await Rating.create(options, { transaction: transactionContext });
     await transactionContext.commit();
+
     return newRating;
   } catch (err) {
     console.log('Error while creating rating: ', err.message);
@@ -59,18 +58,10 @@ const createRestaurantsRating = async (restaurantId, value, userId) => {
   }
 };
 
-const createDishesRating = async (dishId, value, userId) => {
+const createDishesRating = async (dishId, rating, userId) => {
   const transactionContext = await sequelize.transaction();
 
   try {
-    // console.log(`${entityType} ${dishId} ${value} ${userId}`);
-    let payload = {
-      user_id: userId,
-      dish_id: dishId,
-      entity_type: constants.ENTITY_TYPE.DISH,
-      rating: value,
-    };
-
     //check if dish exists
     const dishExists = await Dish.findOne({
       where: { id: dishId },
@@ -83,7 +74,7 @@ const createDishesRating = async (dishId, value, userId) => {
     //check if rating already exists
     const ratingExists = await Rating.findOne({
       where: {
-        [Op.and]: [{ user_id: userId }, { entity_type: constants.ENTITY_TYPE.DISH }, { dish_id: dishId }],
+        [Op.and]: [{ user_id: userId }, { entity_type: constants.ENTITY_TYPE.DISH }, { entity_id: dishId }],
       },
     });
 
@@ -117,9 +108,17 @@ const createDishesRating = async (dishId, value, userId) => {
       throw commonHelpers.customError("User has not ordered the dish yet, can't rate", 403);
     }
 
-    const rating = await Rating.create(payload);
+    let options = {
+      user_id: userId,
+      entity_id: dishId,
+      entity_type: constants.ENTITY_TYPE.DISH,
+      rating,
+    };
+
+    const newRating = await Rating.create(options, { transaction: transactionContext });
     await transactionContext.commit();
-    return rating;
+
+    return newRating;
   } catch (err) {
     console.log('Error in creating ', err);
     await transactionContext.rollback();
@@ -127,36 +126,14 @@ const createDishesRating = async (dishId, value, userId) => {
   }
 };
 
-const deleteRestaurantRating = async (restaurantId, ratingId) => {
+const deleteRating = async (ratingId, entityType, entityId) => {
   const transactionContext = await sequelize.transaction();
   try {
+    const filter = { id: ratingId };
+    entityType === 'dish' ? (filter.entity_id = entityId) : (filter.entity_id = entityId);
+
     const rating = await Rating.findOne({
-      where: { id: ratingId, restaurant_id: restaurantId },
-    });
-
-    if (!rating) {
-      throw commonHelpers.customError('No rating found for the restaurant', 404);
-    }
-
-    await Rating.destroy({
-      where: { id: ratingId },
-      transaction: transactionContext,
-    });
-
-    await transactionContext.commit();
-    return;
-  } catch (err) {
-    await transactionContext.rollback();
-    console.log('Error in deleting rating', err.message);
-    throw commonHelpers.customError(err.message, err.statusCode);
-  }
-};
-
-const deleteDishRating = async (dishId, ratingId) => {
-  const transactionContext = await sequelize.transaction();
-  try {
-    const rating = await Rating.findOne({
-      where: { id: ratingId, dish_id: dishId },
+      where: filter,
     });
 
     if (!rating) {
@@ -164,7 +141,7 @@ const deleteDishRating = async (dishId, ratingId) => {
     }
 
     await Rating.destroy({
-      where: { id: ratingId },
+      where: filter,
       transaction: transactionContext,
     });
 
@@ -180,6 +157,5 @@ const deleteDishRating = async (dishId, ratingId) => {
 module.exports = {
   createRestaurantsRating,
   createDishesRating,
-  deleteRestaurantRating,
-  deleteDishRating,
+  deleteRating,
 };

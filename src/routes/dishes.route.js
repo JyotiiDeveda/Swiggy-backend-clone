@@ -10,7 +10,7 @@ router.post(
   '/:id/ratings',
   authMiddlewares.authenticateToken,
   authMiddlewares.isAdmin,
-  ratingsValidator.validateRatingScore,
+  ratingsValidator.validateRatingSchema,
   dishControllers.createDishesRating,
   ratingSerializers.serializeRatings,
   commonHelpers.customResponseHandler

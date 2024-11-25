@@ -36,11 +36,11 @@ const get = async restaurantId => {
     throw commonHelpers.customError('Restaurant id not found', 422);
   }
 
-  const restaurant = await Restaurant.findOne({
+  const options = {
     where: { id: restaurantId },
     attributes: {
       include: [
-        [sequelize.fn('round', sequelize.fn('avg', sequelize.col('ratings.rating')), 2), 'avg_rating'],
+        [sequelize.fn('round', sequelize.fn('avg', sequelize.col('ratings.rating')), 2), 'averageRating'],
         [sequelize.fn('count', sequelize.col('ratings.rating')), 'ratings_cnt'],
       ],
     },
@@ -57,7 +57,8 @@ const get = async restaurantId => {
       },
     ],
     group: ['Restaurant.id', 'dishes.id'],
-  });
+  };
+  const restaurant = await Restaurant.findOne(options);
 
   if (!restaurant) {
     throw commonHelpers.customError('No restaurant found', 404);
@@ -67,10 +68,16 @@ const get = async restaurantId => {
 };
 
 const getAll = async queryOptions => {
-  const { city, name, category, orderBy = constants.SORT_ORDER.ASC, page = 1, limit = 10 } = queryOptions;
+  const {
+    city = '',
+    name = '',
+    category = constants.RESTAURANT_CATEGORY.VEG,
+    orderBy = constants.SORT_ORDER.ASC,
+    page = 1,
+    limit = 10,
+  } = queryOptions;
 
-  const startIndex = (page - 1) * limit;
-  const endIndex = page * limit;
+  const offset = (page - 1) * limit;
 
   let filter = {};
 
@@ -83,13 +90,15 @@ const getAll = async queryOptions => {
       [Op.iLike]: category,
     });
 
-  const order = orderBy === 'asc' ? constants.SORT_ORDER.ASC : constants.SORT_ORDER.DESC;
+  // console.log(
+  //   `city: ${city} name: ${name} category: ${category} orderBy: ${orderBy} page: ${page} limit: ${limit}`
+  // );
 
-  const restaurants = await Restaurant.findAndCountAll({
+  const options = {
     where: filter,
     attributes: {
       include: [
-        [sequelize.fn('round', sequelize.fn('avg', sequelize.col('ratings.rating')), 2), 'avg_rating'],
+        [sequelize.fn('round', sequelize.fn('avg', sequelize.col('ratings.rating')), 2), 'averageRating'],
         [sequelize.fn('count', sequelize.col('ratings.rating')), 'ratings_cnt'],
       ],
     },
@@ -100,31 +109,34 @@ const getAll = async queryOptions => {
         attributes: [],
         duplicating: false,
       },
-      {
-        model: Dish,
-        as: 'dishes',
-        attributes: ['name', 'image_url', 'description', 'type', 'price'],
-        duplicating: false,
-      },
     ],
-    group: ['Restaurant.id', 'dishes.id'],
-    order: [['avg_rating', `${order} NULLS LAST`]],
-    offset: startIndex,
-    limit: endIndex,
-  });
+    group: ['Restaurant.id'],
+    order: [[constants.SORT_BY.AVERAGE_RATING, `${orderBy} NULLS LAST`]],
+  };
 
-  const totalRestaurants = restaurants?.count.length;
-  if (!restaurants || totalRestaurants === 0) {
-    throw commonHelpers.customError('No restaurants found', 404);
+  let restaurantsData;
+  await Promise.all([
+    Restaurant.count(options),
+    Restaurant.findAll({ ...options, offset: offset, limit }),
+  ]).then(values => {
+    restaurantsData = values;
+  });
+  console.log('Restaurant: ', restaurantsData);
+
+  const restaurantsCount = restaurantsData[0]?.length;
+  const restaurants = restaurantsData[1];
+
+  if (!restaurantsCount || restaurantsCount === 0) {
+    commonHelpers.customError('Restaurants not found', 404);
   }
 
   const response = {
-    rows: restaurants.rows,
+    rows: restaurants,
     pagination: {
-      totalRecords: totalRestaurants,
+      totalRecords: restaurantsCount,
       currentPage: parseInt(page),
       recordsPerPage: parseInt(limit),
-      noOfPages: Math.ceil(totalRestaurants / limit),
+      noOfPages: Math.ceil(restaurantsCount / limit),
     },
   };
 
@@ -198,7 +210,7 @@ const uploadImage = async (restaurantId, file) => {
 
     await transactionContext.commit();
 
-    return restaurantExists;
+    return { imageUrl };
   } catch (err) {
     console.log('Error in uploading image for dish: ', err);
     await transactionContext.rollback();

@@ -3,7 +3,7 @@ const serializeRoles = (req, res, next) => {
 
   const isSingleItem = !Array.isArray(rows);
 
-  if (!Array.isArray(rows)) {
+  if (isSingleItem) {
     rows = [rows];
   }
 

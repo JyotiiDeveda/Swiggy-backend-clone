@@ -23,7 +23,7 @@ const sendOtp = async (req, res, next) => {
     await authServices.sendOtp(email);
 
     res.statusCode = 200;
-    res.message = 'Otp sent Successfully';
+    res.message = 'Otp sent successfully';
 
     next();
   } catch (err) {
