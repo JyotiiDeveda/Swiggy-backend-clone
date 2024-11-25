@@ -61,7 +61,8 @@ const create = async (restaurantId, data) => {
 
 const get = async (restaurantId, dishId) => {
   // get a dish with its average rating and ratings count
-  const dish = await Dish.findOne({
+
+  const options = {
     where: { id: dishId, restaurant_id: restaurantId },
     attributes: {
       include: [
@@ -77,7 +78,8 @@ const get = async (restaurantId, dishId) => {
       },
     ],
     group: ['Dish.id'],
-  });
+  };
+  const dish = await Dish.findOne(options);
 
   if (!dish) {
     throw commonHelpers.customError('No dish found', 404);
@@ -98,8 +100,7 @@ const getAll = async (restaurantId, queryOptions) => {
     limit = 10,
   } = queryOptions;
 
-  const startIndex = (page - 1) * limit;
-  const endIndex = page * limit;
+  const offset = (page - 1) * limit;
 
   let filter = restaurantId ? { restaurant_id: restaurantId } : {};
 
@@ -109,7 +110,7 @@ const getAll = async (restaurantId, queryOptions) => {
       [Op.iLike]: category,
     });
 
-  const dishes = await Dish.findAll({
+  const options = {
     where: filter,
     attributes: {
       include: [
@@ -131,17 +132,33 @@ const getAll = async (restaurantId, queryOptions) => {
       },
     ],
     group: ['Dish.id', 'Restaurant.id'],
-    offset: startIndex,
     order: [[sortBy, `${orderBy} NULLS LAST`]],
-    limit: endIndex,
-  });
+  };
 
-  // console.log('dishes service: ', restaurants);
-  if (!dishes || dishes.length === 0) {
-    throw commonHelpers.customError('No dishes found', 404);
+  let dishesData;
+  await Promise.all([Dish.count(options), Dish.findAll({ ...options, offset: offset, limit })]).then(
+    values => (dishesData = values)
+  );
+  console.log('Dishes: ', dishesData);
+
+  const dishesCount = dishesData[0]?.length;
+  const dishes = dishesData[1];
+
+  if (!dishesCount || dishesCount === 0) {
+    commonHelpers.customError('Restaurants not found', 404);
   }
 
-  return dishes;
+  const response = {
+    rows: dishes,
+    pagination: {
+      totalRecords: dishesCount,
+      currentPage: parseInt(page),
+      recordsPerPage: parseInt(limit),
+      noOfPages: Math.ceil(dishesCount / limit),
+    },
+  };
+
+  return response;
 };
 
 const update = async (restaurantId, dishId, payload) => {
@@ -198,7 +215,7 @@ const remove = async (restaurantId, dishId) => {
   }
 };
 
-const uplaodImage = async (restaurantId, dishId, file) => {
+const uploadImage = async (restaurantId, dishId, file) => {
   const transactionContext = await sequelize.transaction();
   try {
     // check if restaurant exists
@@ -229,5 +246,5 @@ module.exports = {
   getAll,
   update,
   remove,
-  uplaodImage,
+  uploadImage,
 };
