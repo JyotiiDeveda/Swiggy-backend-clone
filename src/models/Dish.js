@@ -15,9 +15,12 @@ module.exports = (sequelize, DataTypes) => {
       });
 
       Dish.hasMany(models.Rating, {
-        foreignKey: 'dish_id',
+        foreignKey: 'entity_id',
         onDelete: 'CASCADE',
         as: 'ratings',
+        scope: {
+          entity_type: 'dish',
+        },
       });
     }
   }

@@ -10,9 +10,12 @@ module.exports = (sequelize, DataTypes) => {
       });
 
       Restaurant.hasMany(models.Rating, {
-        foreignKey: 'restaurant_id',
+        foreignKey: 'entity_id',
         onDelete: 'CASCADE',
         as: 'ratings',
+        scope: {
+          entity_type: 'restaurant',
+        },
       });
 
       Restaurant.hasMany(models.Order, {
