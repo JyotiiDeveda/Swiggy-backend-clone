@@ -11,11 +11,6 @@ const validatePlaceOrderSchema = (req, res, next) => {
           version: 'uuidv4',
         })
         .required(),
-      restaurantId: Joi.string()
-        .guid({
-          version: 'uuidv4',
-        })
-        .required(),
     });
 
     const validateResponse = validateHelper.validateSchemas(schema, req.body);

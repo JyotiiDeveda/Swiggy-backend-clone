@@ -2,6 +2,8 @@ const serializeRestaurants = (req, res, next) => {
   let rows = res.data?.rows || res.data;
   const isSingleItem = !Array.isArray(rows);
 
+  const response = { pagination: res.data?.pagination };
+
   if (!Array.isArray(rows)) {
     rows = [rows];
   }
@@ -20,8 +22,8 @@ const serializeRestaurants = (req, res, next) => {
     updatedAt: restaurant?.updated_at,
   }));
 
-  res.data = isSingleItem ? { restaurant: restaurants[0] } : { restaurants };
-
+  isSingleItem ? (response.restaurant = restaurants[0]) : (response.restaurants = restaurants);
+  res.data = response;
   next();
 };
 

@@ -15,7 +15,6 @@ const makePayment = async (currentUser, payload) => {
     const orderExists = await Order.findOne({
       where: {
         id: orderId,
-        status: constants.ORDER_STATUS.PREPARING,
       },
       include: {
         model: Cart,
