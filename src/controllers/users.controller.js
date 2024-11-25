@@ -157,10 +157,10 @@ const getOrder = async (req, res, next) => {
 
 const getAllOrders = async (req, res, next) => {
   try {
-    const { page = 1, limit = 10 } = req.query;
+    const queryOptions = req.query;
     const userId = req.params['id'];
     const currentUser = req.user;
-    const orders = await orderServices.getAllOrders(currentUser, userId, page, limit);
+    const orders = await orderServices.getAllOrders(currentUser, userId, queryOptions);
 
     res.statusCode = 200;
     res.message = "Fetched user's orders successfully";

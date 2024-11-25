@@ -21,8 +21,7 @@ const makePayment = async (req, res, next) => {
 const getAll = async (req, res, next) => {
   try {
     const { userId } = req.user;
-    const { page = 1, limit = 10 } = req.query;
-    const allPayments = await paymentServices.getAllPayments(userId, page, limit);
+    const allPayments = await paymentServices.getAllPayments(userId, req.query);
 
     res.statusCode = 200;
     res.data = allPayments;
