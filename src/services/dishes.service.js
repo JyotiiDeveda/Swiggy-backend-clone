@@ -215,11 +215,11 @@ const remove = async (restaurantId, dishId) => {
   }
 };
 
-const uploadImage = async (restaurantId, dishId, file) => {
+const uploadImage = async (dishId, file) => {
   const transactionContext = await sequelize.transaction();
   try {
-    // check if restaurant exists
-    const dishExists = await Dish.findOne({ where: { id: dishId, restaurant_id: restaurantId } });
+    // check if dish exists
+    const dishExists = await Dish.findOne({ where: { id: dishId } });
 
     if (!dishExists) {
       throw commonHelpers.customError('Dish not found', 404);
@@ -232,7 +232,7 @@ const uploadImage = async (restaurantId, dishId, file) => {
 
     await transactionContext.commit();
 
-    return dishExists;
+    return { imageUrl };
   } catch (err) {
     console.log('Error in uploading image for dish: ', err);
     await transactionContext.rollback();

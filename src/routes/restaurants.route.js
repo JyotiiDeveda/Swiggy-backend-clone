@@ -3,7 +3,6 @@ const restaurantsController = require('../controllers/restaurants.controller.js'
 const restaurantValidators = require('../validators/restaurants.validator');
 const authMiddlewares = require('../middlewares/auth.middleware');
 const dishValidators = require('../validators/dishes.validator');
-const upload = require('../middlewares/multer.middleware');
 const ratingValidators = require('../validators/ratings.validator');
 const commonHelpers = require('../helpers/common.helper');
 const dishSerializers = require('../serializers/dishes.serializer');
@@ -76,20 +75,6 @@ router.delete(
   commonHelpers.customResponseHandler
 );
 
-//image upload
-router.patch(
-  '/:id',
-  authMiddlewares.authenticateToken,
-  authMiddlewares.isAdmin,
-  upload.single('image'),
-  restaurantValidators.validateImage,
-  restaurantsController.uploadImage,
-  restaurantSerializers.serializeRestaurants,
-  commonHelpers.customResponseHandler
-);
-
-// dishes routes
-
 // to create a dish
 router.post(
   '/:id/dishes',
@@ -131,17 +116,6 @@ router.delete(
   authMiddlewares.authenticateToken,
   authMiddlewares.isAdmin,
   restaurantsController.removeDish,
-  commonHelpers.customResponseHandler
-);
-
-router.patch(
-  '/:restaurantId/dishes/:dishId',
-  authMiddlewares.authenticateToken,
-  authMiddlewares.isAdmin,
-  upload.single('image'),
-  restaurantValidators.validateImage,
-  restaurantsController.uplaodDishImage,
-  dishSerializers.serializeDishes,
   commonHelpers.customResponseHandler
 );
 

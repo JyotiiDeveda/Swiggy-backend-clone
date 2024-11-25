@@ -70,7 +70,45 @@ const validateId = (req, res, next) => {
   }
 };
 
+const validateImageUploadSchema = (req, res, next) => {
+  try {
+    const schema = Joi.object({
+      image: Joi.binary().required(),
+      entityType: Joi.string()
+        .required()
+        .valid(...Object.values(constants.ENTITY_TYPE)),
+      entityId: Joi.string()
+        .guid({
+          version: 'uuidv4',
+        })
+        .required(),
+    });
+
+    const payload = {
+      image: req.file.buffer,
+      entityType: req.body?.entityType,
+      entityId: req.body?.entityId,
+    };
+
+    const validateResponse = validateHelper.validateSchemas(schema, payload);
+    const isValid = validateResponse[0];
+    const value = validateResponse[1];
+
+    if (!isValid) {
+      return commonHelper.customErrorHandler(res, value, 422);
+    }
+
+    req.body = value;
+
+    return next();
+  } catch (err) {
+    console.log('Error validating input fields: ', err);
+    return commonHelper.customErrorHandler(res, err.message, 400);
+  }
+};
+
 module.exports = {
   validateQueryParams,
   validateId,
+  validateImageUploadSchema,
 };

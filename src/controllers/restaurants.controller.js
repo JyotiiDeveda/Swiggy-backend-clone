@@ -132,22 +132,6 @@ const createRestaurantsDish = async (req, res, next) => {
   }
 };
 
-const uploadImage = async (req, res, next) => {
-  try {
-    const restaurantId = req.params['id'];
-    const updatedRestaurant = await restaurantServices.uploadImage(restaurantId, req.file);
-
-    res.statusCode = 200;
-    res.message = 'Image uploaded successfully';
-    res.data = updatedRestaurant;
-
-    next();
-  } catch (err) {
-    console.log('Error in uploading image for restaurant: ', err);
-    return commonHelper.customErrorHandler(res, err.message, err.statusCode);
-  }
-};
-
 // dishes controllers
 const getDish = async (req, res, next) => {
   try {
@@ -216,24 +200,6 @@ const removeDish = async (req, res, next) => {
   }
 };
 
-const uplaodDishImage = async (req, res, next) => {
-  try {
-    const restaurantId = req.params['restaurantId'];
-    const dishId = req.params['dishId'];
-
-    const updatedDish = await dishServices.uplaodImage(restaurantId, dishId, req.file);
-
-    res.statusCode = 200;
-    res.message = 'Image uploaded successfully';
-    res.data = updatedDish;
-
-    next();
-  } catch (err) {
-    console.log('Error in uploading image for dish: ', err);
-    return commonHelper.customErrorHandler(res, err.message, err.statusCode);
-  }
-};
-
 module.exports = {
   create,
   get,
@@ -243,10 +209,8 @@ module.exports = {
   createRestaurantsRating,
   deleteRating,
   createRestaurantsDish,
-  uploadImage,
   getDish,
   getAllDishes,
   updateDish,
   removeDish,
-  uplaodDishImage,
 };

@@ -210,7 +210,7 @@ const uploadImage = async (restaurantId, file) => {
 
     await transactionContext.commit();
 
-    return restaurantExists;
+    return { imageUrl };
   } catch (err) {
     console.log('Error in uploading image for dish: ', err);
     await transactionContext.rollback();

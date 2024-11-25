@@ -31,31 +31,6 @@ const validateRestaurantSchema = (req, res, next) => {
   }
 };
 
-const validateImage = (req, res, next) => {
-  try {
-    const schema = Joi.object({
-      image: Joi.binary().required(),
-    });
-
-    const imageUrl = req.file.buffer;
-    const validateResponse = validateHelper.validateSchemas(schema, { image: imageUrl });
-    const isValid = validateResponse[0];
-    const value = validateResponse[1];
-
-    if (!isValid) {
-      return commonHelper.customErrorHandler(res, value, 422);
-    }
-
-    req.body = value;
-
-    return next();
-  } catch (err) {
-    console.log('Error validating input fields: ', err);
-    return commonHelper.customErrorHandler(res, err.message, 400);
-  }
-};
-
 module.exports = {
   validateRestaurantSchema,
-  validateImage,
 };
