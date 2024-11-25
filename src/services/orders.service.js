@@ -3,6 +3,7 @@ const { User, Order, Cart, Dish, Restaurant } = require('../models');
 const { sequelize } = require('../models');
 const constants = require('../constants/constants');
 const mailHelper = require('../helpers/mail.helper');
+const ordersHelper = require('../helpers/orders.helper');
 
 const placeOrder = async (currentUser, userId, payload) => {
   const transactionContext = await sequelize.transaction();
@@ -134,16 +135,16 @@ const getOrder = async (currentUser, userId, orderId) => {
   return order;
 };
 
-const getAllOrders = async (currentUser, userId, page, limit) => {
+const getAllOrders = async (currentUser, userId, queryOptions) => {
   // check if user has the access
   if (!currentUser?.userRoles.includes(constants.ROLES.ADMIN) && currentUser.userId !== userId) {
     throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
   }
+  const { page = 1, limit = 10 } = queryOptions;
 
-  const startIndex = (page - 1) * limit;
-  const endIndex = page * limit;
+  const offset = (page - 1) * limit;
 
-  const orders = await Order.findAll({
+  const options = {
     attributes: {
       include: [[sequelize.col('Restaurant.name'), constants.ENTITY_TYPE.RESTAURANT]],
       exclude: ['created_at', 'deleted_at', 'updated_at'],
@@ -162,13 +163,13 @@ const getAllOrders = async (currentUser, userId, page, limit) => {
         duplicating: false,
       },
     ],
-    offset: startIndex,
-    limit: endIndex,
-  });
-  if (!orders || orders.length === 0) {
-    throw commonHelpers.customError('No users found', 404);
-  }
-  return orders;
+    offset: offset,
+    limit: limit,
+  };
+
+  const response = await ordersHelper.getOrders(options, page, limit);
+
+  return response;
 };
 
 const deleteOrder = async (currentUser, userId, orderId) => {
@@ -222,21 +223,20 @@ const deleteOrder = async (currentUser, userId, orderId) => {
 };
 
 const getAllUnassignedOrders = async (page, limit) => {
-  const startIndex = (page - 1) * limit;
-  const endIndex = page * limit;
+  const offset = (page - 1) * limit;
 
-  const orders = await Order.findAll({
-    where: { status: constants.ORDER_STATUS.PREPARING },
+  const options = {
+    where: { status: constants.ORDER_STATUS.PREPARING, delivery_partner_id: null },
     include: {
       model: Restaurant,
     },
-    offset: startIndex,
-    limit: endIndex,
-  });
-  if (!orders || orders.length === 0) {
-    throw commonHelpers.customError('No orders found', 404);
-  }
-  return orders;
+    offset: offset,
+    limit: limit,
+  };
+
+  const response = await ordersHelper.getOrders(options, page, limit);
+
+  return response;
 };
 
 const assignOrder = async (currentUser, userId, orderId) => {
@@ -247,7 +247,6 @@ const assignOrder = async (currentUser, userId, orderId) => {
       throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
     }
 
-    console.log('ORDER ID: ', orderId);
     const order = await Order.findOne({ where: { id: orderId, status: constants.ORDER_STATUS.PREPARING } });
 
     if (!order) {
@@ -285,20 +284,17 @@ const getPendingOrders = async (currentUser, userId, page, limit) => {
     throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
   }
 
-  const startIndex = (page - 1) * limit;
-  const endIndex = page * limit;
+  const offset = (page - 1) * limit;
 
-  const orders = await Order.findAll({
+  const options = {
     where: { delivery_partner_id: userId, status: constants.ORDER_STATUS.PREPARING },
-    offset: startIndex,
-    limit: endIndex,
-  });
+    offset: offset,
+    limit: limit,
+  };
 
-  if (!orders || orders.length === 0) {
-    throw commonHelpers.customError('No pending orders found', 404);
-  }
+  const response = await ordersHelper.getOrders(options, page, limit);
 
-  return orders;
+  return response;
 };
 
 const updateOrderStatus = async (deliveryPartner, orderId, status) => {

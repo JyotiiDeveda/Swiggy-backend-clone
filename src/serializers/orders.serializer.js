@@ -6,6 +6,8 @@ const serializeOrders = (req, res, next) => {
     rows = [rows];
   }
 
+  const response = { pagination: res.data?.pagination };
+
   const orders = rows.map(order => ({
     id: order.id,
     restaurant: order?.dataValues?.restaurant || order?.Restaurant?.name,
@@ -35,7 +37,9 @@ const serializeOrders = (req, res, next) => {
     orders[0].dishes = dishes;
   }
 
-  res.data = isSingleItem ? { order: orders[0] } : { orders };
+  isSingleItem ? (response.order = orders[0]) : (response.orders = orders);
+
+  res.data = response;
 
   next();
 };
