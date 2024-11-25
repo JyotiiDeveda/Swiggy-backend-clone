@@ -2,7 +2,7 @@ const serializeOrders = (req, res, next) => {
   let rows = res.data?.rows || res.data;
   const isSingleItem = !Array.isArray(rows);
 
-  if (!Array.isArray(rows)) {
+  if (isSingleItem) {
     rows = [rows];
   }
 

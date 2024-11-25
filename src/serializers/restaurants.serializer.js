@@ -4,7 +4,7 @@ const serializeRestaurants = (req, res, next) => {
 
   const response = { pagination: res.data?.pagination };
 
-  if (!Array.isArray(rows)) {
+  if (isSingleItem) {
     rows = [rows];
   }
 
