@@ -37,10 +37,9 @@ const addItem = async (req, res, next) => {
 
 const removeItem = async (req, res, next) => {
   try {
-    const cartId = req.params['cartId'];
-    const dishId = req.params['dishId'];
+    const payload = req.params;
     const { userId } = req.user;
-    await cartServices.removeItem(userId, cartId, dishId);
+    await cartServices.removeItem(userId, payload);
 
     res.statusCode = 204;
     res.message = 'Dish removed from cart';
