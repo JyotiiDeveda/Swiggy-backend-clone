@@ -1,7 +1,111 @@
 paths:
+  /users:
+    get:
+      summary: Fetch all users
+      tags:
+        - Users
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: role
+          in: query
+          description: Filter users by role
+          schema:
+            type: string
+            enum: [admin, delivery-partner, customer]
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            example: 1
+        - name: limit
+          in: query
+          description: Number of users per page
+          schema:
+            type: integer
+            example: 10
+      responses:
+        '200':
+          description: Fetched all users successfully
+        '404':
+          description: No users found
+    post:
+      tags:
+        - Users
+      summary: Create a new user (Admin Only)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                  description: First name of the user
+                  example: John
+                lastName:
+                  type: string
+                  description: Last name of the user
+                  example: Doe
+                email:
+                  type: string
+                  description: Email address of the user
+                  format: email
+                  example: john.doe@example.com
+                phone:
+                  type: string
+                  description: Phone number of the user
+                  example: '1234567890'
+                address:
+                  type: string
+                  description: Address of the user
+                  example: '123 Main Street, New York, NY'
+                role:
+                  type: string
+                  description: Role of the user
+                  enum:
+                    - Admin
+                    - Customer
+                    - Delivery Partner
+                  example: Customer
+              required:
+                - firstName
+                - lastName
+                - email
+                - phone
+                - role
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: User created successfully
+                  data:
+                    type: object
+                    description: The created user's details
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '409':
+          description: Conflict - User already exists
+        '422':
+          description: Validation error
+
   /users/{id}:
-    patch:
-      summary: Add an address for the user
+    get:
+      summary: Fetch user details
       tags:
         - Users
       security:
@@ -13,26 +117,93 @@ paths:
           description: User ID
           schema:
             type: string
+      responses:
+        '200':
+          description: Fetched user details successfully
+        '403':
+          description: Unauthorized
+        '404':
+          description: User not found
+    put:
+      tags:
+        - Users
+      summary: Update a user profile
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            example: '123'
+          description: ID of the user to update
       requestBody:
-        description: User address details
         required: true
         content:
           application/json:
             schema:
               type: object
               properties:
+                firstName:
+                  type: string
+                  description: First name of the user
+                  example: John
+                lastName:
+                  type: string
+                  description: Last name of the user
+                  example: Doe
+                email:
+                  type: string
+                  description: Email address of the user
+                  format: email
+                  example: john.doe@example.com
+                phone:
+                  type: string
+                  description: Phone number of the user
+                  example: '1234567890'
                 address:
                   type: string
-                  example: '123 Street, City, Country'
+                  description: Address of the user
+                  example: '123 Main Street, New York, NY'
+                role:
+                  type: string
+                  description: Role of the user
+                  enum:
+                    - Admin
+                    - Customer
+                    - Delivery Partner
+                  example: Customer
+                
+              required:
+                - firstName
+                - lastName
+                - email
+                - phone
       responses:
         '200':
-          description: Address updated successfully
+          description: User profile updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: User profile updated successfully
+                  data:
+                    type: object
+                    description: The updated user's details
         '400':
-          description: Bad request
-        '403':
+          description: Bad Request
+        '401':
           description: Unauthorized
+        '403':
+          description: Forbidden
         '404':
           description: User not found
+        '422':
+          description: Validation error
 
     delete:
       summary: Remove user account
@@ -55,26 +226,7 @@ paths:
         '404':
           description: User not found
 
-    get:
-      summary: Fetch user details
-      tags:
-        - Users
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          description: User ID
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Fetched user details successfully
-        '403':
-          description: Unauthorized
-        '404':
-          description: User not found
+    
 
   /users:
     get:
@@ -107,6 +259,77 @@ paths:
           description: Fetched all users successfully
         '404':
           description: No users found
+    post:
+      tags:
+        - Users
+      summary: Create a new user (Admin Only)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                  description: First name of the user
+                  example: John
+                lastName:
+                  type: string
+                  description: Last name of the user
+                  example: Doe
+                email:
+                  type: string
+                  description: Email address of the user
+                  format: email
+                  example: john.doe@example.com
+                phone:
+                  type: string
+                  description: Phone number of the user
+                  example: '1234567890'
+                address:
+                  type: string
+                  description: Address of the user
+                  example: '123 Main Street, New York, NY'
+                role:
+                  type: string
+                  description: Role of the user
+                  enum:
+                    - ADMIN
+                    - CUSTOMER
+                  example: CUSTOMER
+              required:
+                - firstName
+                - lastName
+                - email
+                - phone
+                - role
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: User created successfully
+                  data:
+                    type: object
+                    description: The created user's details
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '409':
+          description: Conflict - User already exists
+        '422':
+          description: Validation error
 
   /users/{userId}/assign-role:
     put:

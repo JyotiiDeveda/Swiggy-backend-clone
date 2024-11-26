@@ -55,7 +55,7 @@ paths:
 
         '404':
           description: No restaurants found
-          
+
   /restaurants/{id}:
     get:
       tags:
@@ -283,38 +283,6 @@ paths:
         '404':
           description: Rating not found
 
-  /restaurants/{id}:
-    patch:
-      tags:
-        - Images
-      summary: Upload a restaurant image
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            example: '123'
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                image:
-                  type: string
-                  format: binary
-              required:
-                - image
-      responses:
-        '200':
-          description: Image uploaded successfully
-        '404':
-          description: Restaurant not found
-
   /restaurants/{restaurantId}/dishes/{dishId}:
     get:
       tags:
@@ -384,26 +352,13 @@ paths:
         '404':
           description: Dish not found
 
-  /restaurants/{restaurantId}/dishes/{dishId}:
+  /images:
     patch:
       tags:
         - Images
-      summary: Upload an image for a dish
+      summary: Upload an image for restaurant or dish
       security:
         - BearerAuth: []
-      parameters:
-        - name: restaurantId
-          in: path
-          required: true
-          schema:
-            type: string
-            example: '123'
-        - name: dishId
-          in: path
-          required: true
-          schema:
-            type: string
-            example: '456'
       requestBody:
         required: true
         content:
@@ -411,6 +366,13 @@ paths:
             schema:
               type: object
               properties:
+                entityType:
+                  type: string
+                  enum:
+                    - dish
+                    - restaurant
+                entityId:
+                  type: string
                 image:
                   type: string
                   format: binary
@@ -420,4 +382,4 @@ paths:
         '200':
           description: Image uploaded successfully
         '404':
-          description: Dish not found
+          description: Restaurant not found
