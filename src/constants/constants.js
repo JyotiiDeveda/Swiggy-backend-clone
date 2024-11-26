@@ -55,6 +55,11 @@ const SORT_BY = {
   AVERAGE_RATING: 'averageRating',
 };
 
+const SORT_ORDERS_BY = {
+  CREATED_AT: 'created_at',
+  TOTAL_AMOUNT: 'total_amount',
+};
+
 module.exports = {
   ROLES,
   RESTAURANT_CATEGORY,
@@ -68,4 +73,5 @@ module.exports = {
   PAYMENT_TYPE,
   SORT_ORDER,
   SORT_BY,
+  SORT_ORDERS_BY,
 };

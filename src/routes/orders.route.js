@@ -6,12 +6,12 @@ const commonHelpers = require('../helpers/common.helper');
 const orderSerializers = require('../serializers/orders.serializer');
 const commonValidators = require('../validators/common.validator');
 
-// get all unassigned orders
+// get all unassigned orders -- not accessible for customers
 router.get(
   '/',
   authMiddlewares.authenticateToken,
   authMiddlewares.isAuthorizedDeliveryPartner,
-  commonValidators.validateQueryParams,
+  orderValidators.validateQueryParams,
   orderControllers.getAllUnassignedOrders,
   orderSerializers.serializeOrders,
   commonHelpers.customResponseHandler

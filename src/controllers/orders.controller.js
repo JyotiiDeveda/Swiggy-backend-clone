@@ -4,8 +4,8 @@ const orderServices = require('../services/orders.service');
 // all the orders that are yet to get assigned to a delivery partner
 const getAllUnassignedOrders = async (req, res, next) => {
   try {
-    const { page = 1, limit = 10 } = req.query;
-    const orders = await orderServices.getAllUnassignedOrders(page, limit);
+    const params = req.query;
+    const orders = await orderServices.getAllUnassignedOrders(params);
 
     res.statusCode = 200;
     res.message = 'Fetched unassigned orders successfully';
@@ -22,10 +22,9 @@ const assignOrder = async (req, res, next) => {
   try {
     const orderId = req.params['id'];
 
-    // delivery partner can assign order to themselves
-    const currentUser = req.user;
-    // the userId(i.e delivery partner) which is supposed to be assigned an order
-    const { userId } = req.body;
+    const currentUser = req.user; // delivery partner can assign order to themselves
+
+    const { userId } = req.body; // the userId(i.e delivery partner) which is supposed to be assigned an order
 
     const orders = await orderServices.assignOrder(currentUser, userId, orderId);
 
@@ -45,6 +44,7 @@ const updateOrderStatus = async (req, res, next) => {
     const orderId = req.params['id'];
     const deliveryPartner = req.user;
     const { status } = req.body;
+
     const orders = await orderServices.updateOrderStatus(deliveryPartner, orderId, status);
 
     res.statusCode = 200;
