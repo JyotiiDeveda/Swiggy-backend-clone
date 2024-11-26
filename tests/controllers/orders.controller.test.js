@@ -33,7 +33,7 @@ describe('Order Controller', () => {
 
       await orderControllers.getAllUnassignedOrders(req, res, next);
 
-      expect(orderServices.getAllUnassignedOrders).toHaveBeenCalledWith(req.query.page, req.query.limit);
+      expect(orderServices.getAllUnassignedOrders).toHaveBeenCalledWith(req.query);
       expect(res.statusCode).toBe(200);
       expect(res.data).toEqual(fakeOrders);
       expect(res.message).toBe('Fetched unassigned orders successfully');

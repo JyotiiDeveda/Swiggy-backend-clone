@@ -7,16 +7,19 @@ const {
   assignOrder,
   updateOrderStatus,
 } = require('../../src/services/orders.service');
+
 const { sequelize } = require('../../src/models');
 const models = require('../../src/../src/models');
 const mailHelper = require('../../src/helpers/mail.helper');
 const constants = require('../../src/constants/constants');
 const { customError } = require('../../src/helpers/common.helper');
+const { getOrders } = require('../../src/helpers/orders.helper');
 const { faker } = require('@faker-js/faker');
 
 jest.mock('../../src/models');
 jest.mock('../../src/helpers/mail.helper');
 jest.mock('../../src/helpers/common.helper');
+jest.mock('../../src/helpers/orders.helper');
 
 describe('Order Service Tests', () => {
   let transactionMock;
@@ -57,13 +60,14 @@ describe('Order Service Tests', () => {
     models.Order.update = jest.fn();
 
     mailHelper.sendOrderPlacedMail = jest.fn();
-    mailHelper.sendOrderAssignedMail = jest.fn();
     mailHelper.sendOrderStatusUpdateMail = jest.fn();
 
     customError.mockImplementation(errorMessage => {
       const error = new Error(errorMessage);
       throw error;
     });
+
+    // getOrders.mockImplementation(() => jest.fn());
   });
 
   afterEach(() => {
@@ -74,67 +78,80 @@ describe('Order Service Tests', () => {
     beforeEach(() => {
       jest.clearAllMocks();
     });
+
     it('should successfully place an order and commit the transaction', async () => {
       const cartDishDetails = {
-        dishes: [{ restaurant_id: restaurantId, CartDish: { quantity: 2, price: 10 } }],
+        getDishes: jest
+          .fn()
+          .mockResolvedValue([{ restaurant_id: restaurantId, price: 10, CartDish: { quantity: 2 } }]),
         status: constants.CART_STATUS.ACTIVE,
         save: jest.fn().mockResolvedValue(true),
       };
 
-      models.Order.findOne.mockResolvedValue(null);
       models.Cart.findOne.mockResolvedValue(cartDishDetails);
+      models.Order.findOne.mockResolvedValue(null);
       models.Order.create.mockResolvedValue({ id: faker.string.uuid() });
 
-      const order = await placeOrder(currentUser, userId, payload);
+      const order = await placeOrder(currentUser, currentUser.userId, payload);
 
-      expect(order).toHaveProperty('id');
+      expect(models.Cart.findOne).toHaveBeenCalled();
+      expect(cartDishDetails.getDishes).toHaveBeenCalled();
+      expect(models.Order.create).toHaveBeenCalled();
       expect(transactionMock.commit).toHaveBeenCalled();
+      expect(order).toHaveProperty('id');
     });
 
     it('should throw error if order is already placed', async () => {
-      models.Order.findOne.mockResolvedValue({ id: faker.string.uuid() });
+      models.Cart.findOne.mockResolvedValue({
+        id: faker.string.uuid(),
+        status: constants.CART_STATUS.ACTIVE,
+      });
+      models.Order.findOne.mockResolvedValue({ id: faker.string.uuid() }); // Order already exists
 
-      await expect(placeOrder(currentUser, userId, payload)).rejects.toThrowError('Order already placed');
+      await expect(placeOrder(currentUser, currentUser.userId, payload)).rejects.toThrowError(
+        'Order already placed'
+      );
       expect(transactionMock.rollback).toHaveBeenCalled();
     });
 
     it('should throw error if cart not found', async () => {
-      models.Order.findOne.mockResolvedValue(null);
-      models.Cart.findOne.mockResolvedValue(null);
+      models.Cart.findOne.mockResolvedValue(null); // Cart not found
 
-      await expect(placeOrder(currentUser, userId, payload)).rejects.toThrowError('Cart not found');
+      await expect(placeOrder(currentUser, currentUser.userId, payload)).rejects.toThrowError(
+        'Cart not found'
+      );
       expect(transactionMock.rollback).toHaveBeenCalled();
     });
 
     it('should throw error if cart is empty', async () => {
-      models.Order.findOne.mockResolvedValue(null); // No order placed
-      models.Cart.findOne.mockResolvedValue({ dishes: [] }); // Cart is empty
+      const emptyCart = {
+        getDishes: jest.fn().mockResolvedValue([]), // Empty cart
+      };
 
-      await expect(placeOrder(currentUser, userId, payload)).rejects.toThrowError('Cart is empty');
-      expect(transactionMock.rollback).toHaveBeenCalled();
-    });
+      models.Cart.findOne.mockResolvedValue(emptyCart);
+      models.Order.findOne.mockResolvedValue(null); // No order exists
 
-    it('should throw error if restaurant does not match cart restaurant', async () => {
-      models.Order.findOne.mockResolvedValue(null); // No order placed
-      models.Cart.findOne.mockResolvedValue({
-        dishes: [{ restaurant_id: faker.string.uuid() }],
-      });
-
-      await expect(placeOrder(currentUser, userId, payload)).rejects.toThrowError(
-        'Restaurant does not belong to given cart'
+      await expect(placeOrder(currentUser, currentUser.userId, payload)).rejects.toThrowError(
+        'Cart is empty'
       );
       expect(transactionMock.rollback).toHaveBeenCalled();
     });
 
     it('should throw error and rollback if order creation fails', async () => {
-      models.Order.findOne.mockResolvedValue(null); // No order placed
-      models.Cart.findOne.mockResolvedValue({
-        dishes: [{ restaurant_id: restaurantId, price: 10, CartDish: { quantity: 2 } }],
-      });
+      const cartDishDetails = {
+        getDishes: jest
+          .fn()
+          .mockResolvedValue([{ restaurant_id: restaurantId, price: 10, CartDish: { quantity: 2 } }]),
+        status: constants.CART_STATUS.ACTIVE,
+      };
 
-      models.Order.create.mockResolvedValue(null); // Failed to create order
+      models.Cart.findOne.mockResolvedValue(cartDishDetails);
+      models.Order.findOne.mockResolvedValue(null); // No order exists
+      models.Order.create.mockResolvedValue(null); // Order creation fails
 
-      await expect(placeOrder(currentUser, userId, payload)).rejects.toThrowError('Failed to place error');
+      await expect(placeOrder(currentUser, currentUser.userId, payload)).rejects.toThrowError(
+        'Failed to place error'
+      );
       expect(transactionMock.rollback).toHaveBeenCalled();
     });
   });
@@ -163,114 +180,99 @@ describe('Order Service Tests', () => {
   });
 
   describe('getAllOrders', () => {
-    it('should return orders for a given user with admin role', async () => {
-      const mockOrders = [
-        { id: 1, status: constants.ORDER_STATUS.PREPARING },
-        { id: 2, status: constants.ORDER_STATUS.PREPARING },
-      ];
-      const currentUser = { userId: 1, userRoles: [constants.ROLES.ADMIN] };
-      models.Order.findAll = jest.fn().mockResolvedValue(mockOrders);
+    let currentUser;
+    let userId;
+    let queryOptions;
 
-      const userId = 1;
-      const page = 1;
-      const limit = 10;
+    beforeEach(() => {
+      jest.clearAllMocks();
 
-      const result = await getAllOrders(currentUser, userId, page, limit);
+      currentUser = { userId: 1, userRoles: [] };
+      userId = 1;
+      queryOptions = { page: 1, limit: 10 };
 
-      expect(result).toEqual(mockOrders);
-      expect(models.Order.findAll).toHaveBeenCalledWith({
-        attributes: [
-          'id',
-          [sequelize.col('Order.created_at'), 'orderDate'],
-          [sequelize.col('Restaurant.name'), constants.ENTITY_TYPE.RESTAURANT],
-          'delivery_charges',
-          'order_charges',
-          'gst',
-          'total_amount',
-          'status',
-        ],
-        include: [
-          {
-            model: models.Restaurant,
-            attributes: [],
-            duplicating: false,
-          },
-          {
-            model: models.Cart,
-            where: { user_id: userId },
-            attributes: [],
-            duplicating: false,
-          },
-        ],
-        offset: (page - 1) * limit,
-        limit: page * limit,
+      customError.mockImplementation((message, statusCode) => {
+        const error = new Error(message);
+        error.statusCode = statusCode;
+        throw error;
       });
+
+      getOrders.mockImplementation(() => jest.fn());
     });
 
     it('should return orders for a given user (non-admin)', async () => {
-      const mockOrders = [
-        { id: 1, status: constants.ORDER_STATUS.PREPARING },
-        { id: 2, status: constants.ORDER_STATUS.PREPARING },
-      ];
-      const currentUser = { userId: 1, userRoles: [] };
-      models.Order.findAll = jest.fn().mockResolvedValue(mockOrders);
+      const mockOrders = {
+        rows: [
+          { id: 1, status: constants.ORDER_STATUS.PREPARING },
+          { id: 2, status: constants.ORDER_STATUS.PREPARING },
+        ],
+        pagination: {
+          totalRecords: 20,
+          currentPage: 1,
+          recordsPerPage: 10,
+          noOfPages: 2,
+        },
+      };
 
-      const userId = 1;
-      const page = 1;
-      const limit = 10;
+      getOrders.mockResolvedValue(mockOrders);
 
-      const result = await getAllOrders(currentUser, userId, page, limit);
+      const result = await getAllOrders(currentUser, userId, queryOptions);
 
       expect(result).toEqual(mockOrders);
-      expect(models.Order.findAll).toHaveBeenCalledWith({
-        attributes: [
-          'id',
-          [sequelize.col('Order.created_at'), 'orderDate'],
-          [sequelize.col('Restaurant.name'), constants.ENTITY_TYPE.RESTAURANT],
-          'delivery_charges',
-          'order_charges',
-          'gst',
-          'total_amount',
-          'status',
-        ],
-        include: [
-          {
-            model: models.Restaurant,
-            attributes: [],
-            duplicating: false,
-          },
-          {
-            model: models.Cart,
-            where: { user_id: userId },
-            attributes: [],
-            duplicating: false,
-          },
-        ],
-        offset: (page - 1) * limit,
-        limit: page * limit,
-      });
+      expect(getOrders).toHaveBeenCalled();
     });
 
-    it('should throw error if user is not authorized', async () => {
-      const currentUser = { userId: 1, userRoles: [] };
-      const userId = 2; // Trying to access another user's data
-      const page = 1;
-      const limit = 10;
+    it('should throw an error if the user is not authorized', async () => {
+      currentUser.userId = 2; // Trying to access data for a different user
+      userId = 1;
 
-      await expect(getAllOrders(currentUser, userId, page, limit)).rejects.toThrow(
+      await expect(getAllOrders(currentUser, userId, queryOptions)).rejects.toThrow(
         'Given user is not authorized for this endpoint'
       );
+
+      expect(customError).toHaveBeenCalledWith('Given user is not authorized for this endpoint', 403);
+      expect(getOrders).not.toHaveBeenCalled();
     });
 
-    it('should throw error if no orders are found', async () => {
-      const currentUser = { userId: 1, userRoles: [constants.ROLES.ADMIN] };
-      const userId = 1;
-      models.Order.findAll = jest.fn().mockResolvedValue([]);
+    it('should return orders for an admin user accessing another user’s data', async () => {
+      currentUser.userRoles = [constants.ROLES.ADMIN];
+      userId = 2;
 
-      const page = 1;
-      const limit = 10;
+      const mockOrders = {
+        rows: [
+          { id: 1, status: constants.ORDER_STATUS.COMPLETED },
+          { id: 2, status: constants.ORDER_STATUS.DELIVERED },
+        ],
+        pagination: {
+          totalRecords: 15,
+          currentPage: 1,
+          recordsPerPage: 10,
+          noOfPages: 2,
+        },
+      };
 
-      await expect(getAllOrders(currentUser, userId, page, limit)).rejects.toThrow('No users found');
+      getOrders.mockResolvedValue(mockOrders);
+
+      const result = await getAllOrders(currentUser, userId, queryOptions);
+
+      expect(result).toEqual(mockOrders);
+      expect(getOrders).toHaveBeenCalled();
+    });
+
+    it('should throw an error if no orders are found', async () => {
+      getOrders.mockRejectedValue(new Error('Orders not found'));
+
+      await expect(getAllOrders(currentUser, userId, queryOptions)).rejects.toThrow('Orders not found');
+
+      expect(getOrders).toHaveBeenCalled();
+    });
+
+    it('should handle an error if getOrders fails', async () => {
+      getOrders.mockRejectedValue(new Error('Database error'));
+
+      await expect(getAllOrders(currentUser, userId, queryOptions)).rejects.toThrow('Database error');
+
+      expect(getOrders).toHaveBeenCalled();
     });
   });
 
@@ -278,71 +280,79 @@ describe('Order Service Tests', () => {
     it('should delete order and commit transaction', async () => {
       const orderId = faker.string.uuid();
       const orderDetails = { id: orderId, cart_id: faker.string.uuid() };
+      const cartDetails = { id: faker.string.uuid(), status: 'active' };
 
-      models.Order.destroy.mockResolvedValue([1, orderDetails]);
+      models.Order.findOne.mockResolvedValue(orderDetails);
+      models.Order.destroy.mockResolvedValue(1);
+      models.Cart.findByPk.mockResolvedValue(cartDetails);
       models.Cart.destroy.mockResolvedValue(1);
 
-      await deleteOrder(currentUser, userId, orderId);
+      await deleteOrder(currentUser, { userId: currentUser.userId, orderId });
 
       expect(transactionMock.commit).toHaveBeenCalled();
     });
 
     it('should rollback and throw error if order not found', async () => {
-      models.Order.destroy.mockResolvedValue([]);
+      models.Order.findOne.mockResolvedValue(null);
+      models.Order.destroy.mockResolvedValue(0);
 
-      await expect(deleteOrder(currentUser, userId, faker.string.uuid())).rejects.toThrowError(
-        'No order found'
-      );
+      await expect(
+        deleteOrder(currentUser, { userId: currentUser.userId, orderId: faker.string.uuid() })
+      ).rejects.toThrowError('No order found');
       expect(transactionMock.rollback).toHaveBeenCalled();
     });
   });
 
   describe('getAllUnassignedOrders', () => {
+    const options = {
+      where: { status: constants.ORDER_STATUS.PREPARING, delivery_partner_id: null },
+      include: {
+        model: models.Restaurant,
+      },
+      offset: 2,
+      limit: 5,
+    };
     it('should return orders with status PREPARING', async () => {
       const mockOrders = [
         { id: 1, status: constants.ORDER_STATUS.PREPARING },
         { id: 2, status: constants.ORDER_STATUS.PREPARING },
       ];
-      models.Order.findAll = jest.fn().mockResolvedValue(mockOrders);
+
+      getOrders.mockResolvedValue(mockOrders);
 
       const page = 1;
       const limit = 10;
 
-      const result = await getAllUnassignedOrders(page, limit);
+      const result = await getAllUnassignedOrders(options, page, limit);
 
       expect(result).toEqual(mockOrders);
-      expect(models.Order.findAll).toHaveBeenCalledWith({
-        where: { status: constants.ORDER_STATUS.PREPARING },
-        offset: (page - 1) * limit,
-        limit: page * limit,
-      });
     });
 
     it('should throw error if no orders are found', async () => {
-      models.Order.findAll = jest.fn().mockResolvedValue([]);
+      getOrders.mockRejectedValue(new Error('No orders found'));
 
       const page = 1;
       const limit = 10;
 
-      await expect(getAllUnassignedOrders(page, limit)).rejects.toThrow('No orders found');
-      expect(models.Order.findAll).toHaveBeenCalledWith({
-        where: { status: constants.ORDER_STATUS.PREPARING },
-        offset: (page - 1) * limit,
-        limit: page * limit,
-      });
+      await expect(getAllUnassignedOrders(options, page, limit)).rejects.toThrow('No orders found');
     });
   });
 
   describe('assignOrder', () => {
+    const orderId = faker.string.uuid();
+    const order = {
+      id: orderId,
+      cart_id: cartId,
+      save: jest.fn(),
+    };
+
     it('should assign order to delivery partner and commit', async () => {
-      const orderId = faker.string.uuid();
-      const updatedOrder = { id: orderId, delivery_partner_id: userId };
-      models.Order.update.mockResolvedValue([1, [updatedOrder]]);
+      models.Order.findOne.mockResolvedValue(order);
       models.User.findOne.mockResolvedValue({ first_name: 'John', last_name: 'Doe' });
 
       const result = await assignOrder(currentUser, userId, orderId);
 
-      expect(result[0].delivery_partner_id).toEqual(userId);
+      expect(result.delivery_partner_id).toEqual(userId);
       expect(transactionMock.commit).toHaveBeenCalled();
     });
 
@@ -357,15 +367,21 @@ describe('Order Service Tests', () => {
   });
 
   describe('updateOrderStatus', () => {
+    const orderId = faker.string.uuid();
+
+    const order = {
+      id: orderId,
+      cart_id: cartId,
+      save: jest.fn(),
+    };
+
     it('should update order status and commit', async () => {
-      const orderId = faker.string.uuid();
       const status = 'DELIVERED';
-      const updatedOrder = { id: orderId, status };
-      models.Order.update.mockResolvedValue([1, [updatedOrder]]);
+      models.Order.findOne.mockResolvedValue(order);
 
       const result = await updateOrderStatus(currentUser, orderId, status);
 
-      expect(result[0].status).toEqual(status);
+      expect(result.status).toEqual(status);
       expect(transactionMock.commit).toHaveBeenCalled();
     });
 
