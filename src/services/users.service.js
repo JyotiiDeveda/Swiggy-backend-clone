@@ -170,7 +170,6 @@ const get = async userId => {
 const getAll = async queryOptions => {
   const { page = 1, limit = 10, role } = queryOptions;
   const startIndex = (page - 1) * limit;
-  const endIndex = page * limit;
 
   let filter = {};
   const userRole = role?.toLowerCase();
@@ -183,6 +182,7 @@ const getAll = async queryOptions => {
   }
 
   const users = await User.findAndCountAll({
+    distinct: true,
     include: {
       model: Role,
       as: 'roles',
@@ -191,11 +191,11 @@ const getAll = async queryOptions => {
       through: { attributes: [] },
     },
     offset: startIndex,
-    limit: endIndex,
-    paranoid: false,
+    limit: limit,
   });
 
-  if (!users || users?.rows?.length === 0) {
+  console.log(users);
+  if (!users || users?.count === 0) {
     throw commonHelpers.customError('No users found', 404);
   }
 
