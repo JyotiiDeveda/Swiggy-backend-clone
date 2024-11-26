@@ -23,6 +23,11 @@ module.exports = (sequelize, DataTypes) => {
         onDelete: 'SET NULL',
         as: 'orders',
       });
+
+      Restaurant.belongsTo(models.City, {
+        foreignKey: 'city_id',
+        onDelete: 'CASCADE',
+      });
     }
   }
   Restaurant.init(

@@ -17,6 +17,7 @@ const serializeRestaurants = (req, res, next) => {
     ratingsCount: restaurant?.dataValues?.ratings_cnt,
     type: restaurant?.category,
     address: restaurant?.address,
+    city: restaurant?.City,
     imageUrl: restaurant?.image_url,
     createdAt: restaurant?.created_at,
     updatedAt: restaurant?.updated_at,
