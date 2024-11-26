@@ -105,7 +105,7 @@ const deleteRating = async (req, res, next) => {
   try {
     const restaurantId = req.params['restaurantId'];
     const ratingId = req.params['ratingId'];
-    await ratingServices.deleteRating(ratingId, constants.ENTITY_TYPE.RESTAURANT, restaurantId, ratingId);
+    await ratingServices.deleteRating(ratingId, constants.ENTITY_TYPE.RESTAURANT, restaurantId);
 
     res.statusCode = 204;
 

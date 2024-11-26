@@ -10,7 +10,7 @@ const validateCartItemSchema = (req, res, next) => {
           version: 'uuidv4',
         })
         .required(),
-      quantity: Joi.number().required(),
+      quantity: Joi.number().required().min(1),
     });
 
     const validateResponse = validateHelper.validateSchemas(schema, req.body);
