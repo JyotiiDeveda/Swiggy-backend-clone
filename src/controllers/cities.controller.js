@@ -22,7 +22,7 @@ const getAll = async (req, res, next) => {
     const roles = await citiesService.getAll();
 
     res.statusCode = 200;
-    res.message = 'Fetched roles successfully';
+    res.message = 'Fetched cities successfully';
     res.data = roles;
 
     next();

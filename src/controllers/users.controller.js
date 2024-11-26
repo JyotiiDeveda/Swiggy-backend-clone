@@ -106,6 +106,7 @@ const placeOrder = async (req, res, next) => {
   try {
     const userId = req.params['id'];
     const currentUser = req.user;
+
     const order = await orderServices.placeOrder(currentUser, userId, req.body);
 
     res.statusCode = 200;
@@ -121,10 +122,10 @@ const placeOrder = async (req, res, next) => {
 
 const getOrder = async (req, res, next) => {
   try {
-    const userId = req.params['userId'];
-    const orderId = req.params['orderId'];
+    const params = req.params;
     const currentUser = req.user;
-    const order = await orderServices.getOrder(currentUser, userId, orderId);
+
+    const order = await orderServices.getOrder(currentUser, params);
 
     res.statusCode = 200;
     res.message = 'Fetched order successfully';
@@ -142,6 +143,7 @@ const getAllOrders = async (req, res, next) => {
     const queryOptions = req.query;
     const userId = req.params['id'];
     const currentUser = req.user;
+
     const orders = await orderServices.getAllOrders(currentUser, userId, queryOptions);
 
     res.statusCode = 200;
@@ -157,10 +159,10 @@ const getAllOrders = async (req, res, next) => {
 
 const deleteOrder = async (req, res, next) => {
   try {
-    const userId = req.params['userId'];
-    const orderId = req.params['orderId'];
+    const params = req.params;
     const currentUser = req.user;
-    await orderServices.deleteOrder(currentUser, userId, orderId);
+
+    await orderServices.deleteOrder(currentUser, params);
 
     res.statusCode = 204;
 
@@ -173,10 +175,11 @@ const deleteOrder = async (req, res, next) => {
 
 const getPendingOrders = async (req, res, next) => {
   try {
-    const { page = 1, limit = 10 } = req.query;
+    const queryOptions = req.query;
     const deliveryPartnerId = req.params['id'];
     const currentUser = req.user;
-    const orders = await orderServices.getPendingOrders(currentUser, deliveryPartnerId, page, limit);
+
+    const orders = await orderServices.getPendingOrders(currentUser, deliveryPartnerId, queryOptions);
 
     res.statusCode = 200;
     res.message = "Fetched delivery partner's pending orders successfully";

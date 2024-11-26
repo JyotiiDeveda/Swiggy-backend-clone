@@ -7,6 +7,7 @@ const constants = require('../constants/constants');
 const create = async (req, res, next) => {
   try {
     const payload = req.body;
+
     const restaurant = await restaurantServices.create(payload);
 
     res.statusCode = 201;
@@ -23,6 +24,7 @@ const create = async (req, res, next) => {
 const get = async (req, res, next) => {
   try {
     const restaurantId = req.params['id'];
+
     const restaurantDetails = await restaurantServices.get(restaurantId);
 
     res.statusCode = 200;
@@ -39,6 +41,7 @@ const get = async (req, res, next) => {
 const getAll = async (req, res, next) => {
   try {
     const queyOptions = req.query;
+
     const restaurants = await restaurantServices.getAll(queyOptions);
 
     res.statusCode = 200;
@@ -56,6 +59,7 @@ const update = async (req, res, next) => {
   try {
     const payload = req.body;
     const restaurantId = req.params['id'];
+
     const updatedRestaurant = await restaurantServices.update(restaurantId, payload);
 
     res.statusCode = 200;
@@ -72,6 +76,7 @@ const update = async (req, res, next) => {
 const remove = async (req, res, next) => {
   try {
     const restaurantId = req.params['id'];
+
     await restaurantServices.remove(restaurantId);
 
     res.statusCode = 204;
@@ -88,6 +93,7 @@ const createRestaurantsRating = async (req, res, next) => {
     const { rating } = req.body;
     const restaurantId = req.params['id'];
     const userId = req.user.userId;
+
     const newRating = await ratingServices.createRestaurantsRating(restaurantId, rating, userId);
 
     res.statusCode = 201;
@@ -105,6 +111,7 @@ const deleteRating = async (req, res, next) => {
   try {
     const restaurantId = req.params['restaurantId'];
     const ratingId = req.params['ratingId'];
+
     await ratingServices.deleteRating(ratingId, constants.ENTITY_TYPE.RESTAURANT, restaurantId);
 
     res.statusCode = 204;
@@ -120,6 +127,7 @@ const createRestaurantsDish = async (req, res, next) => {
   try {
     const payload = req.body;
     const restaurantId = req.params['id'];
+
     const dish = await dishServices.create(restaurantId, payload);
 
     res.statusCode = 201;
@@ -136,9 +144,9 @@ const createRestaurantsDish = async (req, res, next) => {
 // dishes controllers
 const getDish = async (req, res, next) => {
   try {
-    const restaurantId = req.params['restaurantId'];
-    const dishId = req.params['dishId'];
-    const dishDetails = await dishServices.get(restaurantId, dishId);
+    const params = req.params;
+
+    const dishDetails = await dishServices.get(params);
 
     res.statusCode = 200;
     res.message = 'Fetched dish successfully';
@@ -155,6 +163,7 @@ const getAllDishes = async (req, res, next) => {
   try {
     const restaurantId = req.params['restaurantId'];
     const queyOptions = req.query;
+
     const dishes = await dishServices.getAll(restaurantId, queyOptions);
 
     res.statusCode = 200;
@@ -171,9 +180,9 @@ const getAllDishes = async (req, res, next) => {
 const updateDish = async (req, res, next) => {
   try {
     const payload = req.body;
-    const restaurantId = req.params['restaurantId'];
-    const dishId = req.params['dishId'];
-    const updatedDish = await dishServices.update(restaurantId, dishId, payload);
+    const params = req.params;
+
+    const updatedDish = await dishServices.update(params, payload);
 
     res.statusCode = 200;
     res.message = 'Dish updated successfully';
@@ -188,9 +197,9 @@ const updateDish = async (req, res, next) => {
 
 const removeDish = async (req, res, next) => {
   try {
-    const restaurantId = req.params['restaurantId'];
-    const dishId = req.params['dishId'];
-    await dishServices.remove(restaurantId, dishId);
+    const params = req.params;
+
+    await dishServices.remove(params);
 
     res.statusCode = 204;
 

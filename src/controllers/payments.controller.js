@@ -5,6 +5,7 @@ const makePayment = async (req, res, next) => {
   try {
     const currentUser = req.user;
     const payload = req.body;
+
     const payment = await paymentServices.makePayment(currentUser, payload);
 
     res.statusCode = 201;
@@ -18,20 +19,4 @@ const makePayment = async (req, res, next) => {
   }
 };
 
-const getAll = async (req, res, next) => {
-  try {
-    const { userId } = req.user;
-    const allPayments = await paymentServices.getAllPayments(userId, req.query);
-
-    res.statusCode = 200;
-    res.data = allPayments;
-    res.message = 'Fetched all payments successfully';
-
-    next();
-  } catch (err) {
-    console.log('Error in getting payment: ', err);
-    return commonHelper.customErrorHandler(res, err.message, err.statusCode);
-  }
-};
-
-module.exports = { makePayment, getAll };
+module.exports = { makePayment };

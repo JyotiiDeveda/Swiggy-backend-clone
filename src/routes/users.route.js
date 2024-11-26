@@ -98,6 +98,7 @@ router.get(
   '/:id/orders',
   authMiddlewares.authenticateToken,
   authMiddlewares.isAuthorized,
+  orderValidators.validateQueryParams,
   userControllers.getAllOrders,
   orderSerializers.serializeOrders,
   commonHelpers.customResponseHandler
@@ -117,6 +118,7 @@ router.get(
   '/:id/pending-orders',
   authMiddlewares.authenticateToken,
   authMiddlewares.isAuthorizedDeliveryPartner,
+  orderValidators.validateQueryParams,
   userControllers.getPendingOrders,
   orderSerializers.serializeOrders,
   commonHelpers.customResponseHandler

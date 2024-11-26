@@ -3,23 +3,15 @@ const authMiddlewares = require('../middlewares/auth.middleware');
 const paymentsController = require('../controllers/payments.controller');
 const commonHelpers = require('../helpers/common.helper');
 const paymentSerializers = require('../serializers/payments.serializer');
-const commonValidators = require('../validators/common.validator');
+// const commonValidators = require('../validators/common.validator');
+const paymentsValidator = require('../validators/payments.validator');
 
 router.post(
   '/',
   authMiddlewares.authenticateToken,
   authMiddlewares.isAuthorized,
+  paymentsValidator.validatePaymentsSchema,
   paymentsController.makePayment,
-  paymentSerializers.serializePayments,
-  commonHelpers.customResponseHandler
-);
-
-router.get(
-  '/',
-  authMiddlewares.authenticateToken,
-  authMiddlewares.isAuthorized,
-  commonValidators.validateQueryParams,
-  paymentsController.getAll,
   paymentSerializers.serializePayments,
   commonHelpers.customResponseHandler
 );

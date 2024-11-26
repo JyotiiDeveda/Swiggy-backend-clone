@@ -7,6 +7,7 @@ const createDishesRating = async (req, res, next) => {
     const { rating } = req.body;
     const dishId = req.params['id'];
     const userId = req.user.userId;
+
     const newRating = await ratingServices.createDishesRating(dishId, rating, userId);
 
     res.statusCode = 201;
