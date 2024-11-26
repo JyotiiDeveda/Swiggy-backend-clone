@@ -59,6 +59,7 @@ const makePayment = async (currentUser, payload) => {
 
     await mailHelper.sendPaymentStatusMail(email, orderId, newPayment);
     await transactionContext.commit();
+
     return newPayment;
   } catch (err) {
     await transactionContext.rollback();
@@ -67,35 +68,4 @@ const makePayment = async (currentUser, payload) => {
   }
 };
 
-const getAllPayments = async (userId, queryOptions) => {
-  const { page = 1, limit = 10 } = queryOptions;
-  const offset = (page - 1) * limit;
-
-  const options = {
-    where: { user_id: userId },
-    offset: offset,
-    limit: limit,
-  };
-
-  const paymentsData = await Payment.findAndCountAll(options);
-
-  const paymentsCount = paymentsData?.count;
-
-  if (!paymentsCount || paymentsCount === 0) {
-    commonHelpers.customError('Orders not found', 404);
-  }
-
-  const response = {
-    rows: paymentsData?.rows,
-    pagination: {
-      totalRecords: paymentsCount,
-      currentPage: parseInt(page),
-      recordsPerPage: parseInt(limit),
-      noOfPages: Math.ceil(paymentsCount / limit),
-    },
-  };
-
-  return response;
-};
-
-module.exports = { makePayment, getAllPayments };
+module.exports = { makePayment };
