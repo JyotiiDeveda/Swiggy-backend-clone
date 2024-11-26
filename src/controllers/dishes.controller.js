@@ -1,7 +1,6 @@
 const ratingServices = require('../services/ratings.service');
 const commonHelper = require('../helpers/common.helper');
 const constants = require('../constants/constants');
-// const dishServices = require('../services/dishes.service');
 
 const createDishesRating = async (req, res, next) => {
   try {

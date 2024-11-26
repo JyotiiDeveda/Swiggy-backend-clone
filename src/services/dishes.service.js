@@ -8,59 +8,54 @@ const constants = require('../constants/constants');
 
 const create = async (restaurantId, data) => {
   const transactionContext = await sequelize.transaction();
-  try {
-    const { name, description, category, price } = data;
+  const { name, description, category, price } = data;
 
-    // console.log(`${name}, ${restaurantId}, ${description}, ${image}, ${category}, ${price}`);
-    const restaurantExists = await Restaurant.findOne({ where: { id: restaurantId } });
+  // console.log(`${name}, ${restaurantId}, ${description}, ${image}, ${category}, ${price}`);
+  const restaurantExists = await Restaurant.findOne({ where: { id: restaurantId } });
 
-    if (!restaurantExists) {
-      throw commonHelpers.customError('Restaurant does not exist', 404);
-    }
-
-    const lookUpName = name.toLowerCase();
-    const dishExists = await Dish.findOne({
-      where: {
-        restaurant_id: restaurantId,
-        name: sequelize.where(sequelize.fn('LOWER', sequelize.col('name')), lookUpName),
-      },
-    });
-
-    if (dishExists) {
-      throw commonHelpers.customError('Dish already exists', 409);
-    }
-
-    const dishType = category.toLowerCase();
-    if (
-      dishType === constants.DISH_CATEGORY.NON_VEG &&
-      restaurantExists.category === constants.RESTAURANT_CATEGORY.VEG
-    ) {
-      throw commonHelpers.customError('A non-vegetarian dish cannot be added to vegetarian restaurant', 422);
-    }
-
-    // Creating a dish
-    const newDish = await Dish.create(
-      {
-        restaurant_id: restaurantId,
-        name,
-        description,
-        type: dishType,
-        price,
-      },
-      { transaction: transactionContext }
-    );
-
-    if (newDish) await transactionContext.commit();
-    return newDish;
-  } catch (err) {
-    await transactionContext.rollback();
-    console.log('Error in creating dish', err.message);
-    throw commonHelpers.customError(err.message, err.statusCode);
+  if (!restaurantExists) {
+    throw commonHelpers.customError('Restaurant does not exist', 404);
   }
+
+  const lookUpName = name.toLowerCase();
+  const dishExists = await Dish.findOne({
+    where: {
+      restaurant_id: restaurantId,
+      name: sequelize.where(sequelize.fn('LOWER', sequelize.col('name')), lookUpName),
+    },
+  });
+
+  if (dishExists) {
+    throw commonHelpers.customError('Dish already exists', 409);
+  }
+
+  const dishType = category.toLowerCase();
+  if (
+    dishType === constants.DISH_CATEGORY.NON_VEG &&
+    restaurantExists.category === constants.RESTAURANT_CATEGORY.VEG
+  ) {
+    throw commonHelpers.customError('A non-vegetarian dish cannot be added to vegetarian restaurant', 422);
+  }
+
+  // Creating a dish
+  const newDish = await Dish.create(
+    {
+      restaurant_id: restaurantId,
+      name,
+      description,
+      type: dishType,
+      price,
+    },
+    { transaction: transactionContext }
+  );
+
+  if (newDish) await transactionContext.commit();
+  return newDish;
 };
 
-const get = async (restaurantId, dishId) => {
+const get = async payload => {
   // get a dish with its average rating and ratings count
+  const { restaurantId, dishId } = payload;
 
   const options = {
     where: { id: dishId, restaurant_id: restaurantId },
@@ -89,8 +84,6 @@ const get = async (restaurantId, dishId) => {
 };
 
 const getAll = async (restaurantId, queryOptions) => {
-  // sortBy --- price or rating
-  // orderBy --- ascending or descending
   const {
     name = '',
     category = constants.DISH_CATEGORY.VEG,
@@ -100,9 +93,15 @@ const getAll = async (restaurantId, queryOptions) => {
     limit = 10,
   } = queryOptions;
 
+  const restaurantExists = await Restaurant.findByPk(restaurantId);
+
+  if (!restaurantExists) {
+    throw commonHelpers.customError('Restaurant not found', 404);
+  }
+
   const offset = (page - 1) * limit;
 
-  let filter = restaurantId ? { restaurant_id: restaurantId } : {};
+  let filter = { restaurant_id: restaurantId };
 
   if (name) filter.name = { [Op.iLike]: `%${name}%` };
   if (category)
@@ -135,17 +134,13 @@ const getAll = async (restaurantId, queryOptions) => {
     order: [[sortBy, `${orderBy} NULLS LAST`]],
   };
 
-  let dishesData;
-  await Promise.all([Dish.count(options), Dish.findAll({ ...options, offset: offset, limit })]).then(
-    values => (dishesData = values)
-  );
-  console.log('Dishes: ', dishesData);
+  const [dishesCount, dishes] = await Promise.all([
+    Dish.count({ where: filter }), // Returns total count of dishes
+    Dish.findAll({ ...options, offset, limit }), // Fetches paginated dishes
+  ]);
 
-  const dishesCount = dishesData[0]?.length;
-  const dishes = dishesData[1];
-
-  if (!dishesCount || dishesCount === 0) {
-    commonHelpers.customError('Restaurants not found', 404);
+  if (dishesCount === 0) {
+    throw commonHelpers.customError('Restaurants not found', 404);
   }
 
   const response = {
@@ -161,83 +156,60 @@ const getAll = async (restaurantId, queryOptions) => {
   return response;
 };
 
-const update = async (restaurantId, dishId, payload) => {
-  const transactionContext = await sequelize.transaction();
-  try {
-    const { name, description, category, price } = payload;
+const update = async (params, payload) => {
+  const { restaurantId, dishId } = params;
+  const { name, description, category, price } = payload;
 
-    const dish = await Dish.findOne({
-      where: { id: dishId, restaurant_id: restaurantId },
-    });
+  const dish = await Dish.findOne({
+    where: { id: dishId, restaurant_id: restaurantId },
+  });
 
-    if (!dish) {
-      throw commonHelpers.customError('Dish not found', 404);
-    }
-
-    dish.name = name;
-    dish.description = description;
-    dish.type = category;
-    dish.price = price;
-
-    await dish.save({ transaction: transactionContext });
-
-    return dish;
-  } catch (err) {
-    await transactionContext.rollback();
-    console.log('Error in updating dish', err.message);
-    throw commonHelpers.customError(err.message, err.statusCode);
+  if (!dish) {
+    throw commonHelpers.customError('Dish not found', 404);
   }
+
+  dish.name = name;
+  dish.description = description;
+  dish.type = category;
+  dish.price = price;
+
+  await dish.save();
+
+  return dish;
 };
 
-const remove = async (restaurantId, dishId) => {
-  const transactionContext = await sequelize.transaction();
-  try {
-    const dish = await Dish.findOne({
-      where: { id: dishId, restaurant_id: restaurantId },
-    });
+const remove = async params => {
+  const { restaurantId, dishId } = params;
 
-    if (!dish) {
-      throw commonHelpers.customError('Dish not found', 404);
-    }
+  const dish = await Dish.findOne({
+    where: { id: dishId, restaurant_id: restaurantId },
+  });
 
-    await Dish.destroy({
-      where: { id: dishId },
-      transaction: transactionContext,
-    });
-
-    await transactionContext.commit();
-
-    return;
-  } catch (err) {
-    await transactionContext.rollback();
-    console.log('Error in deleting dish', err.message);
-    throw commonHelpers.customError(err.message, err.statusCode);
+  if (!dish) {
+    throw commonHelpers.customError('Dish not found', 404);
   }
+
+  await Dish.destroy({
+    where: { id: dishId },
+  });
+
+  return;
 };
 
 const uploadImage = async (dishId, file) => {
-  const transactionContext = await sequelize.transaction();
-  try {
-    // check if dish exists
-    const dishExists = await Dish.findOne({ where: { id: dishId } });
+  // check if dish exists
+  const dishExists = await Dish.findOne({ where: { id: dishId } });
 
-    if (!dishExists) {
-      throw commonHelpers.customError('Dish not found', 404);
-    }
-
-    const imageUrl = await uploadToS3(file, dishExists.id);
-
-    dishExists.image_url = imageUrl;
-    await dishExists.save({ transaction: transactionContext });
-
-    await transactionContext.commit();
-
-    return { imageUrl };
-  } catch (err) {
-    console.log('Error in uploading image for dish: ', err);
-    await transactionContext.rollback();
-    throw commonHelpers.customError(err.message, err.statusCode);
+  if (!dishExists) {
+    throw commonHelpers.customError('Dish not found', 404);
   }
+
+  const imageUrl = await uploadToS3(file, dishExists.id);
+
+  dishExists.image_url = imageUrl;
+  await dishExists.save();
+
+  return { imageUrl };
 };
 
 module.exports = {
