@@ -11,7 +11,7 @@ const validateRestaurantSchema = (req, res, next) => {
       category: Joi.string()
         .required()
         .valid(...Object.values(constants.RESTAURANT_CATEGORY)),
-      address: Joi.object(),
+      address: Joi.string(),
       city: Joi.string()
         .guid({
           version: 'uuidv4',
@@ -44,7 +44,7 @@ const validateRestaurantUpdateSchema = (req, res, next) => {
       category: Joi.string()
         .required()
         .valid(...Object.values(constants.RESTAURANT_CATEGORY)),
-      address: Joi.object(),
+      address: Joi.string(),
     });
 
     const validateResponse = validateHelper.validateSchemas(schema, req.body);

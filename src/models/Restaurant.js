@@ -50,7 +50,7 @@ module.exports = (sequelize, DataTypes) => {
         defaultValue: 'veg',
       },
       address: {
-        type: DataTypes.JSONB,
+        type: DataTypes.STRING,
         allowNull: false,
       },
       city_id: {
