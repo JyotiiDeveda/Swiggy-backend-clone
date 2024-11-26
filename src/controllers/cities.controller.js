@@ -35,7 +35,6 @@ const getAll = async (req, res, next) => {
 const remove = async (req, res, next) => {
   try {
     const cityId = req.params['id'];
-    console.log('CITY: ', cityId);
 
     await citiesService.remove(cityId);
 
