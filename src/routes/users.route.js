@@ -29,16 +29,6 @@ router.put(
   commonHelpers.customResponseHandler
 );
 
-router.patch(
-  '/:id',
-  authMiddlewares.authenticateToken,
-  authMiddlewares.isAuthorized,
-  userValidators.validateUserAddress,
-  userControllers.addAddress,
-  userSerializers.serializeUsers,
-  commonHelpers.customResponseHandler
-);
-
 // create delivery partner by assigning delvery partner role to customer
 router.put(
   '/:userId/assign-role',

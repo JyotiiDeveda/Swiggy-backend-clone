@@ -35,24 +35,6 @@ const updateProfile = async (req, res, next) => {
   }
 };
 
-const addAddress = async (req, res, next) => {
-  try {
-    const { address } = req.body;
-    const userId = req.params['id'];
-    const currentUser = req.user;
-    const updatedUser = await userServices.addAddress(currentUser, userId, address);
-
-    res.statusCode = 200;
-    res.message = 'Address updated successfully';
-    res.data = updatedUser;
-
-    next();
-  } catch (err) {
-    console.log('Error in updating address: ', err);
-    return commonHelper.customErrorHandler(res, err.message, err.statusCode);
-  }
-};
-
 const assignRole = async (req, res, next) => {
   try {
     const userId = req.params['userId'];
@@ -210,7 +192,6 @@ const getPendingOrders = async (req, res, next) => {
 module.exports = {
   create,
   updateProfile,
-  addAddress,
   assignRole,
   removeAccount,
   get,

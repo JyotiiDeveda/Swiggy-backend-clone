@@ -5,6 +5,9 @@ const constants = require('../constants/constants');
 
 const validateUser = (req, res, next) => {
   try {
+    const isAdmin = req.user?.userRoles?.includes(constants.ROLES.ADMIN);
+    const requestMethod = req.method;
+
     const schema = Joi.object({
       firstName: Joi.string().required().min(3),
       lastName: Joi.string().required().min(3),
@@ -16,9 +19,12 @@ const validateUser = (req, res, next) => {
         }),
       phone: Joi.string().required().min(10).max(15),
       address: Joi.string().min(5),
-      role: Joi.string()
-        .valid(...Object.values(constants.ROLES))
-        .required(),
+      ...(isAdmin &&
+        requestMethod === 'POST' && {
+          role: Joi.string()
+            .valid(...Object.values(constants.ROLES))
+            .required(),
+        }),
     });
 
     const validateResponse = validateHelper.validateSchemas(schema, req.body);
@@ -37,29 +43,4 @@ const validateUser = (req, res, next) => {
   }
 };
 
-// const validateUserAddress = (req, res, next) => {
-//   try {
-//     const schema = Joi.object({
-//       address: Joi.string().required(),
-//     });
-
-//     const validateResponse = validateHelper.validateSchemas(schema, req.body);
-//     const isValid = validateResponse[0];
-//     const value = validateResponse[1];
-
-//     if (!isValid) {
-//       return commonHelper.customErrorHandler(res, value, 422);
-//     }
-
-//     req.body = value;
-//     return next();
-//   } catch (err) {
-//     console.log('Error validating input fields: ', err);
-//     return commonHelper.customErrorHandler(res, err.message, 400);
-//   }
-// };
-
-module.exports = {
-  validateUser,
-  // validateUserAddress
-};
+module.exports = { validateUser };
