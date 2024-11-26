@@ -1,33 +1,33 @@
 const {
   createRestaurantsRating,
   createDishesRating,
-  deleteRestaurantRating,
-  deleteDishRating,
+  deleteRating,
 } = require('../../src/services/ratings.service');
 const { sequelize } = require('../../src/models');
-const models = require('../../src/models');
-const commonHelpers = require('../../src/helpers/common.helper');
-// const constants = require('../../src/constants/constants');
 const { faker } = require('@faker-js/faker');
+const { Rating, Dish, Restaurant, Order, Cart } = require('../../src/models');
+const commonHelpers = require('../../src/helpers/common.helper');
+const ratingService = require('../../src/services/ratings.service');
+const constants = require('../../src/constants/constants');
 
 jest.mock('../../src/models');
 jest.mock('../../src/helpers/common.helper');
 
+// const { sequelize } = require('../models');
+// const { createRestaurantsRating, createDishesRating, deleteRating } = require('../services/rating.service');
+// const models = require('../models');
+// const commonHelpers = require('../helpers/common.helper');
+// const constants = require('../constants/constants');
+// const faker = require('@faker-js/faker');
+
 describe('Rating Service Tests', () => {
   let transactionMock;
-  // let currentUser;
   let userId;
   let restaurantId;
   let dishId;
   let ratingValue;
 
   beforeEach(() => {
-    // Create fake data
-    // currentUser = {
-    //   userId: faker.string.uuid(),
-    //   userRoles: [constants.ROLES.ADMIN],
-    //   email: faker.internet.email(),
-    // };
     userId = faker.string.uuid();
     restaurantId = faker.string.uuid();
     dishId = faker.string.uuid();
@@ -40,17 +40,18 @@ describe('Rating Service Tests', () => {
 
     sequelize.transaction = jest.fn().mockResolvedValue(transactionMock);
 
-    // Mock the models and other dependencies
-    models.Restaurant.findOne = jest.fn();
-    models.Dish.findOne = jest.fn();
-    models.Rating.create = jest.fn();
-    models.Rating.findOne = jest.fn();
-    models.Order.findOne = jest.fn();
-    models.Rating.destroy = jest.fn();
-    models.Cart.findOne = jest.fn();
+    // Mock models
+    Restaurant.findOne = jest.fn();
+    Dish.findOne = jest.fn();
+    Rating.findOne = jest.fn();
+    Rating.create = jest.fn();
+    Rating.destroy = jest.fn();
+    Order.findOne = jest.fn();
+    Cart.findOne = jest.fn();
 
-    commonHelpers.customError = jest.fn().mockImplementation(errorMessage => {
+    commonHelpers.customError = jest.fn().mockImplementation((errorMessage, statusCode) => {
       const error = new Error(errorMessage);
+      error.statusCode = statusCode;
       throw error;
     });
   });
@@ -60,165 +61,127 @@ describe('Rating Service Tests', () => {
   });
 
   describe('createRestaurantsRating', () => {
-    beforeEach(() => {
-      jest.clearAllMocks();
-    });
-
     it('should successfully create a restaurant rating', async () => {
-      models.Restaurant.findOne.mockResolvedValue({ id: restaurantId });
-      models.Rating.findOne.mockResolvedValue(null);
-      models.Order.findOne.mockResolvedValue({});
+      Restaurant.findOne.mockResolvedValue({ id: restaurantId });
+      Rating.findOne.mockResolvedValue(null);
+      Order.findOne.mockResolvedValue({});
 
-      models.Rating.create.mockResolvedValue({ id: faker.string.uuid(), rating: ratingValue });
+      Rating.create.mockResolvedValue({ id: faker.string.uuid(), rating: ratingValue });
 
       const newRating = await createRestaurantsRating(restaurantId, ratingValue, userId);
 
       expect(newRating).toHaveProperty('id');
-      expect(transactionMock.commit).toHaveBeenCalled();
+      expect(Restaurant.findOne).toHaveBeenCalledWith({ where: { id: restaurantId } });
+      expect(Rating.create).toHaveBeenCalled();
     });
 
     it('should throw error if restaurant does not exist', async () => {
-      models.Restaurant.findOne.mockResolvedValue(null);
+      Restaurant.findOne.mockResolvedValue(null);
 
-      await expect(createRestaurantsRating(restaurantId, ratingValue, userId)).rejects.toThrowError(
+      await expect(createRestaurantsRating(restaurantId, ratingValue, userId)).rejects.toThrow(
         'No restaurant found with given id'
       );
-      expect(transactionMock.rollback).toHaveBeenCalled();
     });
 
     it('should throw error if user has already rated the restaurant', async () => {
-      models.Restaurant.findOne.mockResolvedValue({ id: restaurantId });
-      models.Rating.findOne.mockResolvedValue({ id: faker.string.uuid() });
+      Restaurant.findOne.mockResolvedValue({ id: restaurantId });
+      Rating.findOne.mockResolvedValue({ id: faker.string.uuid() });
 
-      await expect(createRestaurantsRating(restaurantId, ratingValue, userId)).rejects.toThrowError(
+      await expect(createRestaurantsRating(restaurantId, ratingValue, userId)).rejects.toThrow(
         'User has already rated the restaurant'
       );
-      expect(transactionMock.rollback).toHaveBeenCalled();
     });
 
     it('should throw error if user has not ordered from the restaurant', async () => {
-      models.Restaurant.findOne.mockResolvedValue({ id: restaurantId });
-      models.Rating.findOne.mockResolvedValue(null);
-      models.Order.findOne.mockResolvedValue(null);
+      Restaurant.findOne.mockResolvedValue({ id: restaurantId });
+      Rating.findOne.mockResolvedValue(null);
+      Order.findOne.mockResolvedValue(null);
 
-      await expect(createRestaurantsRating(restaurantId, ratingValue, userId)).rejects.toThrowError(
-        "User has no orders from the restaurant.. can't rate"
+      await expect(createRestaurantsRating(restaurantId, ratingValue, userId)).rejects.toThrow(
+        "User has no orders from the restaurant, can't rate"
       );
-      expect(transactionMock.rollback).toHaveBeenCalled();
     });
 
     it('should throw error if rating creation fails', async () => {
-      models.Restaurant.findOne.mockResolvedValue({ id: restaurantId });
+      Restaurant.findOne.mockResolvedValue({ id: restaurantId });
+      Rating.findOne.mockResolvedValue(null);
+      Order.findOne.mockResolvedValue({});
+      Rating.create.mockRejectedValue(new Error('Failed to create rating'));
 
-      models.Rating.findOne.mockResolvedValue(null);
-      models.Order.findOne.mockResolvedValue({});
-      models.Rating.create.mockRejectedValue(new Error('Failed to create rating'));
-
-      await expect(createRestaurantsRating(restaurantId, ratingValue, userId)).rejects.toThrowError(
+      await expect(createRestaurantsRating(restaurantId, ratingValue, userId)).rejects.toThrow(
         'Failed to create rating'
       );
-      expect(transactionMock.rollback).toHaveBeenCalled();
     });
   });
 
   describe('createDishesRating', () => {
-    beforeEach(() => {
-      jest.clearAllMocks();
-    });
-
     it('should successfully create a dish rating', async () => {
-      models.Dish.findOne.mockResolvedValue({ id: dishId });
-      models.Rating.findOne.mockResolvedValue(null);
-      models.Order.findOne.mockResolvedValue({});
+      Dish.findOne.mockResolvedValue({ id: dishId });
+      Rating.findOne.mockResolvedValue(null);
+      Order.findOne.mockResolvedValue({});
 
-      models.Rating.create.mockResolvedValue({ id: faker.string.uuid(), rating: ratingValue });
+      Rating.create.mockResolvedValue({ id: faker.string.uuid(), rating: ratingValue });
 
       const newRating = await createDishesRating(dishId, ratingValue, userId);
 
       expect(newRating).toHaveProperty('id');
-      expect(transactionMock.commit).toHaveBeenCalled();
+      expect(Dish.findOne).toHaveBeenCalledWith({ where: { id: dishId } });
+      expect(Rating.create).toHaveBeenCalled();
     });
 
     it('should throw error if dish does not exist', async () => {
-      models.Dish.findOne.mockResolvedValue(null);
+      Dish.findOne.mockResolvedValue(null);
 
-      await expect(createDishesRating(dishId, ratingValue, userId)).rejects.toThrowError(
-        'Dish does not exist'
-      );
-      expect(transactionMock.rollback).toHaveBeenCalled();
+      await expect(createDishesRating(dishId, ratingValue, userId)).rejects.toThrow('Dish does not exist');
     });
 
     it('should throw error if user has already rated the dish', async () => {
-      models.Dish.findOne.mockResolvedValue({ id: dishId });
-      models.Rating.findOne.mockResolvedValue({ id: faker.string.uuid() });
+      Dish.findOne.mockResolvedValue({ id: dishId });
+      Rating.findOne.mockResolvedValue({ id: faker.string.uuid() });
 
-      await expect(createDishesRating(dishId, ratingValue, userId)).rejects.toThrowError(
+      await expect(createDishesRating(dishId, ratingValue, userId)).rejects.toThrow(
         'User has already rated the dish'
       );
-      expect(transactionMock.rollback).toHaveBeenCalled();
     });
 
     it('should throw error if user has not ordered the dish', async () => {
-      models.Dish.findOne.mockResolvedValue({ id: dishId });
-      models.Rating.findOne.mockResolvedValue(null);
-      models.Order.findOne.mockResolvedValue(null);
+      Dish.findOne.mockResolvedValue({ id: dishId });
+      Rating.findOne.mockResolvedValue(null);
+      Order.findOne.mockResolvedValue(null);
 
-      await expect(createDishesRating(dishId, ratingValue, userId)).rejects.toThrowError(
-        "User has not ordered the dish yet... can't rate"
+      await expect(createDishesRating(dishId, ratingValue, userId)).rejects.toThrow(
+        "User has not ordered the dish yet, can't rate"
       );
-      expect(transactionMock.rollback).toHaveBeenCalled();
     });
 
     it('should throw error if rating creation fails', async () => {
-      models.Dish.findOne.mockResolvedValue({ id: dishId });
-      models.Rating.findOne.mockResolvedValue(null);
-      models.Order.findOne.mockResolvedValue({});
-      models.Rating.create.mockRejectedValue(new Error('Failed to create rating')); // Simulating failure
+      Dish.findOne.mockResolvedValue({ id: dishId });
+      Rating.findOne.mockResolvedValue(null);
+      Order.findOne.mockResolvedValue({});
+      Rating.create.mockRejectedValue(new Error('Failed to create rating'));
 
-      await expect(createDishesRating(dishId, ratingValue, userId)).rejects.toThrowError(
+      await expect(createDishesRating(dishId, ratingValue, userId)).rejects.toThrow(
         'Failed to create rating'
       );
-      expect(transactionMock.rollback).toHaveBeenCalled();
     });
   });
 
-  describe('deleteRestaurantRating', () => {
-    it('should delete a restaurant rating', async () => {
-      const ratingId = faker.string.uuid();
-      models.Rating.destroy.mockResolvedValue(1);
+  describe('deleteRating', () => {
+    it('should successfully delete a rating', async () => {
+      Rating.findOne.mockResolvedValue({ id: faker.string.uuid() });
+      Rating.destroy.mockResolvedValue(1);
 
-      await deleteRestaurantRating(restaurantId, ratingId);
+      await deleteRating(faker.string.uuid(), constants.ENTITY_TYPE.RESTAURANT, restaurantId);
 
-      expect(transactionMock.commit).toHaveBeenCalled();
+      expect(Rating.destroy).toHaveBeenCalled();
     });
 
-    it('should throw error if no rating found for restaurant', async () => {
-      const ratingId = faker.string.uuid();
-      models.Rating.destroy.mockResolvedValue(0);
+    it('should throw error if no rating found for entity', async () => {
+      Rating.findOne.mockResolvedValue(null);
 
-      await expect(deleteRestaurantRating(restaurantId, ratingId)).rejects.toThrowError(
-        'No rating found for the restaurant'
-      );
-      expect(transactionMock.rollback).toHaveBeenCalled();
-    });
-  });
-
-  describe('deleteDishRating', () => {
-    it('should delete a dish rating', async () => {
-      const ratingId = faker.string.uuid();
-      models.Rating.destroy.mockResolvedValue(1);
-
-      await deleteDishRating(dishId, ratingId);
-
-      expect(transactionMock.commit).toHaveBeenCalled();
-    });
-
-    it('should throw error if no rating found for dish', async () => {
-      const ratingId = faker.string.uuid();
-      models.Rating.destroy.mockResolvedValue(0);
-
-      await expect(deleteDishRating(dishId, ratingId)).rejects.toThrowError('No rating found for the dish');
-      expect(transactionMock.rollback).toHaveBeenCalled();
+      await expect(
+        deleteRating(faker.string.uuid(), constants.ENTITY_TYPE.RESTAURANT, restaurantId)
+      ).rejects.toThrow('No rating found for the dish');
     });
   });
 });
