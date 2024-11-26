@@ -7,7 +7,6 @@ const { sequelize } = require('../../src/models');
 const { faker } = require('@faker-js/faker');
 const { Rating, Dish, Restaurant, Order, Cart } = require('../../src/models');
 const commonHelpers = require('../../src/helpers/common.helper');
-const ratingService = require('../../src/services/ratings.service');
 const constants = require('../../src/constants/constants');
 
 jest.mock('../../src/models');

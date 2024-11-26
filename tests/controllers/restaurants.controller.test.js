@@ -4,6 +4,8 @@ const ratingServices = require('../../src/services/ratings.service');
 const dishServices = require('../../src/services/dishes.service');
 const commonHelper = require('../../src/helpers/common.helper');
 const restaurantControllers = require('../../src/controllers/restaurants.controller');
+const imagesController = require('../../src/controllers/images.controller');
+const constants = require('../../src/constants/constants');
 
 jest.mock('../../src/services/restaurants.service');
 jest.mock('../../src/services/ratings.service');
@@ -301,13 +303,14 @@ describe('deleteRating Controller', () => {
   });
 
   it('should delete a restaurant rating successfully', async () => {
-    ratingServices.deleteRestaurantRating.mockResolvedValue();
+    ratingServices.deleteRating.mockResolvedValue();
 
     await restaurantControllers.deleteRating(req, res, next);
 
-    expect(ratingServices.deleteRestaurantRating).toHaveBeenCalledWith(
-      req.params.restaurantId,
-      req.params.ratingId
+    expect(ratingServices.deleteRating).toHaveBeenCalledWith(
+      req.params.ratingId,
+      constants.ENTITY_TYPE.RESTAURANT,
+      req.params.restaurantId
     );
     expect(res.statusCode).toBe(204);
     expect(next).toHaveBeenCalledTimes(1);
@@ -317,7 +320,7 @@ describe('deleteRating Controller', () => {
     const errorMessage = 'Failed to delete rating';
     const error = new Error(errorMessage);
     error.statusCode = 400;
-    ratingServices.deleteRestaurantRating.mockRejectedValue(error);
+    ratingServices.deleteRating.mockRejectedValue(error);
 
     await restaurantControllers.deleteRating(req, res, next);
 
@@ -379,7 +382,7 @@ describe('uploadImage Controller', () => {
 
   beforeEach(() => {
     req = {
-      params: { id: faker.string.uuid() }, // Fake restaurant ID
+      body: { entityType: constants.ENTITY_TYPE.RESTAURANT, entityId: faker.string.uuid() },
       file: { buffer: faker.image.avatar() }, // Fake image file
     };
     res = {
@@ -391,15 +394,15 @@ describe('uploadImage Controller', () => {
 
   it('should upload restaurant image successfully', async () => {
     const updatedRestaurant = {
-      id: req.params.id,
+      id: req.body.entityId,
       imageUrl: faker.image.url(),
     };
 
     restaurantServices.uploadImage.mockResolvedValue(updatedRestaurant);
 
-    await restaurantControllers.uploadImage(req, res, next);
+    await imagesController.uploadImage(req, res, next);
 
-    expect(restaurantServices.uploadImage).toHaveBeenCalledWith(req.params.id, req.file);
+    expect(restaurantServices.uploadImage).toHaveBeenCalledWith(req.body.entityId, req.file);
     expect(res.statusCode).toBe(200);
     expect(res.data).toEqual(updatedRestaurant);
     expect(res.message).toBe('Image uploaded successfully');
@@ -412,7 +415,7 @@ describe('uploadImage Controller', () => {
     error.statusCode = 400;
     restaurantServices.uploadImage.mockRejectedValue(error);
 
-    await restaurantControllers.uploadImage(req, res, next);
+    await imagesController.uploadImage(req, res, next);
 
     expect(commonHelper.customErrorHandler).toHaveBeenCalledWith(res, errorMessage, 400);
   });
