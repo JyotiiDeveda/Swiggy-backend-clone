@@ -9,7 +9,7 @@ const ratingSerializers = require('../serializers/ratings.serializer');
 router.post(
   '/:id/ratings',
   authMiddlewares.authenticateToken,
-  authMiddlewares.isAdmin,
+  authMiddlewares.isAuthorized,
   ratingsValidator.validateRatingSchema,
   dishControllers.createDishesRating,
   ratingSerializers.serializeRatings,
