@@ -424,6 +424,28 @@ paths:
           schema:
             type: integer
             example: 10
+        - name: sortBy
+          in: query
+          description: Sort orders by date or order amount
+          schema:
+            type: string
+            enum:
+              - created_at
+              - total_amount
+        - name: orderBy
+          in: query
+          description: Order restaurants in ascending or descending order
+          schema:
+            type: string
+            enum:
+              - ASC
+              - DESC
+        - name: restaurantId
+          in: query
+          description: Get orders of a specific restaurant
+          schema:
+            type: string
+ 
       responses:
         '200':
           description: Fetched all orders successfully
@@ -513,6 +535,11 @@ paths:
           schema:
             type: integer
             example: 10
+        - name: restaurantId
+          in: query
+          description: Get orders of a specific restaurant
+          schema:
+            type: string
       responses:
         '200':
           description: Fetched pending orders successfully

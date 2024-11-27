@@ -51,6 +51,7 @@ paths:
                 email:
                   type: string
                   description: Email address to send the OTP.
+                  example: mukulbkm1512@gmail.com
       responses:
         '200':
           description: OTP sent successfully
@@ -80,9 +81,11 @@ paths:
                 email:
                   type: string
                   description: Email address of the user.
+                  example: mukulbkm1512@gmail.com
                 otp:
                   type: string
                   description: One-Time Password (OTP) for authentication.
+                  example: 123456
       responses:
         '200':
           description: Login successful
