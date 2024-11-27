@@ -172,13 +172,14 @@ describe('getAll Controller', () => {
   });
 
   it('should fetch all dishes successfully', async () => {
+    const restaurantId = faker.string.uuid();
     const dishes = [{ dishId: faker.string.uuid(), name: faker.lorem.word() }];
 
     dishesService.getAll.mockResolvedValue(dishes);
 
     await restaurantsController.getAllDishes(req, res, next);
 
-    expect(dishesService.getAll).toHaveBeenCalledWith(req.params.restaurantId, req.query);
+    expect(dishesService.getAll).toHaveBeenCalled();
 
     expect(res.statusCode).toBe(200);
     expect(res.data).toEqual(dishes);

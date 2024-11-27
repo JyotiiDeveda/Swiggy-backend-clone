@@ -7,7 +7,6 @@ const commonHelpers = require('../helpers/common.helper');
 const constants = require('../constants/constants');
 
 const create = async (restaurantId, data) => {
-  const transactionContext = await sequelize.transaction();
   const { name, description, category, price } = data;
 
   // console.log(`${name}, ${restaurantId}, ${description}, ${image}, ${category}, ${price}`);
@@ -38,18 +37,16 @@ const create = async (restaurantId, data) => {
   }
 
   // Creating a dish
-  const newDish = await Dish.create(
-    {
-      restaurant_id: restaurantId,
-      name,
-      description,
-      type: dishType,
-      price,
-    },
-    { transaction: transactionContext }
-  );
+  const newDish = await Dish.create({
+    restaurant_id: restaurantId,
+    name,
+    description,
+    type: dishType,
+    price,
+  });
 
-  if (newDish) await transactionContext.commit();
+  if (!newDish) commonHelpers.customError('Failed to create dish', 400);
+
   return newDish;
 };
 
@@ -74,6 +71,7 @@ const get = async payload => {
     ],
     group: ['Dish.id'],
   };
+
   const dish = await Dish.findOne(options);
 
   if (!dish) {
@@ -140,7 +138,7 @@ const getAll = async (restaurantId, queryOptions) => {
   ]);
 
   if (dishesCount === 0) {
-    throw commonHelpers.customError('Restaurants not found', 404);
+    throw commonHelpers.customError('No dishes avaliable in the restaurant', 404);
   }
 
   const response = {

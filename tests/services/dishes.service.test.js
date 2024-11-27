@@ -84,7 +84,6 @@ describe('Dish Services', () => {
       expect(Restaurant.findOne).toHaveBeenCalledWith({ where: { id: restaurant.id } });
       expect(Dish.create).toHaveBeenCalled();
       expect(result).toEqual(dish);
-      expect(transactionContext.commit).toHaveBeenCalled();
     });
 
     it('should throw error if restaurant does not exist', async () => {
@@ -198,24 +197,24 @@ describe('Dish Services', () => {
       );
 
       expect(Restaurant.findByPk).toHaveBeenCalledWith(restaurantId);
-      expect(Dish.count).not.toHaveBeenCalled(); // Ensure `Dish.count` was not called
-      expect(Dish.findAll).not.toHaveBeenCalled(); // Ensure `Dish.findAll` was not called
+      expect(Dish.count).not.toHaveBeenCalled();
+      expect(Dish.findAll).not.toHaveBeenCalled();
     });
 
     it('should throw an error if no dishes are found', async () => {
       const mockCount = 0;
 
-      Restaurant.findByPk = jest.fn().mockResolvedValue(restaurant); // Mock restaurant exists
-      Dish.count = jest.fn().mockResolvedValue(mockCount); // No dishes
-      Dish.findAll = jest.fn().mockResolvedValue([]); // Empty dishes array
+      Restaurant.findByPk = jest.fn().mockResolvedValue(restaurant);
+      Dish.count = jest.fn().mockResolvedValue(mockCount);
+      Dish.findAll = jest.fn().mockResolvedValue([]);
 
       await expect(dishService.getAll(restaurantId, queryOptions)).rejects.toThrowError(
-        'Restaurants not found'
+        'No dishes avaliable in the restaurant'
       );
 
       expect(Restaurant.findByPk).toHaveBeenCalledWith(restaurantId);
-      expect(Dish.count).toHaveBeenCalled(); // Ensure `Dish.count` was called
-      expect(Dish.findAll).toHaveBeenCalled(); // Ensure `Dish.findAll` was called
+      expect(Dish.count).toHaveBeenCalled();
+      expect(Dish.findAll).toHaveBeenCalled();
     });
   });
 
