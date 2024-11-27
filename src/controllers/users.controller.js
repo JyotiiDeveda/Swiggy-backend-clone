@@ -72,12 +72,29 @@ const removeAccount = async (req, res, next) => {
 
 const get = async (req, res, next) => {
   try {
-    let userId = req.params?.id ? req.params.id : req.user.userId;
+    let userId = req.params?.id;
 
     const userDetails = await userServices.get(userId);
 
     res.statusCode = 200;
     res.message = 'Fetched user details successfully';
+    res.data = userDetails;
+
+    return next();
+  } catch (err) {
+    console.log('Error in getting the user details: ', err);
+    return commonHelper.customErrorHandler(res, err.message, err.statusCode);
+  }
+};
+
+const getMe = async (req, res, next) => {
+  try {
+    let userId = req.user?.userId;
+
+    const userDetails = await userServices.get(userId);
+
+    res.statusCode = 200;
+    res.message = 'Fetched user profile details successfully';
     res.data = userDetails;
 
     return next();
@@ -199,6 +216,7 @@ module.exports = {
   assignRole,
   removeAccount,
   get,
+  getMe,
   getAll,
   placeOrder,
   getOrder,

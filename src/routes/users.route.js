@@ -50,7 +50,7 @@ router.delete(
 router.get(
   '/me',
   authMiddlewares.authenticateToken,
-  userControllers.get,
+  userControllers.getMe,
   userSerializers.serializeUsers,
   commonHelpers.customResponseHandler
 );
