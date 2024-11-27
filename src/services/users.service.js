@@ -63,96 +63,68 @@ const create = async data => {
 };
 
 const assignRole = async (currentUser, userId, roleId) => {
-  const transactionContext = await sequelize.transaction();
-  try {
-    if (!currentUser?.userRoles.includes(constants.ROLES.ADMIN) && currentUser.userId !== userId) {
-      throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
-    }
-    // a user can signup with customer role only
-    const roleDetails = await Role.findOne({ where: { id: roleId } });
+  const roleDetails = await Role.findOne({ where: { id: roleId } });
 
-    if (!roleDetails) {
-      throw commonHelpers.customError('Role does not exist', 404);
-    }
-
-    const usersRole = {
-      user_id: userId,
-      role_id: roleDetails.id,
-    };
-
-    const userRole = await UserRole.findOrCreate({
-      where: usersRole,
-      transaction: transactionContext,
-    });
-    if (!userRole) {
-      commonHelpers.customError('Failed to assign role', 400);
-    }
-    console.log('Assigned role successfully');
-    await transactionContext.commit();
-    return;
-  } catch (err) {
-    await transactionContext.rollback();
-    console.log('Error while adding delivery partner', err.message);
-    throw commonHelpers.customError(err.message, err.statusCode);
+  if (!roleDetails) {
+    throw commonHelpers.customError('Role does not exist', 404);
   }
+
+  const usersRole = {
+    user_id: userId,
+    role_id: roleDetails.id,
+  };
+
+  const userRole = await UserRole.findOrCreate({
+    where: usersRole,
+  });
+
+  if (!userRole) {
+    commonHelpers.customError('Failed to assign role', 400);
+  }
+  console.log('Assigned role successfully');
+
+  return;
 };
 
 const updateProfile = async (currentUser, userId, payload) => {
-  const transactionContext = await sequelize.transaction();
-  try {
-    if (!currentUser?.userRoles.includes(constants.ROLES.ADMIN) && currentUser.userId !== userId) {
-      throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
-    }
-
-    const userDetails = await User.findByPk(userId);
-    if (!userDetails) {
-      throw commonHelpers.customError('User not found', 404);
-    }
-
-    const userToUpdate = {
-      first_name: payload.firstName,
-      last_name: payload.lastName,
-      email: payload.email,
-      phone: payload.phone,
-      address: payload.address,
-    };
-
-    await userDetails.update(userToUpdate, { transaction: transactionContext });
-
-    await transactionContext.commit();
-    return userDetails;
-  } catch (err) {
-    await transactionContext.rollback();
-    console.log('Error in updating profile', err.message);
-    throw commonHelpers.customError(err.message, err.statusCode);
+  if (currentUser.userId !== userId) {
+    throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
   }
+
+  const userDetails = await User.findByPk(userId);
+  if (!userDetails) {
+    throw commonHelpers.customError('User not found', 404);
+  }
+
+  const userToUpdate = {
+    first_name: payload.firstName,
+    last_name: payload.lastName,
+    email: payload.email,
+    phone: payload.phone,
+    address: payload.address,
+  };
+
+  await userDetails.update(userToUpdate);
+
+  return userDetails;
 };
 
 const removeAccount = async (currentUser, userId) => {
-  const transactionContext = await sequelize.transaction();
-  try {
-    if (!currentUser?.userRoles.includes(constants.ROLES.ADMIN) && currentUser.userId !== userId) {
-      throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
-    }
-
-    const user = await User.findByPk(userId);
-
-    if (!user) {
-      throw commonHelpers.customError('No user found', 404);
-    }
-
-    await User.destroy({
-      where: { id: userId },
-      transaction: transactionContext,
-    });
-
-    await transactionContext.commit();
-    return;
-  } catch (err) {
-    await transactionContext.rollback();
-    console.log('Error in deleting user', err.message);
-    throw commonHelpers.customError(err.message, err.statusCode);
+  if (!currentUser?.userRoles.includes(constants.ROLES.ADMIN) && currentUser.userId !== userId) {
+    throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
   }
+
+  const user = await User.findByPk(userId);
+
+  if (!user) {
+    throw commonHelpers.customError('No user found', 404);
+  }
+
+  await User.destroy({
+    where: { id: userId },
+  });
+
+  return;
 };
 
 const get = async userId => {

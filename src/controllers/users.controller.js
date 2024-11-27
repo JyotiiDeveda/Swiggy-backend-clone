@@ -22,6 +22,7 @@ const updateProfile = async (req, res, next) => {
   try {
     const userId = req.params['id'];
     const payload = req.body;
+
     const updatedUser = await userServices.updateProfile(req.user, userId, payload);
 
     res.statusCode = 200;
