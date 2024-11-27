@@ -236,8 +236,6 @@ const getAllUnassignedOrders = async queryOptions => {
   // to get orders from a particular restaurant
   if (restaurantId) filter.restaurant_id = restaurantId;
 
-  console.log('Filter: ', filter);
-
   const options = {
     where: filter,
     include: {
@@ -298,8 +296,6 @@ const getPendingOrders = async (currentUser, userId, queryOptions) => {
   const filter = { delivery_partner_id: userId, status: constants.ORDER_STATUS.PREPARING };
 
   if (restaurantId) filter.restaurant_id = restaurantId;
-
-  console.log('FILTER: ', filter);
 
   const options = {
     where: filter,

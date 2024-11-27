@@ -20,13 +20,14 @@ paths:
           schema:
             type: integer
             default: 10
-            example: 10
           description: Number of records per page.
         - name: restaurantId
           in: query
-          description: Get orders of a specific restaurant
           schema:
-            type: string
+            type: integer
+            default: 1234
+          description: Get unassigned orders of a specific restaurant
+
       responses:
         '200':
           description: Successfully fetched unassigned orders.

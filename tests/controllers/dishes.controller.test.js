@@ -172,7 +172,6 @@ describe('getAll Controller', () => {
   });
 
   it('should fetch all dishes successfully', async () => {
-    const restaurantId = faker.string.uuid();
     const dishes = [{ dishId: faker.string.uuid(), name: faker.lorem.word() }];
 
     dishesService.getAll.mockResolvedValue(dishes);
