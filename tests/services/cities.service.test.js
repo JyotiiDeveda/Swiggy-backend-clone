@@ -60,30 +60,36 @@ describe('Cities Service', () => {
   });
 
   describe('getAll', () => {
+    const queryOptions = { page: 1, limit: 10 };
+
     it('should successfully return all cities', async () => {
-      const mockCities = [
-        { id: 1, name: 'New York' },
-        { id: 2, name: 'Los Angeles' },
-      ];
+      const mockCities = {
+        count: 2,
+        rows: [
+          { id: 1, name: 'New York' },
+          { id: 2, name: 'Los Angeles' },
+        ],
+      };
 
-      City.findAll.mockResolvedValue(mockCities);
+      City.findAndCountAll.mockResolvedValue(mockCities);
 
-      const result = await citiesService.getAll();
+      const result = await citiesService.getAll(queryOptions);
 
-      expect(City.findAll).toHaveBeenCalled();
-      expect(result).toEqual(mockCities);
+      expect(City.findAndCountAll).toHaveBeenCalled();
+      expect(result?.rows).toHaveLength(2);
     });
 
     it('should throw an error if no cities are found', async () => {
-      City.findAll.mockResolvedValue([]);
+      City.findAndCountAll.mockResolvedValue({ count: 0, rows: [] });
+
       commonHelpers.customError.mockImplementation((message, statusCode) => {
         const error = new Error(message);
         error.statusCode = statusCode;
         throw error;
       });
 
-      await expect(citiesService.getAll()).rejects.toThrow('No cities found');
-      expect(City.findAll).toHaveBeenCalled();
+      await expect(citiesService.getAll(queryOptions)).rejects.toThrow('No cities found');
+      expect(City.findAndCountAll).toHaveBeenCalled();
     });
   });
 

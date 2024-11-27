@@ -72,7 +72,7 @@ describe('Cities Controller', () => {
 
       expect(citiesService.getAll).toHaveBeenCalled();
       expect(res.statusCode).toBe(200);
-      expect(res.message).toBe('Fetched roles successfully');
+      expect(res.message).toBe('Fetched cities successfully');
       expect(res.data).toEqual(mockCities);
       expect(next).toHaveBeenCalled();
     });

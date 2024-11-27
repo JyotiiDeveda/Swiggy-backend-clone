@@ -195,7 +195,7 @@ describe('Cart Services', () => {
       CartDish.findOne.mockResolvedValue(cartDish);
       CartDish.destroy.mockResolvedValue();
 
-      await cartServices.removeItem(userId, cart.id, payload.dish_id);
+      await cartServices.removeItem(userId, { cartId: cart.id, dishId: payload.dish_id });
 
       expect(CartDish.destroy).toHaveBeenCalledWith({
         where: { cart_id: cart.id, dish_id: payload.dish_id },
@@ -206,9 +206,9 @@ describe('Cart Services', () => {
       CartDish.findOne.mockResolvedValue(null);
       CartDish.destroy.mockResolvedValue(0);
 
-      await expect(cartServices.removeItem(userId, cart.id, payload.dish_id)).rejects.toThrowError(
-        'Dish not found in the cart'
-      );
+      await expect(
+        cartServices.removeItem(userId, { cartId: cart.id, dishId: payload.dish_id })
+      ).rejects.toThrowError('Dish not found in the cart');
     });
   });
 
