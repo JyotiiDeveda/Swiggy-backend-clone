@@ -15,23 +15,23 @@ paths:
               properties:
                 name:
                   type: string
+                  example: test restaurant
                 description:
                   type: string
+                  example: test restaurant description
                 category:
                   type: string
                   enum:
                     - veg
                     - non-veg
                     - both
+                  example: veg
                 address:
-                  type: object
-                  properties:
-                    city:
-                      type: string
-                    state:
-                      type: string
-                    pincode:
-                      type: string
+                  type: string
+                  example: street 12, shiv colony
+                cityId:
+                  type: string
+                  example: 1244
       responses:
         '201':
           description: Restaurant created successfully
@@ -43,12 +43,47 @@ paths:
         - Restaurants
       summary: Fetch all restaurants
       parameters:
-        - name: city
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            example: 1
+        - name: limit
+          in: query
+          description: Number of orders per page
+          schema:
+            type: integer
+            example: 10
+        - name: cityId
           in: query
           schema:
             type: string
-            example: 'Metropolis'
+            example: '1234'
           description: Filter by city
+        - name: name
+          in: query
+          schema:
+            type: string
+            example: 'Restaurant name'
+          description: Filter by name
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum:
+              - veg
+              - non-veg
+              - both
+          description: Filter by restaurant category
+        - name: orderBy
+          in: query
+          schema:
+            type: string
+            enum:
+              - ASC
+              - DESC
+            description: Order restaurants by ratings in ascending or descending order
       responses:
         '200':
           description: List of restaurants fetched successfully
@@ -111,14 +146,7 @@ paths:
                     - non-veg
                     - both
                 address:
-                  type: object
-                  properties:
-                    city:
-                      type: string
-                    state:
-                      type: string
-                    pincode:
-                      type: string
+                  type: string
 
       responses:
         '200':
@@ -166,19 +194,54 @@ paths:
           schema:
             type: string
             example: '123'
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            example: 1
+        - name: limit
+          in: query
+          description: Number of orders per page
+          schema:
+            type: integer
+            example: 10
+        - name: name
+          in: query
+          schema:
+            type: string
+            example: 'Dish name'
+          description: Filter by name
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum:
+              - veg
+              - non-veg
+          description: Filter by dish category
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            enum:
+              - price
+              - averageRating
+            description: Sort dishes by ratings or price.
+        - name: orderBy
+          in: query
+          schema:
+            type: string
+            enum:
+              - ASC
+              - DESC
+            description: Order dishes in ascending or descending order
+
       responses:
         '200':
           description: List of dishes
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
         '404':
           description: No dishes found
-          content:
-            application/json:
-              schema:
 
     post:
       tags:

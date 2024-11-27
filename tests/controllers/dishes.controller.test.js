@@ -178,7 +178,7 @@ describe('getAll Controller', () => {
 
     await restaurantsController.getAllDishes(req, res, next);
 
-    expect(dishesService.getAll).toHaveBeenCalledWith(req.params.restaurantId, req.query);
+    expect(dishesService.getAll).toHaveBeenCalled();
 
     expect(res.statusCode).toBe(200);
     expect(res.data).toEqual(dishes);

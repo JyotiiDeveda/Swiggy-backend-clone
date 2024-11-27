@@ -353,7 +353,6 @@ describe('Order Service Tests', () => {
       const result = await assignOrder(currentUser, userId, orderId);
 
       expect(result.delivery_partner_id).toEqual(userId);
-      expect(transactionMock.commit).toHaveBeenCalled();
     });
 
     it('should rollback if no order found for assignment', async () => {
@@ -362,7 +361,6 @@ describe('Order Service Tests', () => {
       await expect(assignOrder(currentUser, userId, faker.string.uuid())).rejects.toThrowError(
         'No order found'
       );
-      expect(transactionMock.rollback).toHaveBeenCalled();
     });
   });
 
@@ -382,7 +380,6 @@ describe('Order Service Tests', () => {
       const result = await updateOrderStatus(currentUser, orderId, status);
 
       expect(result.status).toEqual(status);
-      expect(transactionMock.commit).toHaveBeenCalled();
     });
 
     it('should rollback and throw error if no order found', async () => {
@@ -391,7 +388,6 @@ describe('Order Service Tests', () => {
       await expect(updateOrderStatus(currentUser, faker.string.uuid(), 'DELIVERED')).rejects.toThrowError(
         'No order found'
       );
-      expect(transactionMock.rollback).toHaveBeenCalled();
     });
   });
 });

@@ -6,7 +6,7 @@ const { Restaurant, Dish, Rating, City } = require('../models');
 const constants = require('../constants/constants');
 
 const create = async data => {
-  const { name, description, category, address, city } = data;
+  const { name, description, category, address, cityId } = data;
 
   // Creating a restaurant
   const newRestaurant = await Restaurant.create({
@@ -14,7 +14,7 @@ const create = async data => {
     description,
     category,
     address: address,
-    city_id: city,
+    city_id: cityId,
   });
 
   if (!newRestaurant) throw commonHelpers.customError('Failed to create restaurant', 400);
@@ -61,7 +61,7 @@ const get = async restaurantId => {
 
 const getAll = async queryOptions => {
   const {
-    city = '',
+    cityId = '',
     name = '',
     category = '',
     orderBy = constants.SORT_ORDER.ASC,
@@ -73,7 +73,7 @@ const getAll = async queryOptions => {
 
   let filter = {};
 
-  if (city) filter.city_id = city;
+  if (cityId) filter.city_id = cityId;
 
   if (name) filter.name = { [Op.iLike]: `%${name}%` };
 
@@ -111,7 +111,7 @@ const getAll = async queryOptions => {
     Restaurant.findAll({ ...options, offset, limit }),
   ]);
 
-  if (totalRecords === 0) {
+  if (!restaurants || totalRecords === 0) {
     throw commonHelpers.customError('Restaurants not found', 404);
   }
 

@@ -8,14 +8,14 @@ const validateQueryParams = (req, res, next) => {
     const schema = Joi.object({
       page: Joi.number().positive().max(100).default(1),
       limit: Joi.number().positive().min(1).max(100).default(10),
-      city: Joi.string().optional(),
+      cityId: Joi.string().optional(),
       sortBy: Joi.string()
         .valid(...Object.values(constants.SORT_BY))
         .optional(),
       role: Joi.string().valid('admin', 'delivery-partner', 'customer').optional(),
       orderBy: Joi.string()
         .valid(...Object.values(constants.SORT_ORDER))
-        .optional(),
+        .default(constants.SORT_ORDER.ASC),
       name: Joi.string().optional(),
       category: Joi.string()
         .valid(...Object.values(constants.DISH_CATEGORY))

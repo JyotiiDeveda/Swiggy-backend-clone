@@ -1,0 +1,108 @@
+paths:
+  /cities:
+    post:
+      tags:
+        - Cities
+      summary: Add a new city (Admin Only)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                city:
+                  type: string
+                  description: Name of the city
+                  example: New York
+              required:
+                - city
+      responses:
+        '201':
+          description: City added successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: City added successfully
+                  data:
+                    type: object
+                    description: The created city's details
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '409':
+          description: Conflict - City already exists
+
+    get:
+      tags:
+        - Cities
+      summary: Get a list of all cities
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Fetched cities successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Fetched cities successfully
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          example: 1123
+                        name:
+                          type: string
+                          example: New York
+        '404':
+          description: No cities found
+
+  /cities/{id}:
+    delete:
+      tags:
+        - Cities
+      summary: Delete a city by ID (Admin Only)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The ID of the city to delete
+          example: '1'
+      responses:
+        '204':
+          description: City deleted successfully
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: City not found

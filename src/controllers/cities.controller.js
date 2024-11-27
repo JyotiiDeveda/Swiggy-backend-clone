@@ -19,7 +19,8 @@ const create = async (req, res, next) => {
 
 const getAll = async (req, res, next) => {
   try {
-    const roles = await citiesService.getAll();
+    const queryOptions = req.query;
+    const roles = await citiesService.getAll(queryOptions);
 
     res.statusCode = 200;
     res.message = 'Fetched cities successfully';

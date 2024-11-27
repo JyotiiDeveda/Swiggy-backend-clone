@@ -87,13 +87,14 @@ router.post(
 
 router.get(
   '/:restaurantId/dishes/:dishId',
+  commonValidators.validateQueryParams,
   restaurantsController.getDish,
   dishSerializers.serializeDishes,
   commonHelpers.customResponseHandler
 );
 
 router.get(
-  '/:restaurantId/dishes',
+  '/:id/dishes',
   commonValidators.validateQueryParams,
   restaurantsController.getAllDishes,
   dishSerializers.serializeDishes,

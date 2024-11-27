@@ -9,7 +9,7 @@ const getOrders = async (options, page, limit) => {
   const ordersCount = ordersData?.count;
 
   if (!ordersCount || ordersCount === 0) {
-    commonHelpers.customError('Orders not found', 404);
+    throw commonHelpers.customError('Orders not found', 404);
   }
 
   const response = {

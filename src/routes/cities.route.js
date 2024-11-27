@@ -4,6 +4,7 @@ const authMiddlewares = require('../middlewares/auth.middleware');
 const citiesSerializer = require('../serializers/cities.serializer');
 const citiesValidator = require('../validators/cities.validator');
 const commonHelpers = require('../helpers/common.helper');
+const commonValidators = require('../validators/common.validator');
 
 router.post(
   '/',
@@ -17,6 +18,7 @@ router.post(
 
 router.get(
   '/',
+  commonValidators.validateQueryParams,
   citiesController.getAll,
   citiesSerializer.serializeCities,
   commonHelpers.customResponseHandler

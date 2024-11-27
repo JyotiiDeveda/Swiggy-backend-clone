@@ -161,7 +161,7 @@ const getDish = async (req, res, next) => {
 
 const getAllDishes = async (req, res, next) => {
   try {
-    const restaurantId = req.params['restaurantId'];
+    const restaurantId = req.params['id'];
     const queyOptions = req.query;
 
     const dishes = await dishServices.getAll(restaurantId, queyOptions);
