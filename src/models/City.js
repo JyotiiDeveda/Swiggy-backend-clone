@@ -1,17 +1,14 @@
 'use strict';
 const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-  class Role extends Model {
+  class City extends Model {
     static associate(models) {
-      Role.belongsToMany(models.User, {
-        through: 'UserRole',
-        foreignKey: 'role_id',
-        onDelete: 'CASCADE',
-        as: 'users',
+      City.hasMany(models.Restaurant, {
+        foreignKey: 'city_id',
       });
     }
   }
-  Role.init(
+  City.init(
     {
       name: {
         type: DataTypes.STRING,
@@ -20,11 +17,11 @@ module.exports = (sequelize, DataTypes) => {
     },
     {
       sequelize,
-      modelName: 'Role',
-      tableName: 'roles',
-      paranoid: true,
+      modelName: 'City',
+      tableName: 'cities',
       timestamps: true,
+      paranoid: true,
     }
   );
-  return Role;
+  return City;
 };

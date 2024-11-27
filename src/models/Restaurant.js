@@ -23,6 +23,11 @@ module.exports = (sequelize, DataTypes) => {
         onDelete: 'SET NULL',
         as: 'orders',
       });
+
+      Restaurant.belongsTo(models.City, {
+        foreignKey: 'city_id',
+        onDelete: 'CASCADE',
+      });
     }
   }
   Restaurant.init(
@@ -45,8 +50,17 @@ module.exports = (sequelize, DataTypes) => {
         defaultValue: 'veg',
       },
       address: {
-        type: DataTypes.JSONB,
+        type: DataTypes.STRING,
         allowNull: false,
+      },
+      city_id: {
+        type: DataTypes.UUID,
+        references: {
+          model: 'city',
+          key: 'id',
+        },
+        allowNull: false,
+        onDelete: 'CASCADE',
       },
     },
     {

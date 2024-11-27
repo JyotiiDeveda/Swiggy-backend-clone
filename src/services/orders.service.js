@@ -20,7 +20,7 @@ const placeOrder = async (currentUser, userId, payload) => {
       where: { cart_id: cartId },
       include: {
         model: User,
-        where: { user_id: userId },
+        where: { id: userId },
       },
     });
 

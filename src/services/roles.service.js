@@ -1,9 +1,16 @@
 const { Role, sequelize } = require('../models');
+const { Op } = require('sequelize');
 const commonHelpers = require('../helpers/common.helper');
 
 const create = async role => {
   const transactionContext = await sequelize.transaction();
   try {
+    const roleExists = await Role.findOne({ where: { name: { [Op.iLike]: role } } });
+
+    if (roleExists) {
+      throw commonHelpers.customError('Role already exists', 409);
+    }
+
     const newRole = await Role.create(
       {
         name: role,
@@ -17,7 +24,7 @@ const create = async role => {
     return newRole;
   } catch (err) {
     await transactionContext.rollback();
-    console.log('Error in creating role', err.message);
+    console.log('Error in creating role', err);
     throw commonHelpers.customError(err.message, err.statusCode);
   }
 };
@@ -50,7 +57,7 @@ const remove = async roleId => {
     return;
   } catch (err) {
     await transactionContext.rollback();
-    console.log('Error in deleting role', err.message);
+    console.log('Error in deleting role', err);
     throw commonHelpers.customError(err.message, err.statusCode);
   }
 };

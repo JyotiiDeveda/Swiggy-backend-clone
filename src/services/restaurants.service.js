@@ -2,13 +2,13 @@ const { sequelize } = require('../models');
 const { Op } = require('sequelize');
 const { uploadToS3 } = require('../helpers/image-upload.helper');
 const commonHelpers = require('../helpers/common.helper');
-const { Restaurant, Dish, Rating } = require('../models');
+const { Restaurant, Dish, Rating, City } = require('../models');
 const constants = require('../constants/constants');
 
 const create = async data => {
   const transactionContext = await sequelize.transaction();
   try {
-    const { name, description, category, address } = data;
+    const { name, description, category, address, city } = data;
 
     // Creating a restaurant
     const newRestaurant = await Restaurant.create(
@@ -17,6 +17,7 @@ const create = async data => {
         description,
         category,
         address: address,
+        city_id: city,
       },
       { transaction: transactionContext }
     );
@@ -58,6 +59,7 @@ const get = async restaurantId => {
     ],
     group: ['Restaurant.id', 'dishes.id'],
   };
+
   const restaurant = await Restaurant.findOne(options);
 
   if (!restaurant) {
@@ -71,7 +73,7 @@ const getAll = async queryOptions => {
   const {
     city = '',
     name = '',
-    category = constants.RESTAURANT_CATEGORY.VEG,
+    category = '',
     orderBy = constants.SORT_ORDER.ASC,
     page = 1,
     limit = 10,
@@ -81,7 +83,7 @@ const getAll = async queryOptions => {
 
   let filter = {};
 
-  if (city) filter['address.city'] = { [Op.iLike]: city };
+  if (city) filter.city_id = city;
 
   if (name) filter.name = { [Op.iLike]: `%${name}%` };
 
@@ -109,8 +111,12 @@ const getAll = async queryOptions => {
         attributes: [],
         duplicating: false,
       },
+      {
+        model: City,
+        attributes: ['id', 'name'],
+      },
     ],
-    group: ['Restaurant.id'],
+    group: ['Restaurant.id', 'City.id'],
     order: [[constants.SORT_BY.AVERAGE_RATING, `${orderBy} NULLS LAST`]],
   };
 
@@ -121,7 +127,7 @@ const getAll = async queryOptions => {
   ]).then(values => {
     restaurantsData = values;
   });
-  console.log('Restaurant: ', restaurantsData);
+  // console.log('Restaurant: ', restaurantsData);
 
   const restaurantsCount = restaurantsData[0]?.length;
   const restaurants = restaurantsData[1];

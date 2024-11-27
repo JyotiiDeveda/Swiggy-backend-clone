@@ -2,15 +2,16 @@ const Joi = require('joi');
 const commonHelper = require('../helpers/common.helper');
 const validateHelper = require('../helpers/validate.helper');
 
-const validateCartItemSchema = (req, res, next) => {
+const validateCity = (req, res, next) => {
   try {
     const schema = Joi.object({
-      dishId: Joi.string()
-        .guid({
-          version: 'uuidv4',
-        })
-        .required(),
-      quantity: Joi.number().required().min(1),
+      city: Joi.string()
+        .pattern(/^(?:[A-Z][a-z]*)(?: [A-Z][a-z]*)*$/, 'capitalized words')
+        .required()
+        .messages({
+          'string.empty': 'City name is required.',
+          'string.pattern.name': 'City name must have the first letter of each word capitalized.',
+        }),
     });
 
     const validateResponse = validateHelper.validateSchemas(schema, req.body);
@@ -30,6 +31,4 @@ const validateCartItemSchema = (req, res, next) => {
   }
 };
 
-module.exports = {
-  validateCartItemSchema,
-};
+module.exports = { validateCity };

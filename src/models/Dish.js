@@ -36,16 +36,16 @@ module.exports = (sequelize, DataTypes) => {
         onDelete: 'CASCADE',
       },
       name: {
-        type: DataTypes.UUID,
+        type: DataTypes.STRING,
         allowNull: false,
       },
       description: {
-        type: DataTypes.UUID,
+        type: DataTypes.STRING,
         allowNull: false,
       },
       image_url: {
-        type: DataTypes.UUID,
-        allowNull: true,
+        type: DataTypes.STRING,
+        allowNull: false,
       },
       type: {
         type: DataTypes.ENUM,

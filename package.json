@@ -7,7 +7,16 @@
     "test": "jest --watchAll --coverage",
     "lint": "npx eslint ./",
     "format": "npx prettier --write \"./**/*.{js,jsx}\"",
-    "dev": "nodemon src/index.js"
+    "dev": "nodemon src/index.js",
+    "migration:generate": "npx sequelize-cli migration:generate --name",
+    "migration:create": "npx sequelize-cli migration:create --name",
+    "migration:up": "npx sequelize-cli db:migrate",
+    "migration:down": "npx sequelize-cli db:migrate:undo --name",
+    "migration:down:all": "npx sequelize-cli db:migrate:undo:all",
+    "seed:generate": "npx sequelize-cli seed:generate --name",
+    "seed:all": "npx sequelize-cli db:seed:all",
+    "seed:undo": "npx sequelize-cli db:seed:undo --seed",
+    "seed:undo:all": "npx sequelize-cli db:seed:undo:all"
   },
   "author": "Jyoti Deveda",
   "license": "ISC",
