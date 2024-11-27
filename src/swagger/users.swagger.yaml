@@ -341,40 +341,6 @@ paths:
         '422':
           description: Validation error
 
-  /users/{userId}/assign-role:
-    put:
-      summary: Assign role to a user
-      tags:
-        - Roles
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          description: User ID
-          schema:
-            type: string
-      requestBody:
-        description: User role details
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                roleId:
-                  type: string
-                  required: true
-                  example: '123'
-      responses:
-        '201':
-          description: Role assigned successfully
-        '403':
-          description: Unauthorized
-        '404':
-          description: Role or User not found
-
   /users/{id}/orders:
     post:
       summary: Place an order
