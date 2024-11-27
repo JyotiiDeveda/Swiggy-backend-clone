@@ -109,37 +109,21 @@ const updateProfile = async (currentUser, userId, payload) => {
       throw commonHelpers.customError('User not found', 404);
     }
 
-    await userDetails.update(payload, { transaction: transactionContext });
+    const userToUpdate = {
+      first_name: payload.firstName,
+      last_name: payload.lastName,
+      email: payload.email,
+      phone: payload.phone,
+      address: payload.address,
+    };
 
+    await userDetails.update(userToUpdate, { transaction: transactionContext });
+
+    await transactionContext.commit();
     return userDetails;
   } catch (err) {
     await transactionContext.rollback();
     console.log('Error in updating profile', err.message);
-    throw commonHelpers.customError(err.message, err.statusCode);
-  }
-};
-
-const addAddress = async (currentUser, userId, address) => {
-  const transactionContext = await sequelize.transaction();
-  try {
-    if (!currentUser?.userRoles.includes(constants.ROLES.ADMIN) && currentUser.userId !== userId) {
-      throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
-    }
-
-    const user = await User.findByPk(userId);
-
-    if (!user) {
-      throw commonHelpers.customError('No user found', 404);
-    }
-
-    user.address = address;
-    await user.save({ transaction: transactionContext });
-
-    await transactionContext.commit();
-    return user;
-  } catch (err) {
-    await transactionContext.rollback();
-    console.log('Error while updating address', err.message);
     throw commonHelpers.customError(err.message, err.statusCode);
   }
 };
@@ -228,4 +212,4 @@ const getAll = async queryOptions => {
   return response;
 };
 
-module.exports = { create, assignRole, updateProfile, addAddress, removeAccount, get, getAll };
+module.exports = { create, assignRole, updateProfile, removeAccount, get, getAll };

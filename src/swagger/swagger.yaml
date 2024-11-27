@@ -21,6 +21,8 @@ tags:
     description: Order management and status tracking
   - name: Payments
     description: Payment processing and transactions
+  - name: Images
+    description: Image uploading routes
 paths:
   $ref:
     - ./auth.swagger.yaml

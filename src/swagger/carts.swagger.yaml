@@ -14,13 +14,11 @@ paths:
             type: string
           description: ID of the cart.
       responses:
-        200:
+        '200':
           description: Fetched cart dishes successfully.
-          content:
-            application/json:
-        404:
+        '404':
           description: Cart not found.
-        400:
+        '400':
           description: Cart is empty.
 
     delete:
@@ -37,9 +35,9 @@ paths:
             type: string
           description: ID of the cart to empty.
       responses:
-        204:
+        '204':
           description: Cart emptied successfully.
-        404:
+        '404':
           description: No active cart found.
 
   /carts:
@@ -93,7 +91,7 @@ paths:
             type: string
           description: ID of the dish to remove.
       responses:
-        204:
+        '204':
           description: Dish removed successfully.
-        404:
+        '404':
           description: Dish not found in the cart.
