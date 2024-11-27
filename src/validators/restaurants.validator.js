@@ -12,7 +12,7 @@ const validateRestaurantSchema = (req, res, next) => {
         .required()
         .valid(...Object.values(constants.RESTAURANT_CATEGORY)),
       address: Joi.string(),
-      city: Joi.string()
+      cityId: Joi.string()
         .guid({
           version: 'uuidv4',
         })
