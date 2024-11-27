@@ -1,11 +1,4 @@
-const {
-  create,
-  assignRole,
-  addAddress,
-  removeAccount,
-  get,
-  getAll,
-} = require('../../src/services/users.service');
+const { create, assignRole, removeAccount, get, getAll } = require('../../src/services/users.service');
 const { sequelize } = require('../../src/models');
 const { User, UserRole, Role } = require('../../src/models');
 const commonHelpers = require('../../src/helpers/common.helper');
@@ -21,7 +14,6 @@ describe('User Service Tests', () => {
   let userId;
   let newUser;
   let roleId;
-  let address;
 
   beforeEach(() => {
     // Create fake data
@@ -36,10 +28,11 @@ describe('User Service Tests', () => {
       last_name: faker.person.lastName(),
       email: faker.internet.email(),
       phone: faker.phone.number(),
+      address: faker.location.streetAddress(),
+
       save: jest.fn().mockResolvedValue(true),
     };
     roleId = faker.string.uuid();
-    address = faker.location.streetAddress();
 
     transactionMock = {
       commit: jest.fn(),
@@ -85,7 +78,6 @@ describe('User Service Tests', () => {
 
       expect(createdUser).toHaveProperty('id');
       expect(User.findOne).toHaveBeenCalled();
-      expect(transactionMock.commit).toHaveBeenCalled();
     });
 
     it('should throw error if user already exists', async () => {
@@ -104,7 +96,6 @@ describe('User Service Tests', () => {
       const restoredUser = await create(newUser);
 
       expect(restoredUser).toHaveProperty('id');
-      expect(transactionMock.commit).toHaveBeenCalled();
     });
   });
 
@@ -114,43 +105,12 @@ describe('User Service Tests', () => {
       UserRole.findOrCreate.mockResolvedValue([{}, true]);
 
       await assignRole(currentUser, userId, roleId);
-
-      expect(transactionMock.commit).toHaveBeenCalled();
-    });
-
-    it('should throw error if user is not authorized to assign role', async () => {
-      currentUser.userRoles = [constants.ROLES.CUSTOMER]; // Not an admin
-
-      await expect(assignRole(currentUser, userId, roleId)).rejects.toThrowError(
-        'Given user is not authorized for this endpoint'
-      );
-      expect(transactionMock.rollback).toHaveBeenCalled();
     });
 
     it('should throw error if role does not exist', async () => {
       Role.findOne.mockResolvedValue(null);
 
       await expect(assignRole(currentUser, userId, roleId)).rejects.toThrowError('Role does not exist');
-      expect(transactionMock.rollback).toHaveBeenCalled();
-    });
-  });
-
-  describe('addAddress', () => {
-    it('should successfully add address to user', async () => {
-      User.findByPk.mockResolvedValue(newUser);
-      newUser.address = address;
-
-      const updatedUser = await addAddress(currentUser, userId, address);
-
-      expect(updatedUser).toHaveProperty('address', address);
-      expect(transactionMock.commit).toHaveBeenCalled();
-    });
-
-    it('should throw error if user not found', async () => {
-      User.findByPk.mockResolvedValue(null);
-
-      await expect(addAddress(currentUser, userId, address)).rejects.toThrowError('No user found');
-      expect(transactionMock.rollback).toHaveBeenCalled();
     });
   });
 
@@ -160,8 +120,6 @@ describe('User Service Tests', () => {
       User.destroy.mockResolvedValue(1);
 
       await removeAccount(currentUser, userId);
-
-      expect(transactionMock.commit).toHaveBeenCalled();
     });
 
     it('should throw error if user not found', async () => {
@@ -169,7 +127,6 @@ describe('User Service Tests', () => {
       User.destroy.mockResolvedValue(0); // No user found
 
       await expect(removeAccount(currentUser, userId)).rejects.toThrowError('No user found');
-      expect(transactionMock.rollback).toHaveBeenCalled();
     });
   });
 

@@ -1,4 +1,4 @@
-const { makePayment, getAllPayments } = require('../../src/services/payments.service');
+const { makePayment } = require('../../src/services/payments.service');
 const { sequelize } = require('../../src/models');
 const models = require('../../src/models');
 const mailHelper = require('../../src/helpers/mail.helper');
@@ -15,7 +15,6 @@ jest.mock('../../src/helpers/payments.helper');
 describe('Payments Service Tests', () => {
   let transactionMock;
   let currentUser;
-  let userId;
   let payload;
   let orderId;
   // let email;
@@ -26,7 +25,6 @@ describe('Payments Service Tests', () => {
       userId: faker.string.uuid(),
       email: faker.internet.email(),
     };
-    userId = faker.string.uuid();
     orderId = faker.string.uuid();
     // email = faker.internet.email();
     payload = { orderId, type: 'CREDIT_CARD' };
@@ -109,38 +107,6 @@ describe('Payments Service Tests', () => {
 
       await expect(makePayment(currentUser, payload)).rejects.toThrowError('Error in payment');
       expect(transactionMock.rollback).toHaveBeenCalled();
-    });
-  });
-
-  describe('getAllPayments', () => {
-    beforeEach(() => {
-      jest.clearAllMocks();
-    });
-
-    it('should return all payments for the given user', async () => {
-      const mockPayments = [{ id: 1, order_id: orderId, total_amount: 100 }];
-      models.Payment.findAll.mockResolvedValue(mockPayments);
-
-      const page = 1;
-      const limit = 10;
-
-      const result = await getAllPayments(userId, page, limit);
-
-      expect(result).toEqual(mockPayments);
-      expect(models.Payment.findAll).toHaveBeenCalledWith({
-        where: { user_id: userId },
-        offset: (page - 1) * limit,
-        limit: page * limit,
-      });
-    });
-
-    it('should throw error if no payments are found', async () => {
-      models.Payment.findAll.mockResolvedValue([]);
-
-      const page = 1;
-      const limit = 10;
-
-      await expect(getAllPayments(userId, page, limit)).rejects.toThrow('No payments found for the user');
     });
   });
 });

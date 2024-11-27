@@ -6,30 +6,20 @@ const { Restaurant, Dish, Rating, City } = require('../models');
 const constants = require('../constants/constants');
 
 const create = async data => {
-  const transactionContext = await sequelize.transaction();
-  try {
-    const { name, description, category, address, city } = data;
+  const { name, description, category, address, city } = data;
 
-    // Creating a restaurant
-    const newRestaurant = await Restaurant.create(
-      {
-        name,
-        description,
-        category,
-        address: address,
-        city_id: city,
-      },
-      { transaction: transactionContext }
-    );
+  // Creating a restaurant
+  const newRestaurant = await Restaurant.create({
+    name,
+    description,
+    category,
+    address: address,
+    city_id: city,
+  });
 
-    if (newRestaurant) await transactionContext.commit();
+  if (!newRestaurant) throw commonHelpers.customError('Failed to create restaurant', 400);
 
-    return newRestaurant;
-  } catch (err) {
-    console.log('Error in creating restaurant: ', err);
-    await transactionContext.rollback();
-    throw commonHelpers.customError(err.message, err.statusCode);
-  }
+  return newRestaurant;
 };
 
 const get = async restaurantId => {
@@ -92,10 +82,6 @@ const getAll = async queryOptions => {
       [Op.iLike]: category,
     });
 
-  // console.log(
-  //   `city: ${city} name: ${name} category: ${category} orderBy: ${orderBy} page: ${page} limit: ${limit}`
-  // );
-
   const options = {
     where: filter,
     attributes: {
@@ -120,29 +106,22 @@ const getAll = async queryOptions => {
     order: [[constants.SORT_BY.AVERAGE_RATING, `${orderBy} NULLS LAST`]],
   };
 
-  let restaurantsData;
-  await Promise.all([
-    Restaurant.count(options),
-    Restaurant.findAll({ ...options, offset: offset, limit }),
-  ]).then(values => {
-    restaurantsData = values;
-  });
-  // console.log('Restaurant: ', restaurantsData);
+  const [totalRecords, restaurants] = await Promise.all([
+    Restaurant.count({ where: filter }),
+    Restaurant.findAll({ ...options, offset, limit }),
+  ]);
 
-  const restaurantsCount = restaurantsData[0]?.length;
-  const restaurants = restaurantsData[1];
-
-  if (!restaurantsCount || restaurantsCount === 0) {
-    commonHelpers.customError('Restaurants not found', 404);
+  if (totalRecords === 0) {
+    throw commonHelpers.customError('Restaurants not found', 404);
   }
 
   const response = {
     rows: restaurants,
     pagination: {
-      totalRecords: restaurantsCount,
+      totalRecords,
       currentPage: parseInt(page),
       recordsPerPage: parseInt(limit),
-      noOfPages: Math.ceil(restaurantsCount / limit),
+      noOfPages: Math.ceil(totalRecords / limit),
     },
   };
 
@@ -150,78 +129,52 @@ const getAll = async queryOptions => {
 };
 
 const update = async (restaurantId, payload) => {
-  const transactionContext = await sequelize.transaction();
-  try {
-    const { name, description, category, address } = payload;
+  const { name, description, category, address } = payload;
 
-    const restaurant = await Restaurant.findByPk(restaurantId);
+  const restaurant = await Restaurant.findByPk(restaurantId);
 
-    if (!restaurant) {
-      throw commonHelpers.customError('Restaurant not found', 404);
-    }
-
-    restaurant.name = name;
-    restaurant.description = description;
-    restaurant.category = category;
-    restaurant.address = address;
-
-    await restaurant.save({ transaction: transactionContext });
-
-    await transactionContext.commit();
-    return restaurant;
-  } catch (err) {
-    await transactionContext.rollback();
-    console.log('Error in updating restaurant', err.message);
-    throw commonHelpers.customError(err.message, err.statusCode);
+  if (!restaurant) {
+    throw commonHelpers.customError('Restaurant not found', 404);
   }
+
+  restaurant.name = name;
+  restaurant.description = description;
+  restaurant.category = category;
+  restaurant.address = address;
+
+  await restaurant.save();
+
+  return restaurant;
 };
 
 const remove = async restaurantId => {
-  const transactionContext = await sequelize.transaction();
-  try {
-    const restaurant = await Restaurant.findByPk(restaurantId);
+  const restaurant = await Restaurant.findByPk(restaurantId);
 
-    if (!restaurant) {
-      throw commonHelpers.customError('Restaurant not found', 404);
-    }
-
-    await Restaurant.destroy({
-      where: { id: restaurantId },
-      transaction: transactionContext,
-    });
-
-    await transactionContext.commit();
-    return;
-  } catch (err) {
-    await transactionContext.rollback();
-    console.log('Error in deleting restaurant', err.message);
-    throw commonHelpers.customError(err.message, err.statusCode);
+  if (!restaurant) {
+    throw commonHelpers.customError('Restaurant not found', 404);
   }
+
+  await Restaurant.destroy({
+    where: { id: restaurantId },
+  });
+
+  return;
 };
 
 const uploadImage = async (restaurantId, file) => {
-  const transactionContext = await sequelize.transaction();
-  try {
-    // check if restaurant exists
-    const restaurantExists = await Restaurant.findOne({ where: { id: restaurantId } });
+  // check if restaurant exists
+  const restaurantExists = await Restaurant.findOne({ where: { id: restaurantId } });
 
-    if (!restaurantExists) {
-      throw commonHelpers.customError('Restaurant not found', 404);
-    }
-
-    const imageUrl = await uploadToS3(file, restaurantExists.id);
-
-    restaurantExists.image_url = imageUrl;
-    await restaurantExists.save({ transaction: transactionContext });
-
-    await transactionContext.commit();
-
-    return { imageUrl };
-  } catch (err) {
-    console.log('Error in uploading image for dish: ', err);
-    await transactionContext.rollback();
-    throw commonHelpers.customError(err.message, err.statusCode);
+  if (!restaurantExists) {
+    throw commonHelpers.customError('Restaurant not found', 404);
   }
+
+  const imageUrl = await uploadToS3(file, restaurantExists.id);
+
+  restaurantExists.image_url = imageUrl;
+  await restaurantExists.save();
+
+  return { imageUrl };
 };
 
 module.exports = {

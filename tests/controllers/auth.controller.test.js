@@ -6,6 +6,7 @@ const { redisClient } = require('../../src/config/redis');
 
 jest.mock('../../src/services/auth.service');
 jest.mock('../../src/helpers/common.helper');
+
 jest.mock('redis', () => {
   const mRedisClient = {
     connect: jest.fn().mockResolvedValue(),

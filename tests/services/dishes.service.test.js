@@ -52,6 +52,7 @@ describe('Dish Services', () => {
     Cart.findOne = jest.fn();
     CartDish.findOne = jest.fn();
     Restaurant.findOne = jest.fn();
+    Restaurant.findByPk = jest.fn();
     Order.create = jest.fn();
     Cart.save = jest.fn();
     Dish.save = jest.fn();
@@ -109,7 +110,7 @@ describe('Dish Services', () => {
       payload.category = constants.DISH_CATEGORY.NON_VEG;
 
       await expect(dishService.create(restaurantId, payload)).rejects.toThrowError(
-        'A non-vegeterian dish cannot be added to vegeterian restaurant'
+        'A non-vegetarian dish cannot be added to vegetarian restaurant'
       );
     });
   });
@@ -121,7 +122,7 @@ describe('Dish Services', () => {
     it('should successfully get a dish with rating', async () => {
       Dish.findOne.mockResolvedValue(dish);
 
-      const result = await dishService.get(restaurantId, dish.id);
+      const result = await dishService.get({ restaurantId, dishId: dish.id });
 
       expect(Dish.findOne).toHaveBeenCalledWith(
         expect.objectContaining({ where: { restaurant_id: restaurantId, id: dish.id } })
@@ -137,55 +138,132 @@ describe('Dish Services', () => {
   });
 
   describe('getAll', () => {
-    it('should successfully get all dishes based on filters', async () => {
-      const queryOptions = {
-        name: 'pizza',
+    let restaurant, dish, restaurantId, queryOptions;
+
+    beforeEach(() => {
+      restaurantId = 1;
+      restaurant = { id: restaurantId, name: 'Test Restaurant' };
+      dish = {
+        id: 1,
+        name: 'Dhokle',
+        type: 'veg',
+        price: 10.0,
+        averageRating: 4.5,
+        ratingsCount: 20,
+      };
+      queryOptions = {
+        name: 'dhokle',
         category: 'veg',
         sortBy: 'price',
-        orderBy: '1',
+        orderBy: 'ASC',
         page: 1,
         limit: 10,
       };
+
+      jest.clearAllMocks();
+    });
+
+    it('should successfully get all dishes based on filters', async () => {
       const dishes = [dish];
-      Dish.findAll.mockResolvedValue(dishes);
+      const mockCount = 1;
+
+      // Mock Restaurant and Dish models
+      Restaurant.findByPk = jest.fn().mockResolvedValue(restaurant);
+      Dish.count = jest.fn().mockResolvedValue(mockCount);
+      Dish.findAll = jest.fn().mockResolvedValue(dishes);
 
       const result = await dishService.getAll(restaurantId, queryOptions);
 
+      expect(Restaurant.findByPk).toHaveBeenCalledWith(restaurantId);
+      expect(Dish.count).toHaveBeenCalled();
       expect(Dish.findAll).toHaveBeenCalled();
-      expect(result).toEqual(dishes);
+
+      // Verify the response structure
+      expect(result).toEqual({
+        rows: dishes,
+        pagination: {
+          totalRecords: mockCount,
+          currentPage: queryOptions.page,
+          recordsPerPage: queryOptions.limit,
+          noOfPages: Math.ceil(mockCount / queryOptions.limit),
+        },
+      });
     });
 
-    it('should throw error if no dishes found', async () => {
-      const queryOptions = {
-        name: 'pizza',
-        category: 'veg',
-        sortBy: 'price',
-        orderBy: '1',
-        page: 1,
-        limit: 10,
-      };
-      Dish.findAll.mockResolvedValue(null);
+    it('should throw an error if restaurant is not found', async () => {
+      Restaurant.findByPk = jest.fn().mockResolvedValue(null); // Mock restaurant not found
 
-      await expect(dishService.getAll(restaurantId, queryOptions)).rejects.toThrowError('No dishes found');
+      await expect(dishService.getAll(restaurantId, queryOptions)).rejects.toThrowError(
+        'Restaurant not found'
+      );
+
+      expect(Restaurant.findByPk).toHaveBeenCalledWith(restaurantId);
+      expect(Dish.count).not.toHaveBeenCalled(); // Ensure `Dish.count` was not called
+      expect(Dish.findAll).not.toHaveBeenCalled(); // Ensure `Dish.findAll` was not called
+    });
+
+    it('should throw an error if no dishes are found', async () => {
+      const mockCount = 0;
+
+      Restaurant.findByPk = jest.fn().mockResolvedValue(restaurant); // Mock restaurant exists
+      Dish.count = jest.fn().mockResolvedValue(mockCount); // No dishes
+      Dish.findAll = jest.fn().mockResolvedValue([]); // Empty dishes array
+
+      await expect(dishService.getAll(restaurantId, queryOptions)).rejects.toThrowError(
+        'Restaurants not found'
+      );
+
+      expect(Restaurant.findByPk).toHaveBeenCalledWith(restaurantId);
+      expect(Dish.count).toHaveBeenCalled(); // Ensure `Dish.count` was called
+      expect(Dish.findAll).toHaveBeenCalled(); // Ensure `Dish.findAll` was called
     });
   });
 
   describe('update', () => {
-    it('should successfully update a dish', async () => {
-      // const updatedDish = { ...dish, ...payload };
-      Dish.findOne.mockResolvedValue(dish);
+    let params, payload, dish;
 
-      // const result = await dishService.update(restaurantId, dish.id, payload);
-
-      // expect(Dish.save).toHaveBeenCalled();
-
-      expect(transactionContext.commit).toHaveBeenCalled();
+    beforeEach(() => {
+      params = { restaurantId: 1, dishId: 101 };
+      payload = { name: 'Updated Dish', description: 'Updated Description', category: 'VEG', price: 15.99 };
+      dish = {
+        id: 101,
+        restaurant_id: 1,
+        name: 'Original Dish',
+        description: 'Original Description',
+        type: 'NON-VEG',
+        price: 10.99,
+        save: jest.fn().mockResolvedValue(), // Mock `save` method
+      };
+      jest.clearAllMocks();
     });
 
-    it('should throw error if dish not found', async () => {
-      Dish.findOne.mockResolvedValue(null);
+    it('should successfully update a dish', async () => {
+      Dish.findOne = jest.fn().mockResolvedValue(dish);
 
-      await expect(dishService.update(restaurantId, dish.id, payload)).rejects.toThrowError('Dish not found');
+      const result = await dishService.update(params, payload);
+
+      expect(Dish.findOne).toHaveBeenCalledWith({
+        where: { id: params.dishId, restaurant_id: params.restaurantId },
+      });
+
+      expect(dish.name).toEqual(payload.name);
+      expect(dish.description).toEqual(payload.description);
+      expect(dish.type).toEqual(payload.category);
+      expect(dish.price).toEqual(payload.price);
+
+      expect(dish.save).toHaveBeenCalled();
+      expect(result).toEqual(dish);
+    });
+
+    it('should throw an error if the dish is not found', async () => {
+      Dish.findOne = jest.fn().mockResolvedValue(null);
+
+      await expect(dishService.update(params, payload)).rejects.toThrowError('Dish not found');
+
+      expect(Dish.findOne).toHaveBeenCalledWith({
+        where: { id: params.dishId, restaurant_id: params.restaurantId },
+      });
+      expect(dish.save).not.toHaveBeenCalled();
     });
   });
 
@@ -194,13 +272,11 @@ describe('Dish Services', () => {
       Dish.findOne.mockResolvedValue(dish);
       Dish.destroy.mockResolvedValue(1);
 
-      await dishService.remove(restaurantId, dish.id);
+      await dishService.remove({ restaurantId, dishId: dish.id });
 
       expect(Dish.destroy).toHaveBeenCalledWith({
         where: { id: dish.id },
-        transaction: transactionContext,
       });
-      expect(transactionContext.commit).toHaveBeenCalled();
     });
 
     it('should throw error if no dish found', async () => {
@@ -211,29 +287,41 @@ describe('Dish Services', () => {
     });
   });
 
-  describe('uplaodImage', () => {
-    it('should successfully upload an image for a dish', async () => {
-      const file = { buffer: Buffer.from('image data') };
-      const imageUrl = 'https://example.com/image.jpg';
+  describe('uploadImage', () => {
+    let dish, file, imageUrl;
 
-      Dish.findOne.mockResolvedValue(dish);
-      uploadToS3.mockResolvedValue(imageUrl);
-      Dish.save.mockResolvedValue(dish);
+    beforeEach(() => {
+      dish = {
+        id: 101,
+        image_url: null,
+        save: jest.fn().mockResolvedValue(), // Mock the `save` method
+      };
+      file = { buffer: Buffer.from('image data') };
+      imageUrl = 'https://example.com/image.jpg';
 
-      const result = await dishService.uplaodImage(restaurantId, dish.id, file);
-
-      expect(Dish.findOne).toHaveBeenCalledWith({ where: { id: dish.id, restaurant_id: restaurantId } });
-      expect(uploadToS3).toHaveBeenCalledWith(file, dish.id);
-      expect(result.image_url).toEqual(imageUrl);
-      expect(transactionContext.commit).toHaveBeenCalled();
+      jest.clearAllMocks(); // Clear mocks before each test
     });
 
-    it('should throw error if dish not found', async () => {
-      Dish.findOne.mockResolvedValue(null);
+    it('should successfully upload an image for a dish', async () => {
+      Dish.findOne = jest.fn().mockResolvedValue(dish);
+      uploadToS3.mockResolvedValue(imageUrl);
 
-      await expect(dishService.uplaodImage(dish.id, { buffer: Buffer.from('image') })).rejects.toThrowError(
-        'Dish not found'
-      );
+      const result = await dishService.uploadImage(dish.id, file);
+
+      expect(Dish.findOne).toHaveBeenCalledWith({ where: { id: dish.id } });
+      expect(uploadToS3).toHaveBeenCalledWith(file, dish.id);
+      expect(dish.save).toHaveBeenCalled();
+      expect(result.imageUrl).toEqual(imageUrl);
+    });
+
+    it('should throw an error if the dish is not found', async () => {
+      Dish.findOne = jest.fn().mockResolvedValue(null); // Dish not found
+
+      await expect(dishService.uploadImage(dish.id, file)).rejects.toThrowError('Dish not found');
+
+      expect(Dish.findOne).toHaveBeenCalledWith({ where: { id: dish.id } });
+      expect(uploadToS3).not.toHaveBeenCalled();
+      expect(dish.save).not.toHaveBeenCalled();
     });
   });
 });

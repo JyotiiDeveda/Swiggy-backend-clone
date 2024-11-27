@@ -1,5 +1,5 @@
 const commonHelpers = require('../helpers/common.helper');
-const { User, Order, Cart, Dish, Restaurant } = require('../models');
+const { User, Role, Order, Cart, Dish, Restaurant } = require('../models');
 const { sequelize } = require('../models');
 const constants = require('../constants/constants');
 const mailHelper = require('../helpers/mail.helper');
@@ -9,18 +9,24 @@ const placeOrder = async (currentUser, userId, payload) => {
   const transactionContext = await sequelize.transaction();
   try {
     // check if user can access the endpoint
-    if (!currentUser?.userRoles.includes(constants.ROLES.ADMIN) && currentUser.userId !== userId) {
+    if (currentUser.userId !== userId) {
       throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
     }
 
     const { cartId } = payload;
 
+    const cartExists = await Cart.findOne({ where: { id: cartId, status: constants.CART_STATUS.ACTIVE } });
+
+    if (!cartExists) {
+      throw commonHelpers.customError('Cart not found', 404);
+    }
+
     // check if order is already placed
     const orderDetails = await Order.findOne({
       where: { cart_id: cartId },
       include: {
-        model: User,
-        where: { id: userId },
+        model: Cart,
+        where: { user_id: userId },
       },
     });
 
@@ -28,27 +34,10 @@ const placeOrder = async (currentUser, userId, payload) => {
       throw commonHelpers.customError('Order already placed', 409);
     }
 
-    const cartDishDetails = await Cart.findOne({
-      where: { id: cartId, user_id: userId, status: constants.CART_STATUS.ACTIVE },
-      include: {
-        model: Dish,
-        as: 'dishes',
-        attributes: ['restaurant_id', 'id', 'price'],
-        through: {
-          attributes: ['dish_id', 'quantity', 'price'],
-        },
-      },
-      attributes: { exclude: ['created_at', 'updated_at', 'deleted_at'] },
-    });
-
-    if (!cartDishDetails) {
-      throw commonHelpers.customError('Cart not found', 404);
-    }
-
-    const dishes = cartDishDetails.dishes;
+    const dishes = await cartExists.getDishes();
 
     // check if cart is not empty
-    if (!dishes || dishes.length === 0) {
+    if (!dishes || dishes?.length === 0) {
       throw commonHelpers.customError('Cart is empty', 400);
     }
 
@@ -65,9 +54,10 @@ const placeOrder = async (currentUser, userId, payload) => {
     const gst = orderCharges * (constants.GST_RATE / 100);
 
     const totalCost = orderCharges + deliveryCharges + gst;
-    console.log(
-      `Order charges: ${orderCharges} deliver charges: ${deliveryCharges} gst: ${gst} total cost: ${totalCost}`
-    );
+
+    // console.log(
+    //   `Order charges: ${orderCharges} deliver charges: ${deliveryCharges} gst: ${gst} total cost: ${totalCost}`
+    // );
 
     const order = await Order.create(
       {
@@ -86,8 +76,8 @@ const placeOrder = async (currentUser, userId, payload) => {
     }
 
     // lock the cart if ordered placed
-    cartDishDetails.status = constants.ORDER_STATUS.LOCKED;
-    await cartDishDetails.save({ transaction: transactionContext });
+    cartExists.status = constants.CART_STATUS.LOCKED;
+    await cartExists.save({ transaction: transactionContext });
 
     // send mail
     await mailHelper.sendOrderPlacedMail(currentUser.email, order);
@@ -96,12 +86,14 @@ const placeOrder = async (currentUser, userId, payload) => {
     return order;
   } catch (err) {
     await transactionContext.rollback();
-    console.log('Error in placing order', err);
+    console.log('Error in placing order: ', err);
     throw commonHelpers.customError(err.message, err.statusCode);
   }
 };
 
-const getOrder = async (currentUser, userId, orderId) => {
+const getOrder = async (currentUser, params) => {
+  const { userId, orderId } = params;
+
   // check if user has the access
   if (!currentUser?.userRoles.includes(constants.ROLES.ADMIN) && currentUser.userId !== userId) {
     throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
@@ -140,14 +132,19 @@ const getAllOrders = async (currentUser, userId, queryOptions) => {
   if (!currentUser?.userRoles.includes(constants.ROLES.ADMIN) && currentUser.userId !== userId) {
     throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
   }
-  const { page = 1, limit = 10 } = queryOptions;
+  const { page, limit, sortBy, orderBy, status, restaurantId = '' } = queryOptions;
 
   const offset = (page - 1) * limit;
 
+  const filter = {};
+  if (status) filter.status = status;
+  if (restaurantId) filter.restaurant_id = restaurantId;
+
   const options = {
+    where: filter,
+    distinct: true,
     attributes: {
       include: [[sequelize.col('Restaurant.name'), constants.ENTITY_TYPE.RESTAURANT]],
-      exclude: ['created_at', 'deleted_at', 'updated_at'],
     },
 
     include: [
@@ -163,20 +160,26 @@ const getAllOrders = async (currentUser, userId, queryOptions) => {
         duplicating: false,
       },
     ],
+
     offset: offset,
     limit: limit,
+    order: [[sortBy, `${orderBy} NULLS LAST`]],
   };
 
   const response = await ordersHelper.getOrders(options, page, limit);
 
+  console.log('ORDERS: ', response);
+
   return response;
 };
 
-const deleteOrder = async (currentUser, userId, orderId) => {
+const deleteOrder = async (currentUser, params) => {
   const transactionContext = await sequelize.transaction();
   try {
+    const { userId, orderId } = params;
+
     // check if user has the access
-    if (!currentUser?.userRoles.includes(constants.ROLES.ADMIN) && currentUser.userId !== userId) {
+    if (currentUser.userId !== userId) {
       throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
     }
 
@@ -222,14 +225,23 @@ const deleteOrder = async (currentUser, userId, orderId) => {
   }
 };
 
-const getAllUnassignedOrders = async (page, limit) => {
+const getAllUnassignedOrders = async queryOptions => {
+  const { page, limit, restaurantId = '', sortBy, orderBy } = queryOptions;
   const offset = (page - 1) * limit;
 
+  const filter = { status: constants.ORDER_STATUS.PREPARING, delivery_partner_id: null };
+
+  // to get orders from a particular restaurant
+  if (restaurantId) filter.restaurant_id = restaurantId;
+
+  console.log('Filter: ', filter);
+
   const options = {
-    where: { status: constants.ORDER_STATUS.PREPARING, delivery_partner_id: null },
+    where: filter,
     include: {
       model: Restaurant,
     },
+    order: [[sortBy, `${orderBy} NULLS LAST`]],
     offset: offset,
     limit: limit,
   };
@@ -249,11 +261,15 @@ const assignOrder = async (currentUser, userId, orderId) => {
 
     const order = await Order.findOne({ where: { id: orderId, status: constants.ORDER_STATUS.PREPARING } });
 
+    console.log('Orderssss: ', order);
     if (!order) {
       throw commonHelpers.customError('No order found', 404);
     }
 
-    const deliveryPartner = await User.findOne({ where: { id: userId } });
+    const deliveryPartner = await User.findOne({
+      where: { id: userId },
+      include: { model: Role, as: 'roles', where: { name: 'Delivery Partner' } },
+    });
 
     if (!deliveryPartner) {
       throw commonHelpers.customError('Delivery partner not found', 404);
@@ -279,15 +295,22 @@ const assignOrder = async (currentUser, userId, orderId) => {
   }
 };
 
-const getPendingOrders = async (currentUser, userId, page, limit) => {
+const getPendingOrders = async (currentUser, userId, queryOptions) => {
   if (!currentUser?.userRoles.includes(constants.ROLES.ADMIN) && currentUser.userId !== userId) {
     throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
   }
 
+  const { page, limit, restaurantId = '' } = queryOptions;
+
   const offset = (page - 1) * limit;
+  const filter = { delivery_partner_id: userId, status: constants.ORDER_STATUS.PREPARING };
+
+  if (restaurantId) filter.restaurant_id = restaurantId;
+
+  console.log('FILTER: ', filter);
 
   const options = {
-    where: { delivery_partner_id: userId, status: constants.ORDER_STATUS.PREPARING },
+    where: filter,
     offset: offset,
     limit: limit,
   };
@@ -302,11 +325,9 @@ const updateOrderStatus = async (deliveryPartner, orderId, status) => {
   try {
     const filter = { id: orderId };
 
-    // if delivery partner is not admin he can update the status of orders assigned to them only
-    if (!deliveryPartner.userRoles.includes(constants.ROLES.ADMIN))
-      filter.delivery_partner_id = deliveryPartner.userId;
+    filter.delivery_partner_id = deliveryPartner.userId;
 
-    const order = await Order.findOne({ id: orderId, status: constants.ORDER_STATUS.PREPARING });
+    const order = await Order.findOne({ where: filter });
 
     if (!order) {
       throw commonHelpers.customError('No order found', 404);

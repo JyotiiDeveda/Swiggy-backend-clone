@@ -8,53 +8,6 @@ jest.mock('../../src/services/users.service');
 jest.mock('../../src/services/orders.service');
 jest.mock('../../src/helpers/common.helper');
 
-describe('addAddress Controller', () => {
-  let req;
-  let res;
-  let next;
-
-  beforeEach(() => {
-    req = {
-      body: { address: faker.location.streetAddress() },
-      params: { id: faker.string.uuid() },
-      user: { userId: faker.string.uuid() },
-    };
-    res = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn(),
-    };
-    next = jest.fn();
-  });
-
-  it('should add address successfully', async () => {
-    const updatedUser = {
-      id: req.params.id,
-      address: req.body.address,
-    };
-
-    userServices.addAddress.mockResolvedValue(updatedUser);
-
-    await userControllers.addAddress(req, res, next);
-
-    expect(userServices.addAddress).toHaveBeenCalledWith(req.user, req.params.id, req.body.address);
-    expect(res.statusCode).toBe(200);
-    expect(res.data).toEqual(updatedUser);
-    expect(res.message).toBe('Address updated successfully');
-    expect(next).toHaveBeenCalledTimes(1);
-  });
-
-  it('should handle error when adding address fails', async () => {
-    const errorMessage = 'Failed to add address';
-    const error = new Error(errorMessage);
-    error.statusCode = 400;
-    userServices.addAddress.mockRejectedValue(error);
-
-    await userControllers.addAddress(req, res, next);
-
-    expect(commonHelper.customErrorHandler).toHaveBeenCalledWith(res, errorMessage, 400);
-  });
-});
-
 describe('addDeliveryPartner Controller', () => {
   let req;
   let res;
@@ -303,7 +256,7 @@ describe('getOrder Controller', () => {
 
     await userControllers.getOrder(req, res, next);
 
-    expect(orderServices.getOrder).toHaveBeenCalledWith(req.user, req.params.userId, req.params.orderId);
+    expect(orderServices.getOrder).toHaveBeenCalledWith(req.user, req.params);
     expect(res.statusCode).toBe(200);
     expect(res.data).toEqual(order);
     expect(res.message).toBe('Fetched order successfully');

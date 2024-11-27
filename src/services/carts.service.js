@@ -113,55 +113,37 @@ const addItem = async (userId, payload) => {
   }
 };
 
-const removeItem = async (userId, cartId, dishId) => {
-  const transactionContext = await sequelize.transaction();
-  try {
-    const cartDish = await CartDish.findOne({ where: { dish_id: dishId, cart_id: cartId } });
+const removeItem = async (userId, payload) => {
+  const { cartId, dishId } = payload;
+  const cartDish = await CartDish.findOne({ where: { dish_id: dishId, cart_id: cartId } });
 
-    if (!cartDish) {
-      throw commonHelpers.customError('Dish not found in the cart', 404);
-    }
-
-    await CartDish.destroy({
-      where: { cart_id: cartId, dish_id: dishId },
-      transaction: transactionContext,
-    });
-
-    await transactionContext.commit();
-    return;
-  } catch (err) {
-    await transactionContext.rollback();
-    console.log('Error in removing dish from cart', err.message);
-    throw commonHelpers.customError(err.message, err.statusCode);
+  if (!cartDish) {
+    throw commonHelpers.customError('Dish not found in the cart', 404);
   }
+
+  await CartDish.destroy({
+    where: { cart_id: cartId, dish_id: dishId },
+  });
+  return;
 };
 
 const emptyCart = async (userId, cartId) => {
-  const transactionContext = await sequelize.transaction();
-  try {
-    const activeCartExists = await Cart.findOne({
-      where: { id: cartId, user_id: userId, status: constants.CART_STATUS.ACTIVE },
-    });
+  const activeCartExists = await Cart.findOne({
+    where: { id: cartId, user_id: userId, status: constants.CART_STATUS.ACTIVE },
+  });
 
-    if (!activeCartExists) {
-      throw commonHelpers.customError('No active cart exists', 404);
-    }
-
-    const deletedCount = await CartDish.destroy({
-      where: { cart_id: cartId },
-      transaction: transactionContext,
-    });
-
-    if (deletedCount === 0) {
-      throw commonHelpers.customError('No dishes found in the cart', 404);
-    }
-    await transactionContext.commit();
-    return;
-  } catch (err) {
-    await transactionContext.rollback();
-    console.log('Error while emptying cart', err);
-    throw commonHelpers.customError(err.message, err.statusCode);
+  if (!activeCartExists) {
+    throw commonHelpers.customError('No active cart exists', 404);
   }
+
+  const deletedCount = await CartDish.destroy({
+    where: { cart_id: cartId },
+  });
+
+  if (deletedCount === 0) {
+    throw commonHelpers.customError('No dishes found in the cart', 404);
+  }
+  return;
 };
 
 module.exports = {

@@ -10,8 +10,11 @@ const serializeOrders = (req, res, next) => {
 
   const orders = rows.map(order => ({
     id: order.id,
-    restaurant: order?.dataValues?.restaurant || order?.Restaurant?.name,
-    orderDate: order?.created_at,
+    restaurant: {
+      id: order?.restaurant_id,
+      name: order?.dataValues?.restaurant || order?.Restaurant?.name,
+    },
+    orderDate: new Date(order?.created_at).toLocaleDateString('en-CA'),
     deliveryCharges: order?.delivery_charges,
     orderCharges: order?.order_charges,
     gst: order?.gst,

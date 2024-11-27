@@ -18,7 +18,7 @@ const validateUser = (req, res, next) => {
           tlds: { allow: ['com', 'co', 'net'] },
         }),
       phone: Joi.string().required().min(10).max(15),
-      address: Joi.string().min(5),
+      address: Joi.string().min(5).required(),
       ...(isAdmin &&
         requestMethod === 'POST' && {
           role: Joi.string()

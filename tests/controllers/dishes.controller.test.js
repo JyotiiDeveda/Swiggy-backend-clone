@@ -3,7 +3,9 @@ const ratingServices = require('../../src/services/ratings.service');
 const commonHelper = require('../../src/helpers/common.helper');
 const dishesController = require('../../src/controllers/dishes.controller');
 const restaurantsController = require('../../src/controllers/restaurants.controller');
+const imagesController = require('../../src/controllers/images.controller');
 const dishesService = require('../../src/services/dishes.service');
+const constants = require('../../src/constants/constants');
 
 jest.mock('../../src/services/ratings.service');
 jest.mock('../../src/helpers/common.helper');
@@ -71,7 +73,7 @@ describe('deleteRating Controller', () => {
   beforeEach(() => {
     req = {
       user: { userId: faker.string.uuid() }, // Generate a fake userId
-      params: { dishId: faker.string.uuid(), ratingId: faker.string.uuid() }, // Fake dishId and ratingId
+      params: { dishId: faker.string.uuid(), ratingId: faker.string.uuid() },
     };
     res = {
       status: jest.fn().mockReturnThis(),
@@ -82,11 +84,15 @@ describe('deleteRating Controller', () => {
   });
 
   it('should delete a rating successfully', async () => {
-    ratingServices.deleteDishRating.mockResolvedValue();
+    ratingServices.deleteRating.mockResolvedValue();
 
     await dishesController.deleteRating(req, res, next);
 
-    expect(ratingServices.deleteDishRating).toHaveBeenCalledWith(req.params.dishId, req.params.ratingId);
+    expect(ratingServices.deleteRating).toHaveBeenCalledWith(
+      req.params.ratingId,
+      constants.ENTITY_TYPE.DISH,
+      req.params.dishId
+    );
 
     expect(res.statusCode).toBe(204);
     expect(next).toHaveBeenCalledTimes(1);
@@ -96,7 +102,7 @@ describe('deleteRating Controller', () => {
     const errorMessage = 'Failed to delete rating';
     const error = new Error(errorMessage);
     error.statusCode = 400;
-    ratingServices.deleteDishRating.mockRejectedValue(error);
+    ratingServices.deleteRating.mockRejectedValue(error);
 
     await dishesController.deleteRating(req, res);
 
@@ -128,7 +134,7 @@ describe('get Controller', () => {
 
     await restaurantsController.getDish(req, res, next);
 
-    expect(dishesService.get).toHaveBeenCalledWith(req.params.restaurantId, req.params.dishId);
+    expect(dishesService.get).toHaveBeenCalledWith(req.params);
 
     expect(res.statusCode).toBe(200);
     expect(res.data).toEqual(dishDetails);
@@ -218,7 +224,7 @@ describe('update Controller', () => {
 
     await restaurantsController.updateDish(req, res, next);
 
-    expect(dishesService.update).toHaveBeenCalledWith(req.params.restaurantId, req.params.dishId, req.body);
+    expect(dishesService.update).toHaveBeenCalledWith(req.params, req.body);
   });
 
   it('should handle error when updating dish fails', async () => {
@@ -255,7 +261,7 @@ describe('remove Controller', () => {
 
     await restaurantsController.removeDish(req, res, next);
 
-    expect(dishesService.remove).toHaveBeenCalledWith(req.params.restaurantId, req.params.dishId);
+    expect(dishesService.remove).toHaveBeenCalledWith(req.params);
 
     expect(res.statusCode).toBe(204);
     expect(next).toHaveBeenCalledTimes(1);
@@ -279,7 +285,9 @@ describe('uploadImage Controller', () => {
   let next;
 
   beforeEach(() => {
+    const dishId = faker.string.uuid();
     req = {
+      body: { entityType: 'dish', entityId: dishId },
       params: { restaurantId: faker.string.uuid(), dishId: faker.string.uuid() },
       file: { path: faker.system.filePath() },
     };
@@ -291,17 +299,13 @@ describe('uploadImage Controller', () => {
   });
 
   it('should upload an image successfully', async () => {
-    const updatedDish = { dishId: req.params.id, image: req.file.path };
+    const updatedDish = { imageUrl: req.file.path };
 
-    dishesService.uplaodImage.mockResolvedValue(updatedDish);
+    dishesService.uploadImage.mockResolvedValue(updatedDish);
 
-    await restaurantsController.uplaodDishImage(req, res, next);
+    await imagesController.uploadImage(req, res, next);
 
-    expect(dishesService.uplaodImage).toHaveBeenCalledWith(
-      req.params.restaurantId,
-      req.params.dishId,
-      req.file
-    );
+    expect(dishesService.uploadImage).toHaveBeenCalled();
 
     expect(res.statusCode).toBe(200);
     expect(res.data).toEqual(updatedDish);
@@ -313,9 +317,9 @@ describe('uploadImage Controller', () => {
     const errorMessage = 'Failed to upload image';
     const error = new Error(errorMessage);
     error.statusCode = 400;
-    dishesService.uplaodImage.mockRejectedValue(error);
+    dishesService.uploadImage.mockRejectedValue(error);
 
-    await restaurantsController.uplaodDishImage(req, res);
+    await imagesController.uploadImage(req, res, next);
 
     expect(commonHelper.customErrorHandler).toHaveBeenCalledWith(res, errorMessage, 400);
   });

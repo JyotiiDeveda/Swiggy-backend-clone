@@ -1,13 +1,13 @@
 const ratingServices = require('../services/ratings.service');
 const commonHelper = require('../helpers/common.helper');
 const constants = require('../constants/constants');
-// const dishServices = require('../services/dishes.service');
 
 const createDishesRating = async (req, res, next) => {
   try {
     const { rating } = req.body;
     const dishId = req.params['id'];
     const userId = req.user.userId;
+
     const newRating = await ratingServices.createDishesRating(dishId, rating, userId);
 
     res.statusCode = 201;

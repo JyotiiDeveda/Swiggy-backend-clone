@@ -22,7 +22,7 @@ const getAll = async (req, res, next) => {
     const roles = await citiesService.getAll();
 
     res.statusCode = 200;
-    res.message = 'Fetched roles successfully';
+    res.message = 'Fetched cities successfully';
     res.data = roles;
 
     next();
@@ -35,7 +35,6 @@ const getAll = async (req, res, next) => {
 const remove = async (req, res, next) => {
   try {
     const cityId = req.params['id'];
-    console.log('CITY: ', cityId);
 
     await citiesService.remove(cityId);
 
