@@ -80,7 +80,7 @@ const placeOrder = async (currentUser, userId, payload) => {
     await cartExists.save({ transaction: transactionContext });
 
     // send mail
-    await mailHelper.sendOrderPlacedMail(currentUser.email, order);
+    mailHelper.sendOrderPlacedMail(currentUser.email, order);
     await transactionContext.commit();
 
     return order;
@@ -132,6 +132,8 @@ const getAllOrders = async (currentUser, userId, queryOptions) => {
   if (!currentUser?.userRoles.includes(constants.ROLES.ADMIN) && currentUser.userId !== userId) {
     throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
   }
+
+  // sort by - date or amount
   const { page, limit, sortBy, orderBy, status, restaurantId = '' } = queryOptions;
 
   const offset = (page - 1) * limit;
@@ -168,7 +170,7 @@ const getAllOrders = async (currentUser, userId, queryOptions) => {
 
   const response = await ordersHelper.getOrders(options, page, limit);
 
-  console.log('ORDERS: ', response);
+  // console.log('ORDERS: ', response);
 
   return response;
 };
@@ -252,47 +254,37 @@ const getAllUnassignedOrders = async queryOptions => {
 };
 
 const assignOrder = async (currentUser, userId, orderId) => {
-  const transactionContext = await sequelize.transaction();
-  try {
-    // check if user has the access
-    if (!currentUser?.userRoles.includes(constants.ROLES.ADMIN) && currentUser.userId !== userId) {
-      throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
-    }
-
-    const order = await Order.findOne({ where: { id: orderId, status: constants.ORDER_STATUS.PREPARING } });
-
-    console.log('Orderssss: ', order);
-    if (!order) {
-      throw commonHelpers.customError('No order found', 404);
-    }
-
-    const deliveryPartner = await User.findOne({
-      where: { id: userId },
-      include: { model: Role, as: 'roles', where: { name: 'Delivery Partner' } },
-    });
-
-    if (!deliveryPartner) {
-      throw commonHelpers.customError('Delivery partner not found', 404);
-    }
-
-    order.delivery_partner_id = userId;
-    await order.save({ transaction: transactionContext });
-
-    const mailOptions = {
-      orderId: order.id,
-      assignedAt: order.updated_at,
-      deliveryPartner: `${deliveryPartner.first_name} ${deliveryPartner.last_name}`,
-    };
-
-    await mailHelper.sendOrderAssignedMail(currentUser.email, mailOptions);
-    await transactionContext.commit();
-
-    return order;
-  } catch (err) {
-    await transactionContext.rollback();
-    console.log('Error in assigning order', err.message);
-    throw commonHelpers.customError(err.message, err.statusCode);
+  if (!currentUser?.userRoles.includes(constants.ROLES.ADMIN) && currentUser.userId !== userId) {
+    throw commonHelpers.customError('Given user is not authorized for this endpoint', 403);
   }
+
+  const order = await Order.findOne({ where: { id: orderId, status: constants.ORDER_STATUS.PREPARING } });
+
+  if (!order) {
+    throw commonHelpers.customError('No order found', 404);
+  }
+
+  const deliveryPartner = await User.findOne({
+    where: { id: userId },
+    include: { model: Role, as: 'roles', where: { name: 'Delivery Partner' } },
+  });
+
+  if (!deliveryPartner) {
+    throw commonHelpers.customError('Delivery partner not found', 404);
+  }
+
+  order.delivery_partner_id = userId;
+  await order.save();
+
+  const mailOptions = {
+    orderId: order.id,
+    assignedAt: order.updated_at,
+    deliveryPartner: `${deliveryPartner.first_name} ${deliveryPartner.last_name}`,
+  };
+
+  mailHelper.sendOrderAssignedMail(currentUser.email, mailOptions);
+
+  return order;
 };
 
 const getPendingOrders = async (currentUser, userId, queryOptions) => {
@@ -321,30 +313,22 @@ const getPendingOrders = async (currentUser, userId, queryOptions) => {
 };
 
 const updateOrderStatus = async (deliveryPartner, orderId, status) => {
-  const transactionContext = await sequelize.transaction();
-  try {
-    const filter = { id: orderId };
+  const filter = { id: orderId };
 
-    filter.delivery_partner_id = deliveryPartner.userId;
+  filter.delivery_partner_id = deliveryPartner.userId;
 
-    const order = await Order.findOne({ where: filter });
+  const order = await Order.findOne({ where: filter });
 
-    if (!order) {
-      throw commonHelpers.customError('No order found', 404);
-    }
-
-    order.status = status;
-    await order.save({ transaction: transactionContext });
-
-    await mailHelper.sendOrderStatusUpdateMail(deliveryPartner.email, order);
-    await transactionContext.commit();
-
-    return order;
-  } catch (err) {
-    await transactionContext.rollback();
-    console.log('Error in updating order status', err.message);
-    throw commonHelpers.customError(err.message, err.statusCode);
+  if (!order) {
+    throw commonHelpers.customError('No order found', 404);
   }
+
+  order.status = status;
+  await order.save();
+
+  mailHelper.sendOrderStatusUpdateMail(deliveryPartner.email, order);
+
+  return order;
 };
 
 module.exports = {

@@ -22,6 +22,11 @@ paths:
             default: 10
             example: 10
           description: Number of records per page.
+        - name: restaurantId
+          in: query
+          description: Get orders of a specific restaurant
+          schema:
+            type: string
       responses:
         '200':
           description: Successfully fetched unassigned orders.
