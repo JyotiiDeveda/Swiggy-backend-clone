@@ -1,6 +1,8 @@
 const serializeCities = (req, res, next) => {
   let rows = res.data?.rows || res.data;
 
+  const response = { pagination: res?.data?.pagination };
+
   const isSingleItem = !Array.isArray(rows);
 
   if (isSingleItem) {
@@ -15,7 +17,9 @@ const serializeCities = (req, res, next) => {
     return cityData;
   });
 
-  res.data = isSingleItem ? { city: cities[0] } : { cities };
+  isSingleItem ? (response.city = cities[0]) : (response.cities = cities);
+
+  res.data = response;
 
   next();
 };

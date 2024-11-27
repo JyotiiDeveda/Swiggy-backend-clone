@@ -18,14 +18,33 @@ const create = async city => {
   return newCity;
 };
 
-const getAll = async () => {
-  const cities = await City.findAll();
+const getAll = async queryOptions => {
+  const { page = 1, limit = 10 } = queryOptions;
 
-  if (!cities || cities.length === 0) {
+  const offset = (page - 1) * limit;
+
+  const { count, rows: cities } = await City.findAndCountAll({
+    order: [['name', 'ASC']],
+    offset: offset,
+    limit: limit,
+  });
+
+  console.log('Cities: ', count, cities);
+  if (!cities || count === 0) {
     throw commonHelpers.customError('No cities found', 404);
   }
 
-  return cities;
+  const response = {
+    rows: cities,
+    pagination: {
+      totalRecords: count,
+      currentPage: parseInt(page),
+      recordsPerPage: parseInt(limit),
+      noOfPages: Math.ceil(count / limit),
+    },
+  };
+
+  return response;
 };
 
 const remove = async cityId => {
