@@ -39,7 +39,7 @@ paths:
                   message:
                     type: string
 
-  /orders/{id}/assign-order:
+  /orders/{id}/assign:
     patch:
       tags:
         - Orders
@@ -86,7 +86,7 @@ paths:
         '404':
           description: Order or delivery partner not found
 
-  /orders/{id}/update-status:
+  /orders/{id}/status:
     patch:
       tags:
         - Orders

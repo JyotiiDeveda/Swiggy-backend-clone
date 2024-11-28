@@ -7,7 +7,7 @@ const { sequelize } = require('../models');
 const create = async data => {
   const transactionContext = await sequelize.transaction();
   try {
-    const { firstName, lastName, email, phone, address, role = constants.ROLES.CUSTOMER } = data;
+    const { firstName, lastName, email, phone, address, roleId } = data;
     const userExists = await User.findOne({
       where: { [Op.or]: [{ email }, { phone }] },
       paranoid: false,
@@ -40,7 +40,11 @@ const create = async data => {
       address,
     });
 
-    const roleDetails = await Role.findOne({ where: { name: role } });
+    const roleDetails = await Role.findByPk(roleId);
+
+    if (!roleDetails) {
+      throw commonHelpers.customError('Role not found', 404);
+    }
 
     // assign role to user
     const userRole = await UserRole.findOrCreate({
@@ -145,13 +149,10 @@ const getAll = async queryOptions => {
 
   let filter = {};
   const userRole = role?.toLowerCase();
-  if (userRole === 'admin') {
-    filter.name = constants.ROLES.ADMIN;
-  } else if (userRole === 'delivery-partner') {
-    filter.name = constants.ROLES.DELIVERY_PARTNER;
-  } else if (userRole === 'customer') {
-    filter.name = constants.ROLES.CUSTOMER;
-  }
+
+  if (userRole === 'admin') filter.name = constants.ROLES.ADMIN;
+  else if (userRole === 'delivery-partner') filter.name = constants.ROLES.DELIVERY_PARTNER;
+  else if (userRole === 'customer') filter.name = constants.ROLES.CUSTOMER;
 
   const users = await User.findAndCountAll({
     distinct: true,

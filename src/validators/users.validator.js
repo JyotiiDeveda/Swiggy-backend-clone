@@ -21,8 +21,10 @@ const validateUser = (req, res, next) => {
       address: Joi.string().min(5).required(),
       ...(isAdmin &&
         requestMethod === 'POST' && {
-          role: Joi.string()
-            .valid(...Object.values(constants.ROLES))
+          roleId: Joi.string()
+            .guid({
+              version: 'uuidv4',
+            })
             .required(),
         }),
     });

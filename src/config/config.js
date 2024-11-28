@@ -35,4 +35,20 @@ module.exports = {
       deletedAt: 'deleted_at',
     },
   },
+  production: {
+    username: DB_USERNAME,
+    password: DB_PASSWORD,
+    database: DB_NAME,
+    host: DB_HOST,
+    dialect: DB_DIALECT,
+    logging: DB_LOGGING === 'true' ? console.log : false,
+    define: {
+      paranoid: true,
+      underscored: true,
+      timestamps: true,
+      createdAt: 'created_at',
+      updatedAt: 'updated_at',
+      deletedAt: 'deleted_at',
+    },
+  },
 };

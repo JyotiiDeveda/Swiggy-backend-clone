@@ -42,7 +42,7 @@ const validateQueryParams = (req, res, next) => {
 const validateId = (req, res, next) => {
   try {
     const id = [...Object.keys(req.body)][0];
-    console.log('IDD: ', id);
+
     const schema = Joi.object({
       [id]: Joi.string()
         .guid({
@@ -52,8 +52,8 @@ const validateId = (req, res, next) => {
     });
 
     const payload = req.body;
-    console.log('req body: ', payload);
     const validateResponse = validateHelper.validateSchemas(schema, payload);
+
     const isValid = validateResponse[0];
     const value = validateResponse[1];
 

@@ -4,7 +4,6 @@ const commonHelpers = require('../helpers/common.helper');
 const constants = require('../constants/constants');
 
 const createRestaurantsRating = async (restaurantId, rating, userId) => {
-  //check if restaurant exists
   const restaurantExists = await Restaurant.findOne({ where: { id: restaurantId } });
 
   if (!restaurantExists) {

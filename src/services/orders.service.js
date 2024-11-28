@@ -309,9 +309,7 @@ const getPendingOrders = async (currentUser, userId, queryOptions) => {
 };
 
 const updateOrderStatus = async (deliveryPartner, orderId, status) => {
-  const filter = { id: orderId };
-
-  filter.delivery_partner_id = deliveryPartner.userId;
+  const filter = { id: orderId, delivery_partner_id: deliveryPartner.userId };
 
   const order = await Order.findOne({ where: filter });
 

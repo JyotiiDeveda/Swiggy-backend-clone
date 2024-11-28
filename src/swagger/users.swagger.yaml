@@ -1,4 +1,18 @@
 paths:
+  /users/me:
+    get:
+      summary: Fetch logged in user's details
+      tags:
+        - Users
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Fetched user details successfully
+        '403':
+          description: Unauthorized
+        '404':
+          description: User not found
   /users:
     get:
       summary: Fetch all users
@@ -64,14 +78,10 @@ paths:
                   type: string
                   description: Address of the user
                   example: '123 Main Street, New York, NY'
-                role:
+                roleId:
                   type: string
-                  description: Role of the user
-                  enum:
-                    - Admin
-                    - Customer
-                    - Delivery Partner
-                  example: Customer
+                  description: Role Id of the user
+                  example: 1234
               required:
                 - firstName
                 - lastName
@@ -330,40 +340,6 @@ paths:
           description: Conflict - User already exists
         '422':
           description: Validation error
-
-  /users/{userId}/assign-role:
-    put:
-      summary: Assign role to a user
-      tags:
-        - Roles
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          description: User ID
-          schema:
-            type: string
-      requestBody:
-        description: User role details
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                roleId:
-                  type: string
-                  required: true
-                  example: '123'
-      responses:
-        '201':
-          description: Role assigned successfully
-        '403':
-          description: Unauthorized
-        '404':
-          description: Role or User not found
 
   /users/{id}/orders:
     post:

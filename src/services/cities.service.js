@@ -29,7 +29,7 @@ const getAll = async queryOptions => {
     limit: limit,
   });
 
-  console.log('Cities: ', count, cities);
+  // console.log('Cities: ', count, cities);
   if (!cities || count === 0) {
     throw commonHelpers.customError('No cities found', 404);
   }

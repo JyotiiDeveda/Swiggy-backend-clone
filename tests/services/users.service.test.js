@@ -68,7 +68,7 @@ describe('User Service Tests', () => {
     it('should successfully create a new user', async () => {
       User.findOne.mockResolvedValue(null);
       User.create.mockResolvedValue(newUser);
-      Role.findOne.mockResolvedValue({ id: roleId });
+      Role.findByPk.mockResolvedValue({ id: roleId });
       UserRole.findOrCreate.mockResolvedValue([{}, true]);
 
       const mockSave = jest.fn().mockResolvedValue(newUser);

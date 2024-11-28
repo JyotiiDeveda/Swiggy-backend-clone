@@ -19,7 +19,7 @@ router.get(
 
 // assign order to delivery partner
 router.patch(
-  '/:id/assign-order',
+  '/:id/assign',
   authMiddlewares.authenticateToken,
   authMiddlewares.isAuthorizedDeliveryPartner,
   commonValidators.validateId,
@@ -30,7 +30,7 @@ router.patch(
 
 // update order status
 router.patch(
-  '/:id/update-status',
+  '/:id/status',
   authMiddlewares.authenticateToken,
   authMiddlewares.isAuthorizedDeliveryPartner,
   orderValidators.validateOrderStatus,
