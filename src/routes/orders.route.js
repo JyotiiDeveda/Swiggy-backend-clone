@@ -32,7 +32,6 @@ router.patch(
 router.patch(
   '/:id/status',
   authMiddlewares.authenticateToken,
-
   authMiddlewares.isAuthorizedDeliveryPartner,
   orderValidators.validateOrderStatus,
   orderControllers.updateOrderStatus,

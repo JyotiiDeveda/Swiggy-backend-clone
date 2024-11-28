@@ -40,7 +40,7 @@ router.put(
   '/:id',
   authMiddlewares.authenticateToken,
   authMiddlewares.isAdmin,
-  restaurantValidators.validateRestaurantUpdateSchema,
+  restaurantValidators.validateRestaurantSchema,
   restaurantsController.update,
   restaurantSerializers.serializeRestaurants,
   commonHelpers.customResponseHandler
